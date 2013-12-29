@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# name: install.sh
+# description: install script for stackmonkey controller vm
+# author: info@stackmonkey.com 
+# github: https://github.com/StackMonkey/stackmonkey-vm
+
 # update repos
 sudo apt-get update -y
 
@@ -12,6 +17,12 @@ sudo pip install Flask
 sudo pip install flask-wtf
 sudo pip install flask-appconfig
 sudo pip install flask-bootstrap
+
+# install openstack libraries for python
+sudo pip install python-keystoneclient
+sudo pip install python-glanceclient
+sudo pip install python-cinderclient
+sudo pip install python-novaclient
 
 # check out stackgeek-vm repo
 sudo su
