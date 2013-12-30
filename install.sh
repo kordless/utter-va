@@ -29,7 +29,7 @@ sudo chmod -R g+w /var/www/stackmonkey/
 sudo pip install virtualenv
 
 # configure virtual environment
-sudo cd /var/www/stackmonkey/
+cd /var/www/stackmonkey/
 sudo virtualenv ./env
 sudo source env/bin/activate
 
