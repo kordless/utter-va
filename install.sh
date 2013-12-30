@@ -18,8 +18,14 @@ sudo apt-get install build-essential -y
 sudo apt-get install python-dev -y
 sudo pip install uwsgi 
 
-# configure the uwsgi user
+# configure user settings
 sudo useradd -c 'uwsgi user,,,' -g www-data -d /nonexistent -s /bin/false uwsgi
+
+# configure www directory
+sudo mkdir -p /var/www/stackmonkey/
+sudo usermod -a -G www-data www-data
+sudo chown -R www-data:www-data /var/www/
+sudo chmod -R g+w /var/www/stackmonkey/
 
 # configure uwsgi configs
 sudo cat <<EOF > /etc/init/uwsgi.conf
@@ -50,20 +56,20 @@ sudo touch /var/log/uwsgi.log
 sudo logrotate -f /etc/logrotate.d/uwsgi
 
 # configure nginx
-sudo cat <<EOF > /etc/logrotate.d/uwsgi
+sudo cat <<EOF > /etc/nginx/conf.d/stackmonkey.conf
 server {
     listen       80;
-    server_name  localhost;
+    server_name  stackmonkey;
 
     location /static {
-        alias /srv/www/helloworld/static;
+        alias /var/www/stackmonkey/static;
     }
 
     location / {
         include uwsgi_params;
         uwsgi_pass unix:/tmp/uwsgi.sock;
-        uwsgi_param UWSGI_PYHOME /srv/www/helloworld/env;
-        uwsgi_param UWSGI_CHDIR /srv/www/helloworld;
+        uwsgi_param UWSGI_PYHOME /var/www/stackmonkey/env;
+        uwsgi_param UWSGI_CHDIR /var/www/stackmonkey;
         uwsgi_param UWSGI_MODULE application;
         uwsgi_param UWSGI_CALLABLE app;
     }
@@ -72,10 +78,14 @@ server {
 
     error_page   500 502 503 504  /50x.html;
     location = /50x.html {
-        root   /usr/share/nginx/html;
+        root   /usr/share/nginx/www;
     }
 }
 EOF
+
+# restart services
+sudo service uwsgi restart
+sudo service nginx restart
 
 # install flask bits via pip
 sudo pip install Flask
