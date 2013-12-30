@@ -27,11 +27,10 @@ class ExampleForm(Form):
         raise ValidationError('Always wrong')
 
 
-def create_app(configfile=None):
+if __name__ == '__main__':	
+    configfile = None
     app = Flask(__name__)
-    AppConfig(app, configfile)  # Flask-Appconfig is not necessary, but
-                                # highly recommend =)
-                                # https://github.com/mbr/flask-appconfig
+    AppConfig(app, configfile)  
     Bootstrap(app)
 
     # in a real app, these should be configured through Flask-Appconfig
@@ -44,7 +43,4 @@ def create_app(configfile=None):
         form = ExampleForm()
         return render_template('index.html', form=form)
 
-    return app
-
-if __name__ == '__main__':
-    create_app().run(debug=True, host="0.0.0.0")
+    app().run(debug=True, host="0.0.0.0")
