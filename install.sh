@@ -20,7 +20,7 @@ sudo apt-get install python-virtualenv -y
 sudo pip install Flask
 sudo pip install flask-wtf
 sudo pip install flask-appconfig
-sudo pip install flask-user
+sudo pip install flask-login
 
 # install openstack libraries for python
 sudo pip install python-keystoneclient
@@ -28,10 +28,29 @@ sudo pip install python-glanceclient
 sudo pip install python-cinderclient
 sudo pip install python-novaclient
 
+# configure apache
+sudo cat <<EOF > /etc/apache2/sites-available/default
+<VirtualHost *>
+    ServerName stackmonkey
+    ServerAdmin webmaster@localhost
+
+    WSGIDaemonProcess stackmonkey user=www-data group=www-data threads=5
+    WSGIScriptAlias / /var/www/stackmonkey/wsgi.py
+
+    <Directory /var/www/stackmonkey>
+        WSGIProcessGroup stackmonkey
+        WSGIApplicationGroup %{GLOBAL}
+        Order deny,allow
+        Allow from all
+    </Directory>
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+</VirtualHost>
+EOF
+
 # check out stackgeek-vm repo
 sudo su
-cd /root/
-sudo git clone https://github.com/StackMonkey/stackmonkey-vm.git
-
+cd /var/www/
+sudo git clone https://github.com/StackMonkey/stackmonkey-vm.git stackmonkey
+ 
 # configure www directory
 sudo chown -R www-data:www-data /var/www/
