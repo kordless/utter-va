@@ -57,3 +57,6 @@ sudo git clone https://github.com/StackMonkey/stackmonkey-vm.git stackmonkey
  
 # configure www directory
 sudo chown -R www-data:www-data /var/www/
+
+# restart apache
+sudo service apache2 restart
