@@ -33,7 +33,7 @@ mkdir /var/log/stackgeek/
 chown -R www-data:www-data /var/log/stackmonkey/
 sudo cat <<EOF > /etc/apache2/sites-available/default
 <VirtualHost *:80>
-    ServerName stackmonkey.com
+    ServerName controller.stackmonkey.com
 
     WSGIDaemonProcess stackmonkey user=www-data group=www-data threads=5
     WSGIScriptAlias / /var/www/stackmonkey/wsgi.py
