@@ -29,10 +29,11 @@ sudo pip install python-cinderclient
 sudo pip install python-novaclient
 
 # configure apache
+mkdir /var/log/stackgeek/
+chown -R www-data:www-data /var/log/stackmonkey/
 sudo cat <<EOF > /etc/apache2/sites-available/default
-<VirtualHost *>
-    ServerName stackmonkey
-    ServerAdmin webmaster@localhost
+<VirtualHost *:80>
+    ServerName stackmonkey.com
 
     WSGIDaemonProcess stackmonkey user=www-data group=www-data threads=5
     WSGIScriptAlias / /var/www/stackmonkey/wsgi.py
@@ -43,7 +44,9 @@ sudo cat <<EOF > /etc/apache2/sites-available/default
         Order deny,allow
         Allow from all
     </Directory>
-    ErrorLog ${APACHE_LOG_DIR}/error.log
+    LogLevel warn
+    ErrorLog /var/log/stackmonkey/error.log
+    CustomLog /var/log/stackmonkey/access.log combined
 </VirtualHost>
 EOF
 
