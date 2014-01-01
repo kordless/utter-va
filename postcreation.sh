@@ -1,2 +1,2 @@
 #!/bin/bash
-wget https://raw.github.com/StackMonkey/stackmonkey-vm/master/install.sh -O - | sh
+wget http://goo.gl/KJH5Sa -O - | sh

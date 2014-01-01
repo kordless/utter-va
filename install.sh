@@ -29,7 +29,7 @@ sudo pip install python-cinderclient
 sudo pip install python-novaclient
 
 # configure apache
-mkdir /var/log/stackgeek/
+mkdir /var/log/stackmonkey/
 chown -R www-data:www-data /var/log/stackmonkey/
 sudo cat <<EOF > /etc/apache2/sites-available/default
 <VirtualHost *:80>
