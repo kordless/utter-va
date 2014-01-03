@@ -1,0 +1,118 @@
+/* General Styles */
+html, body {
+  height: 100%;
+}
+#wrap { /* for sticky footer */
+  min-height: 100%;
+  height: auto;
+  margin: 0 auto -194px;
+  padding: 0 0 166px;
+}
+ul.unstyled, ol.unstyled {
+  list-style: none;
+  padding: 0px;
+}
+
+/* Navbar */
+.navbar-inverse .navbar-brand {
+  color: #FFF;
+  padding-top: 24px;
+  font-size: 48px;
+  font-family: 'Devonshire',sans-serif;
+  text-shadow: 2px 2px 3px gray;
+}
+.navbar-inverse .navbar-brand > a, 
+.navbar-inverse .navbar-brand > a:hover, 
+.navbar-inverse .navbar-brand > a:link, 
+.navbar-inverse .navbar-brand > a:visited, 
+.navbar-inverse .navbar-brand > a:active {
+  color: #FFF;
+}
+
+/* push nav down and make it taller */
+ul.nav.navbar-nav > li.active > a,
+ul.nav.navbar-nav > li > a {
+  height: 66px;
+  padding-top: 24px;
+}
+
+/* sign in button */
+ul.nav.navbar-nav > li > button {
+  margin-top: 16px;
+  margin-left: 16px;
+  height: auto;
+}
+
+/* Footer */
+footer {
+  vertical-align: baseline;
+  margin-top: 19px;
+  padding-top: 19px;
+  font-size: 13px;
+  background: #252525;
+  border-top: 0;
+  border-top: 0;
+  min-height: 166px;
+}
+footer h4 {
+  color: #999;
+}
+footer p {
+  color: #999;
+}
+footer a {
+  color: #fff;
+  text-decoration: none;
+}
+footer a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+footer #footer-floor {
+  background: #1b1b1b;
+  padding-top: 10px;
+}
+footer #footer-floor h3, footer #footer-floor h4 {
+  color: #fff;
+}
+footer #footer-floor #elsewhere-msg {
+  padding-top: 18px;
+}
+footer #elsewhere-icons {
+  padding: 0px;
+  margin: 0px;
+}
+footer #elsewhere-icons a {
+  background: url("/img/social_icons.png") 0 0 no-repeat;
+  float: left;
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+  text-indent: -900px;
+  margin-right: 8px;
+  margin-bottom: 10px;
+}
+footer #elsewhere-icons a.facebook { 
+	background-position:  0px;
+}
+footer #elsewhere-icons a.twitter { 
+	background-position: -32px; 
+}
+footer #elsewhere-icons a.pintrest { 
+	background-position: -64px; 
+}
+footer #elsewhere-icons a.linkedin { 
+	background-position: -96px;
+}
+footer #elsewhere-icons a.googleplus { 
+	background-position: -128px; 
+}
+footer ul, h4 {
+	margin-top: 4px;
+}
+footer ul {
+	margin-bottom: 16px;
+}
+.footer, .push {
+	height: 200px;
+}

@@ -1,5 +1,28 @@
 {% extends "base.html" %}
 
+{% block page_styles %}
+    <!-- Home Page -->
+    <link href="/css/home.css" rel="stylesheet">
+{% endblock %}
+
+{% block navbar %}
+  {% include 'navbar.html' %}
+{% endblock %}
+
+{% block javascript %}
+        // login button
+    	$('#nav-login').on('click', function(e) { window.location = "/login" });
+    	
+    	// google map
+		var map_canvas = document.getElementById('map_canvas');
+        var map_options = {
+          center: new google.maps.LatLng(46.466667,30.733333),
+          zoom: 2,
+          mapTypeId: google.maps.MapTypeId.ROADMAP
+        }
+        var map = new google.maps.Map(map_canvas, map_options);
+{% endblock %}
+
 {% block content %}
     <div id="map_canvas"></div>
 {% endblock %}

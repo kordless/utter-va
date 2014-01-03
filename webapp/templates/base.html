@@ -6,21 +6,14 @@
 <html class="no-js" lang="{{ locale_language_id }}"> <!--<![endif]-->
   <head>
     <meta charset="utf-8">
-    <title>{% block title %}{% endblock %}{{ app_name }}</title>
+    <title>Stackmonkey VM</title>
 
     <!-- Standard Fare -->
     <meta name="description" content="Distributed servers for all.">
-    <meta name="generator" content="Flask">
+    <meta name="generator" content="Flask App">
 
-    <!-- Mobile Metas -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Google Fonts -->
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800' rel='stylesheet' type='text/css'>
-    
     <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="/js/libs/jquery.min.js"><\/script>')</script>
+    <script src="/js/jquery.min.js"></script>
 
     <!-- Bootstrap CSS -->
     <link href="/css/bootstrap.css" rel="stylesheet">
@@ -52,7 +45,7 @@
     {% include 'footer.html' %}
 
     <!-- JavaScript Libraries -->
-    <script src="/js/libs/bootstrap.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
 
     <script>
       $( document ).ready(function() {
