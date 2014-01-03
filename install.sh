@@ -16,11 +16,16 @@ sudo apt-get install build-essential -y
 sudo apt-get install python-dev -y
 sudo apt-get install python-virtualenv -y
 
+# install werkzeug
+sudo pip install Werkzeug
+
 # install flask bits via pip
-sudo pip install Flask
+sudo pip install flask
 sudo pip install flask-wtf
 sudo pip install flask-appconfig
 sudo pip install flask-login
+sudo pip install flask-openid
+sudo pip install flask-sqlalchemy
 
 # install openstack libraries for python
 sudo pip install python-keystoneclient
@@ -39,6 +44,7 @@ sudo cat <<EOF > /etc/apache2/sites-available/default
     WSGIScriptAlias / /var/www/stackmonkey/wsgi.py
 
     <Directory /var/www/stackmonkey>
+        WSGIScriptReloading On
         WSGIProcessGroup stackmonkey
         WSGIApplicationGroup %{GLOBAL}
         Order deny,allow
