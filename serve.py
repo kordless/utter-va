@@ -1,5 +1,6 @@
 import os
 from webapp import app
+from webapp import settings
 from werkzeug import SharedDataMiddleware
 
 # add static directory to be served by development server

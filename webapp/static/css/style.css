@@ -15,11 +15,10 @@ ul.unstyled, ol.unstyled {
 
 /* Navbar */
 .navbar-inverse .navbar-brand {
-  color: #FFF;
-  padding-top: 24px;
-  font-size: 48px;
+  color: #EEE;
+  padding-top: 16px;
+  font-size: 24px;
   font-family: 'Devonshire',sans-serif;
-  text-shadow: 2px 2px 3px gray;
 }
 .navbar-inverse .navbar-brand > a, 
 .navbar-inverse .navbar-brand > a:hover, 
@@ -38,7 +37,7 @@ ul.nav.navbar-nav > li > a {
 
 /* sign in button */
 ul.nav.navbar-nav > li > button {
-  margin-top: 16px;
+  margin-top: 12px;
   margin-left: 16px;
   height: auto;
 }
@@ -79,7 +78,7 @@ footer #footer-floor #elsewhere-msg {
   padding-top: 18px;
 }
 footer #elsewhere-icons {
-  padding: 0px;
+  padding: 0px 0px 50px;
   margin: 0px;
 }
 footer #elsewhere-icons a {
