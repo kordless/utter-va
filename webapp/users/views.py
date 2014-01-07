@@ -34,7 +34,7 @@ def register():
 	# check to see if user already exists
 	if db.session.query(User).first():
 		print "found a user"
-	form = GetStartedRegisterForm(request.form)
+	form = RegisterForm(request.form)
 	if form.validate_on_submit():
 		# check to see if a user already exists - TODO
 		if False:
