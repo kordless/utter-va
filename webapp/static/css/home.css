@@ -1,6 +1,5 @@
-/* GLOBAL STYLES
+/* HOME STYLES
 -------------------------------------------------- */
-/* Padding below the footer and lighter body text */
 
 body {
   color: #5a5a5a;
@@ -62,7 +61,7 @@ body {
   z-index: 100;
   left: 0;
   right: 0;
-  top: 300px;
+  top: 30%;
   width: 60%;
   max-width: 1000px;
   margin-left: auto;

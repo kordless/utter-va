@@ -2,6 +2,7 @@
 html, body {
   height: 100%;
 }
+
 #wrap { /* for sticky footer */
   min-height: 100%;
   height: auto;
@@ -16,8 +17,8 @@ ul.unstyled, ol.unstyled {
 /* Navbar */
 .navbar-inverse .navbar-brand {
   color: #EEE;
-  padding-top: 16px;
-  font-size: 24px;
+  padding-top: 18px;
+  font-size: 20px;
   font-family: 'Devonshire',sans-serif;
 }
 .navbar-inverse .navbar-brand > a, 
@@ -27,12 +28,17 @@ ul.unstyled, ol.unstyled {
 .navbar-inverse .navbar-brand > a:active {
   color: #FFF;
 }
-
+.navbar-logo > .glyphicon {
+  margin-right: 8px;
+}
+.nav > .dropdown > .dropdown-toggle {
+  color: #EEE;
+} 
 /* push nav down and make it taller */
 ul.nav.navbar-nav > li.active > a,
 ul.nav.navbar-nav > li > a {
-  height: 66px;
-  padding-top: 24px;
+  height: 57px;
+  padding-top: 20px;
 }
 
 /* sign in button */
