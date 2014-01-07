@@ -51,4 +51,4 @@ def register():
 			flash("logged in")
 			return redirect(request.args.get("next") or url_for("index"))
 	
-	return render_template("users/getstarted.html", form=form)
+	return render_template("users/register.html", form=form)
