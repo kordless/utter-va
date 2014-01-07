@@ -10,6 +10,7 @@ sudo apt-get update -y
 
 # install dependencies and services
 sudo apt-get install git -y
+sudo apt-get install sqlite3 -y
 sudo apt-get install python-pip -y
 sudo apt-get install libapache2-mod-wsgi -y
 sudo apt-get install build-essential -y

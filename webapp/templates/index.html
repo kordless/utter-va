@@ -26,7 +26,7 @@
 {% block javascript %}
 	// login button
 	$('#nav-login').on('click', function(e) { window.location = "/login" });
-	$('#get-started').on('click', function(e) { window.location = "/getstarted" });
+	$('#get-started').on('click', function(e) { window.location = "/register" });
 	var themap = L.mapbox.map('map', 'kordless.gnm28jg1', {scrollWheelZoom: false, zoomControl: false}).setView([20, 20], 3);
   setInterval(function(){themap.panBy([-1, 0]);},3000);
 {% endblock %}
