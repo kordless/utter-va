@@ -1,22 +1,28 @@
 from flask import Flask, request, render_template, send_from_directory
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager, current_user
+from flask.ext.actions import Manager
 from flask.ext.bcrypt import Bcrypt
 import os
 
 # app setup
-app = Flask(__name__)
-app.config.from_object('config.DebugConfiguration')
-login_manager = LoginManager(app)
-db = SQLAlchemy(app)
-bcrypt = Bcrypt(app)
+app = Flask(__name__) # main app object
+app.config.from_object('config.DebugConfiguration') # configuration
+login_manager = LoginManager(app) # login manager
+manager = Manager(app) # shell actions manager
+db = SQLAlchemy(app) # database connection
+bcrypt = Bcrypt(app) # hashing function
 
 # users module blueprint
 from webapp.users.views import mod as usersModule
 app.register_blueprint(usersModule)
 
+# users module blueprint
+from webapp.configure.views import mod as configureModule
+app.register_blueprint(configureModule)
+
 #add our view as the login view
-login_manager.login_view = "users.login_view"
+login_manager.login_view = "users.login"
 
 #----------------------------------------
 # controllers

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+    <!-- Config Page -->
+    <link href="/css/configure.css" rel="stylesheet">
+    <link href='//api.tiles.mapbox.com/mapbox.js/v1.6.0-beta0/mapbox.css' rel='stylesheet'>
+{% endblock %}
+
+{% block navbar %}
+  {% include 'navbar.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container configure-container">
+  <ol class="breadcrumb">
+    <li><a href="/">Home</a></li>
+    <li class="active">Configure</li>
+  </ol>
+  <ul class="nav nav-tabs">
+    <li class="active"><a href="">Appliance</a></li>
+    <li><a href="/configure/openstack/">OpenStack</a></li>
+    <li><a href="/configure/instances/">Instances & Flavors</a></li>
+  </ul>
+  <div class="page-header">
+    <h2 id="grid">Applicance Credentials</h2>
+  </div>
+  <form class="form-horizontal" role="form">
+    <div class="form-group">
+      <label for="appliancekey" class="col-sm-2 control-label">Auth URL</label>
+      <div class="col-sm-6">
+        <input type="text" class="form-control" id="appliancekey" placeholder="http://10.0.1.100:5000/v2.0">
+      </div>
+    </div>
+    <div class="col-sm-offset-2 col-sm-10">
+      <button type="submit" class="btn btn-success"><span class="glyphicon glyphicon-floppy-disk"></span> Save Configuration</button>
+      <button type="submit" class="btn btn-info"><span class="glyphicon glyphicon-check"></span> Test</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block javascript %}
+	// login button
+	$('#nav-login').on('click', function(e) { window.location = "/login" });
+	var themap = L.mapbox.map('map', 'kordless.gnm28jg1', {scrollWheelZoom: false, zoomControl: false}).setView([20, 20], 3);
+    setInterval(function(){themap.panBy([-1, 0]);},3000);
+{% endblock %}
+
+{% block extras %}
+    <script src='//api.tiles.mapbox.com/mapbox.js/v1.6.0-beta0/mapbox.js'></script>
+{% endblock %}

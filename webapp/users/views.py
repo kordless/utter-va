@@ -13,42 +13,47 @@ def load_user(user_id):
 
 # home page
 @mod.route('/login/', methods=('GET', 'POST'))
-def login_view():
+def login():
+	# if user is already logged in go to index
+	if current_user.is_authenticated():
+		return redirect(url_for("configure.configure"))
+	
+	# load form and check login
 	form = LoginForm(request.form)
 	if form.validate_on_submit():
 		user = form.get_user()
 		login_user(user)
 		return redirect(request.args.get("next") or url_for("index"))
+	
 	return render_template('users/login.html', form=form)
 
 # logout route
-@login_required
 @mod.route('/logout/')
-def logout_view():
+@login_required
+def logout():
 	logout_user()
 	return redirect(url_for('index'))
 
-# getting started page
+# register user
 @mod.route('/register/', methods=['GET', 'POST'])
 def register():
-	# check to see if user already exists
-	if db.session.query(User).first():
-		print "found a user"
+	# register our form
 	form = RegisterForm(request.form)
+
+	# check to see if a user is already registered in db
+	# if user/pass pair is lost/forgotten use resetdb.sh
+	if db.session.query(User).first():
+		return redirect(url_for('.login'))
+
+	# if we have a valid form, handle registration
 	if form.validate_on_submit():
-		# check to see if a user already exists - TODO
-		if False:
-			# bounce back to main page
-			flash("User already exists.")
-			return redirect(url_for("index"))
-		else:
-			user = User()
-			form.populate_obj(user)
-			user.password = bcrypt.generate_password_hash(user.password)
-			db.session.add(user)
-			db.session.commit()
-			login_user(user)
-			flash("logged in")
-			return redirect(request.args.get("next") or url_for("index"))
+		user = User()
+		form.populate_obj(user)
+		user.password = bcrypt.generate_password_hash(user.password)
+		db.session.add(user)
+		db.session.commit()
+		login_user(user)
+		flash("logged in")
+		return redirect(url_for("index"))
 	
 	return render_template("users/register.html", form=form)

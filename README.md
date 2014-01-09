@@ -10,3 +10,8 @@ Launch a new Ubuntu 12.04.02 instance.  Use the following for your post install 
 
     #!/bin/bash
     wget http://goo.gl/KJH5Sa -O - | sh
+
+Login to the instance and run:
+
+    cd /var/www/stackmonkey/
+    ./resetdb.sh

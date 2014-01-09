@@ -3,7 +3,7 @@ from webapp.mixins import CRUDMixin
 from flask.ext.login import UserMixin
 from werkzeug import generate_password_hash, check_password_hash
 
-# webapp databases
+# user database
 class User(UserMixin, CRUDMixin,  db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)

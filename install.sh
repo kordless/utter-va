@@ -27,6 +27,7 @@ sudo pip install flask-appconfig
 sudo pip install flask-login
 sudo pip install flask-openid
 sudo pip install flask-sqlalchemy
+sudo pip install flask-actions
 sudo pip install flask-bcrypt
 
 # install openstack libraries for python
