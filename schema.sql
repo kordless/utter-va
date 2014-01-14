@@ -1,19 +1,49 @@
 DROP TABLE IF EXISTS users;
 CREATE TABLE users (
   id INTEGER NOT NULL,
-  username VARCHAR(50) NOT NULL,
+  username VARCHAR(100) NOT NULL,
   password VARCHAR(100) NOT NULL,
-  email VARCHAR(100),
-  accountid VARCHAR(32),
   PRIMARY KEY (id)
 );
 
+DROP TABLE IF EXISTS openstack;
 CREATE TABLE openstack (
   id INTEGER NOT NULL,
   authurl VARCHAR(100) NOT NULL,
   tenantname VARCHAR(100) NOT NULL,
   tenantid VARCHAR(100) NOT NULL,
-  username VARCHAR(100) NOT NULL,
-  password VARCHAR(100) NOT NULL,
+  osusername VARCHAR(100) NOT NULL,
+  ospassword VARCHAR(100),
   PRIMARY KEY (id)
+);
+
+DROP TABLE IF EXISTS appliance;
+CREATE TABLE appliance (
+  id INTEGER NOT NULL,
+  apikey VARCHAR(100) NOT NULL,
+  latitude VARCHAR(100) NOT NULL,
+  longitude VARCHAR(100) NOT NULL,
+  PRIMARY KEY (id)
+);
+
+DROP TABLE IF EXISTS images;
+CREATE TABLE images (
+  id INTEGER NOT NULL,
+  md5 VARCHAR(100) NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  url VARCHAR(400) NOT NULL,
+  size INTEGER NOT NULL,
+  flags INTEGER NOT NULL,
+  PRIMARY KEY (id)  
+);
+
+DROP TABLE IF EXISTS flavors;
+CREATE TABLE flavors (
+  id INTEGER NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  comment VARCHAR(200) NOT NULL,
+  vpu INTEGER NOT NULL,
+  mem INTEGER NOT NULL,
+  disk INTEGER NOT NULL,
+  PRIMARY KEY (id)  
 );

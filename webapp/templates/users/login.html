@@ -20,6 +20,16 @@
                     {{ form.csrf_token }}
                     {{ form.username(class="form-control", placeholder="Username", autofocus=true, required=true) }}
                     {{ form.password(class="form-control form-password", placeholder="Password", required=true) }}
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            {% for message in messages %}
+                            <div class="alert alert-info alert-dismissable">
+                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                                <strong>{{ message }}</strong>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
                     {% for error in form.password.errors %}<div class="alert alert-danger">{{ error }} <a href="http://stackmonkey.com/faq#vmuserpass"> Need help?</a></div>{% endfor %}
                     <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
                     <a href="{{ config['APP_WEBSITE'] }}/provider" class="pull-right need-help">Need a provider account?</a><span class="clearfix"></span>

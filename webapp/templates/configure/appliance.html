@@ -22,18 +22,30 @@
     <li><a href="/configure/instances/">Instances & Flavors</a></li>
   </ul>
   <div class="page-header">
-    <h2 id="grid">Applicance Credentials</h2>
+    <h2 id="grid">Applicance Settings</h2>
   </div>
-  <form class="form-horizontal" role="form">
+  <form action="." method="post" class="form-horizontal" role="form">
+    {{ form.csrf_token }}
     <div class="form-group">
-      <label for="appliancekey" class="col-sm-2 control-label">Auth URL</label>
+      <label for="appliancekey" class="col-sm-2 control-label">API Key</label>
       <div class="col-sm-6">
-        <input type="text" class="form-control" id="appliancekey" placeholder="http://10.0.1.100:5000/v2.0">
+        {{ form.apikey(class="form-control", value=appliance.apikey, placeholder="13afa9bb8b142d99b78bc143f754f736", required=true) }}
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="appliancekey" class="col-sm-2 control-label">Service Location</label>
+      <div class="col-sm-6">
+        <div id='map'></div>
+        <div class='map-overlay'>
+            <label for='latitude'>latitude</label>
+            {{ form.latitude(class="form-control", value=appliance.latitude, size=25, required=true) }}
+            <label for='longitude'>longitude</label>
+            {{ form.longitude(class="form-control", value=appliance.longitude, size=25, required=true) }}
+        </div>
       </div>
     </div>
     <div class="col-sm-offset-2 col-sm-10">
       <button type="submit" class="btn btn-success"><span class="glyphicon glyphicon-floppy-disk"></span> Save Configuration</button>
-      <button type="submit" class="btn btn-info"><span class="glyphicon glyphicon-check"></span> Test</button>
     </div>
   </form>
 </div>
@@ -42,10 +54,41 @@
 {% block javascript %}
 	// login button
 	$('#nav-login').on('click', function(e) { window.location = "/login" });
-	var themap = L.mapbox.map('map', 'kordless.gnm28jg1', {scrollWheelZoom: false, zoomControl: false}).setView([20, 20], 3);
-    setInterval(function(){themap.panBy([-1, 0]);},3000);
+  
+  // the map
+  var map = L.mapbox.map('map', 'kordless.gnig3f1g')
+      .setView([{{ appliance['latitude'] }}, {{ appliance['longitude'] }}], 12);
+
+  // get the form inputs we want to update
+  var latitude = document.getElementById('latitude');
+  var longitude = document.getElementById('longitude');
+
+  var marker = L.marker([{{ appliance['latitude'] }}, {{ appliance['longitude'] }}], {
+      draggable: true
+  }).addTo(map);
+
+  // every time the marker is dragged, update the form
+  marker.on('dragend', ondragend);
+
+  // set the initial values in the form
+  ondragend();
+
+  function ondragend() {
+      var ll = marker.getLatLng();
+      latitude.value = ll.lat;
+      longitude.value = ll.lng;
+  }
+
+  $('.btn-toggle').click(function() {
+    $(this).find('.btn').toggleClass('active');
+    if ($(this).find('.btn-primary').size()>0) {
+      $(this).find('.btn').toggleClass('btn-primary');
+    }
+  });
+
 {% endblock %}
 
 {% block extras %}
     <script src='//api.tiles.mapbox.com/mapbox.js/v1.6.0-beta0/mapbox.js'></script>
+
 {% endblock %}

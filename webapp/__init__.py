@@ -17,7 +17,7 @@ bcrypt = Bcrypt(app) # hashing function
 from webapp.users.views import mod as usersModule
 app.register_blueprint(usersModule)
 
-# users module blueprint
+# configure module blueprint
 from webapp.configure.views import mod as configureModule
 app.register_blueprint(configureModule)
 
@@ -30,7 +30,7 @@ login_manager.login_view = "users.login"
 
 @app.route('/favicon.ico')
 def favicon():
-	return send_from_directory(os.path.join(app.root_path, 'static'), 'ico/favicon.ico')
+	return send_from_directory(os.path.join(app.root_path, 'static'), 'img/favicon.ico')
 
 
 @app.route("/")

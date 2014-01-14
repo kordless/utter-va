@@ -28,6 +28,7 @@
   <p><em>Please note you will need to manually set the password below once you have imported the RC file.</em></p>
   
   <form action="." method=post enctype=multipart/form-data>
+    {{ form.csrf_token }}
     <div class="fileinput fileinput-new" data-provides="fileinput">
       <span class="btn btn-default btn-file">
         <span class="fileinput-new">Select RC File</span>
@@ -37,48 +38,60 @@
       <span class="fileinput-filename"></span>
       <a href="#" class="close fileinput-exists" data-dismiss="fileinput" style="float: none">&times;</a>
     </div>
-    <input class="btn btn-warning" type="submit" value="Upload">
+    <span class="configure-upload"><input class="btn btn-warning" type="submit" value="Upload"></span>
   </form>
+
+  <div class="row configure-errors">
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="col-md-4 alert alert-danger alert-dismissable">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        <strong>{{ message }}</strong>
+      </div>
+    {% endfor %}
+  {% endif %}
+  {% endwith %}
+  </div>
 
   <div class="page-header">
     <h3 id="grid">Update Configuration</h3>
   </div>
-  <form class="form-horizontal" role="form">
+  <form action="." method="post" class="form-horizontal" role="form">
+    {{ form.csrf_token }}
     <div class="form-group">
       <label for="appliancekey" class="col-sm-2 control-label">Auth URL</label>
       <div class="col-sm-6">
-        <input type="text" class="form-control" id="appliancekey" placeholder="http://10.0.1.100:5000/v2.0">
+        {{ form.authurl(class="form-control", value=openstack.authurl, placeholder="http://10.0.1.100:5000/v2.0", required=true) }}
       </div>
     </div>
     <div class="form-group">
       <label for="appliancekey" class="col-sm-2 control-label">Tenant Name</label>
       <div class="col-sm-6">
-        <input type="text" class="form-control" id="appliancekey" placeholder="StackMonkey">
+        {{ form.tenantname(class="form-control", value=openstack.tenantname, placeholder="StackMonkey", required=true) }}
       </div>
     </div>
     <div class="form-group">
       <label for="appliancekey" class="col-sm-2 control-label">Tenant ID</label>
       <div class="col-sm-6">
-        <input type="text" class="form-control" id="appliancekey" placeholder="78e98e2295344aabb82135d75bbab06e">
+        {{ form.tenantid(class="form-control", value=openstack.tenantid, placeholder="78e98e2295344aabb82135d75bbab06e", required=true) }}
       </div>
     </div>
     <div class="form-group">
       <label for="appliancekey" class="col-sm-2 control-label">OpenStack Username</label>
       <div class="col-sm-6">
-        <input type="text" class="form-control" id="appliancekey" placeholder="monkey">
+        {{ form.osusername(class="form-control", value=openstack.osusername, placeholder="monkey", required=true) }}
       </div>
     </div>
     <div class="form-group">
       <label for="appliancekey" class="col-sm-2 control-label">OpenStack Password</label>
       <div class="col-sm-6">
-        <input type="password" class="form-control" id="appliancekey" placeholder="******">
+        {{ form.ospassword(class="form-control", value=openstack.ospassword, placeholder="******", required=true) }}
       </div>
     </div>
-
     <div class="form-group">
       <div class="col-sm-offset-2 col-sm-10">
         <button type="submit" class="btn btn-success"><span class="glyphicon glyphicon-floppy-disk"></span> Save Configuration</button>
-        <button type="submit" class="btn btn-info"><span class="glyphicon glyphicon-check"></span> Test</button>
       </div>
     </div>
   </form>

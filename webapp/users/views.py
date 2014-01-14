@@ -14,10 +14,14 @@ def load_user(user_id):
 # home page
 @mod.route('/login/', methods=('GET', 'POST'))
 def login():
-	# if user is already logged in go to index
+	# if user is already logged in go to status
 	if current_user.is_authenticated():
 		return redirect(url_for("configure.configure"))
-	
+
+	# if there are no users in the db redirect to register
+	if not db.session.query(User).first():
+		return redirect(url_for('.register'))
+
 	# load form and check login
 	form = LoginForm(request.form)
 	if form.validate_on_submit():
@@ -53,7 +57,6 @@ def register():
 		db.session.add(user)
 		db.session.commit()
 		login_user(user)
-		flash("logged in")
-		return redirect(url_for("index"))
+		return redirect(url_for("configure.configure"))
 	
 	return render_template("users/register.html", form=form)

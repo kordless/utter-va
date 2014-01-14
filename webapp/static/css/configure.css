@@ -1,3 +1,9 @@
+.configure-errors {
+  margin-left: 0px;
+}
+.configure-upload {
+  margin-left: 8px;
+}
 .configure-container {
   margin-top: 80px;
   margin-bottom: 40px;
@@ -10,12 +16,27 @@
 .bump {
   top: -10px;
 }
-#map {
-  position:absolute; 
+.map-overlay {
+    position:absolute;
+    background: rgba(255, 255, 255, 0.5);
+    top:5px;
+    right:20px;
+    width: 150px;
+    padding:5px;
+    font-size:11px;
+}
+.map-overlay input {
+    font:inherit;
+}
+.map-overlay label {
+  margin: 0px;
+}
+#map { 
+  position:relative; 
   top:0; 
-  bottom:0; 
+  bottom:0;
+  height: 500px;
   width:100%;
-  z-index: -5;
 }
 .btn-file {
   overflow: hidden;

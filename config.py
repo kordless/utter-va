@@ -7,8 +7,10 @@ class BaseConfiguration(object):
 	DEBUG = False
 	TESTING = False
 
-	APP_NAME = "Stackmonkey Virtual Appliance"
-	APP_WEBSITE = "http://stackmonkey.com"
+	VERSION = "0.1.0"
+	APP_NAME = "Electorum Virtual Appliance"
+	APP_WEBSITE = "https://electorums.appspot.com/"
+	# APP_WEBSITE = "https://1.2.3.4/"
 	APP_IRC_URL = "http://mibbit.com/?channel=%23stackmonkey&server=irc.mibbit.net"
 	
 	DATABASE = "stackmonkey.db"
@@ -25,13 +27,14 @@ class BaseConfiguration(object):
 
 class TestConfiguration(BaseConfiguration):
 	TESTING = True
-
-	CSRF_ENABLED = False
-
+	APP_WEBSITE = "http://127.0.0.1:8080/"
 	DATABASE = 'test.db'
 	DATABASE_PATH = os.path.join(_basedir, DATABASE)
 	SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'  # + DATABASE_PATH
 
+	CSRF_ENABLED = False
+
 
 class DebugConfiguration(BaseConfiguration):
 	DEBUG = True
+	APP_WEBSITE = "http://127.0.0.1:8080/"

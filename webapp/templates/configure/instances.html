@@ -21,53 +21,72 @@
     <li><a href="/configure/openstack/">OpenStack</a></li>
     <li class="active"><a href="/configure/instances/">Instances & Flavors</a></li>
   </ul>
-  <div class="page-header">
-    <h2 id="grid">OpenStack Credentials</h2>
+  <div>
+    <div class="page-header">
+      <h3 id="grid">Instance Flavors</h3>
+    </div>
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Username</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>Mark</td>
+          <td>Otto</td>
+          <td>@mdo</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Jacob</td>
+          <td>Thornton</td>
+          <td>@fat</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td colspan="2">Larry the Bird</td>
+          <td>@twitter</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="page-header">
+      <h3 id="grid">Operating System Images</h3>
+    </div>
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Username</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>Mark</td>
+          <td>Otto</td>
+          <td>@mdo</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Jacob</td>
+          <td>Thornton</td>
+          <td>@fat</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td colspan="2">Larry the Bird</td>
+          <td>@twitter</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
-  <p>OpenStack credential information used by the virtual appliance can be pre-loaded using the <strong>OpenStack API RC file</strong> downloaded from your OpenStack controller.  Start by opening the OpenStack UI and clicking on the <strong>Access and Security</strong> tab to the left under the <strong>Project</strong> tab.  Click on the <strong>API Access</strong> tab at the top and then click on the <strong>Download OpenStack RC File</strong> button at the top right.  Save this file locally, then click on the <strong>Load Configuration</strong> button below to preload the form below.</p>
-  <p><em>Please note you will need to manually set the password below once you have imported the RC file.</em></p>
-  <button type="button" class="btn btn-warning"><span class="glyphicon glyphicon-floppy-open"></span> Load API RC from File</button>
-  <div class="page-header">
-    <h3 id="grid">Update Configuration</h3>
-  </div>
-  <form class="form-horizontal" role="form">
-    <div class="form-group">
-      <label for="appliancekey" class="col-sm-2 control-label">Auth URL</label>
-      <div class="col-sm-6">
-        <input type="text" class="form-control" id="appliancekey" placeholder="http://10.0.1.100:5000/v2.0">
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="appliancekey" class="col-sm-2 control-label">Tenant Name</label>
-      <div class="col-sm-6">
-        <input type="text" class="form-control" id="appliancekey" placeholder="StackMonkey">
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="appliancekey" class="col-sm-2 control-label">Tenant ID</label>
-      <div class="col-sm-6">
-        <input type="text" class="form-control" id="appliancekey" placeholder="78e98e2295344aabb82135d75bbab06e">
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="appliancekey" class="col-sm-2 control-label">OpenStack Username</label>
-      <div class="col-sm-6">
-        <input type="text" class="form-control" id="appliancekey" placeholder="monkey">
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="appliancekey" class="col-sm-2 control-label">OpenStack Password</label>
-      <div class="col-sm-6">
-        <input type="password" class="form-control" id="appliancekey" placeholder="******">
-      </div>
-    </div>
-    <div class="form-group">
-      <div class="col-sm-offset-2 col-sm-10">
-        <button type="submit" class="btn btn-success"><span class="glyphicon glyphicon-floppy-disk"></span> Save Configuration</button>
-        <button type="submit" class="btn btn-info"><span class="glyphicon glyphicon-check"></span> Test</button>
-      </div>
-    </div>
-  </form>
 </div>
 {% endblock %}
 
