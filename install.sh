@@ -75,10 +75,11 @@ sudo su
 cd /var/www/
 sudo git clone https://github.com/StackMonkey/stackmonkey-vm.git stackmonkey
 
-# build the database
+# build the database and sync with stackmonkey.com
 cd /var/www/stackmonkey/
-sqlite3 stackmonkey.db < schema.sql
- 
+./manage.py resetdb
+./manage.py sync
+
 # configure www directory
 sudo chown -R www-data:www-data /var/www/
 

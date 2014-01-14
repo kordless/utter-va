@@ -1,3 +1,4 @@
+#!/usr/local/bin/python
 # manage.py
 # -*- encoding:utf-8 -*-
 import os, sys, socket, json
