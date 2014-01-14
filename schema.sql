@@ -34,6 +34,7 @@ CREATE TABLE images (
   url VARCHAR(400) NOT NULL,
   size INTEGER NOT NULL,
   flags INTEGER NOT NULL,
+  installed INTEGER NOT NULL,
   PRIMARY KEY (id)  
 );
 
@@ -45,5 +46,7 @@ CREATE TABLE flavors (
   vpu INTEGER NOT NULL,
   mem INTEGER NOT NULL,
   disk INTEGER NOT NULL,
+  flags INTEGER NOT NULL,
+  installed INTEGER NOT NULL,
   PRIMARY KEY (id)  
 );

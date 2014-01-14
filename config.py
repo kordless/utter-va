@@ -8,7 +8,7 @@ class BaseConfiguration(object):
 	TESTING = False
 
 	VERSION = "0.1.0"
-	APP_NAME = "Electorum Virtual Appliance"
+	APP_NAME = "Stackmonkey Virtual Appliance"
 	APP_WEBSITE = "https://electorums.appspot.com/"
 	# APP_WEBSITE = "https://1.2.3.4/"
 	APP_IRC_URL = "http://mibbit.com/?channel=%23stackmonkey&server=irc.mibbit.net"

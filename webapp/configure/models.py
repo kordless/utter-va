@@ -1,6 +1,5 @@
-from webapp import db, bcrypt
+from webapp import db
 from webapp.mixins import CRUDMixin
-from werkzeug import generate_password_hash, check_password_hash
 
 # openstack database
 class OpenStack(CRUDMixin,  db.Model):

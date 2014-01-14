@@ -21,6 +21,10 @@ app.register_blueprint(usersModule)
 from webapp.configure.views import mod as configureModule
 app.register_blueprint(configureModule)
 
+# api module blueprint
+from webapp.api.views import mod as APIModule
+app.register_blueprint(APIModule)
+
 #add our view as the login view
 login_manager.login_view = "users.login"
 

@@ -19,71 +19,64 @@
   <ul class="nav nav-tabs">
     <li><a href="/configure/">Appliance</a></li>
     <li><a href="/configure/openstack/">OpenStack</a></li>
-    <li class="active"><a href="/configure/instances/">Instances & Flavors</a></li>
+    <li class="active"><a href="/configure/instances/">Flavors & Images</a></li>
   </ul>
   <div>
+    <div class="page-header">
+      <h1 id="grid">Flavors & Images</h3>
+    </div>
+    <p>Your appliance needs a minimum of one flavor and one image installed to provide service to users.  Click on the <strong>Install</strong> button next to the entries you want to intsall on your OpenStack cluster.  If you want to deactive a particular flavor or image, click on the <strong>Deactive</strong> button next to the entry.</p>
+  
     <div class="page-header">
       <h3 id="grid">Instance Flavors</h3>
     </div>
     <table class="table table-hover">
       <thead>
         <tr>
-          <th>#</th>
-          <th>First Name</th>
-          <th>Last Name</th>
-          <th>Username</th>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Comment</th>
+          <th># VPUs</th>
+          <th>Memory (in MB)</th>
+          <th>Disk (in GB)</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
+        {% for flavor in flavors %}
         <tr>
-          <td>1</td>
-          <td>Mark</td>
-          <td>Otto</td>
-          <td>@mdo</td>
+          <td>{{ flavor.id }}</td>
+          <td>{{ flavor.name }}</td>
+          <td>{{ flavor.comment }}</td>
+          <td>{{ flavor.vpu }}</td>
+          <td>{{ flavor.mem }}</td>
+          <td>{{ flavor.disk }}</td>
+          <td><button id="install-{{ flavor.id }}" class="btn btn-sm btn-success">Install</button></td>
         </tr>
-        <tr>
-          <td>2</td>
-          <td>Jacob</td>
-          <td>Thornton</td>
-          <td>@fat</td>
-        </tr>
-        <tr>
-          <td>3</td>
-          <td colspan="2">Larry the Bird</td>
-          <td>@twitter</td>
-        </tr>
+        {% endfor %}
       </tbody>
     </table>
     <div class="page-header">
-      <h3 id="grid">Operating System Images</h3>
+      <h3 id="grid">System Images</h3>
     </div>
     <table class="table table-hover">
       <thead>
         <tr>
-          <th>#</th>
-          <th>First Name</th>
-          <th>Last Name</th>
-          <th>Username</th>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Size (in B)</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
+        {% for image in images %}
         <tr>
-          <td>1</td>
-          <td>Mark</td>
-          <td>Otto</td>
-          <td>@mdo</td>
+          <td>{{ image.id }}</td>
+          <td>{{ image.name }}</td>
+          <td>{{ image.size }}</td>
+          <td><button id="install-{{ image.id }}" class="btn btn-sm btn-success">Install</button></td>
         </tr>
-        <tr>
-          <td>2</td>
-          <td>Jacob</td>
-          <td>Thornton</td>
-          <td>@fat</td>
-        </tr>
-        <tr>
-          <td>3</td>
-          <td colspan="2">Larry the Bird</td>
-          <td>@twitter</td>
-        </tr>
+        {% endfor %}
       </tbody>
     </table>
   </div>

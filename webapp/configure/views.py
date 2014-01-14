@@ -1,4 +1,6 @@
 import re
+import os, sys, socket, json
+from urllib2 import urlopen
 from geoip import get_geodata
 from flask import Blueprint, render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
@@ -6,6 +8,7 @@ from webapp import app, db, bcrypt, login_manager
 from forms import OpenStackForm
 from forms import ApplianceForm
 from webapp.users.models import User
+from webapp.api.models import Images, Flavors
 from webapp.configure.models import OpenStack, Appliance
 
 mod = Blueprint('configure', __name__)
@@ -25,6 +28,17 @@ ALLOWED_EXTENSIONS = set(['sh'])
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
+
+# configure instances page
+@mod.route('/configure/instances/', methods=('GET', 'POST'))
+@login_required
+def configure_instances():
+	flavors = db.session.query(Flavors).all()
+	images = db.session.query(Images).all()
+	
+	return render_template('configure/instances.html', flavors=flavors, images=images)
+
 
 # configuration pages
 @mod.route('/configure/', methods=('GET', 'POST'))
@@ -70,6 +84,7 @@ def configure():
 
 	return render_template('configure/appliance.html', form=form, appliance=appliance)
 
+
 @mod.route('/configure/openstack/', methods=('GET', 'POST'))
 @login_required
 def configure_openstack():
@@ -96,7 +111,7 @@ def configure_openstack():
 				openstack.delete()
 				db.session.commit()
 			
-			# create new entry stub
+			# create new entry handle
 			openstack = OpenStack()
 			
 			# set values from extracted lines above - needs SQL injection protection?
@@ -137,9 +152,4 @@ def configure_openstack():
 	openstack = form.get_openstack()
 	return render_template('configure/openstack.html', form=form, openstack=openstack)	
 
-@mod.route('/configure/instances/', methods=('GET', 'POST'))
-@login_required
-def configure_instances():
-	print current_user
-	form = False
-	return render_template('configure/instances.html', form=form)
+
