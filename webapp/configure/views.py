@@ -1,7 +1,7 @@
 import re
 import os, sys, socket, json
 from urllib2 import urlopen
-from geoip import get_geodata
+from webapp.libs.geoip import get_geodata
 from flask import Blueprint, render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from webapp import app, db, bcrypt, login_manager
