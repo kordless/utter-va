@@ -6,7 +6,7 @@
 # github: https://github.com/StackMonkey/xovio-va
 
 # service token generation
-SERVICE_ENDPOINT_HOSTAME=`< /dev/urandom tr -dc A-Za-z0-9 | head -c16`
+SERVICE_ENDPOINT_HOSTAME=`openssl rand -hex 16`
 echo $SERVICE_ENDPOINT_HOSTAME
 
 # update repos
