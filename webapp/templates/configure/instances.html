@@ -23,12 +23,14 @@
   </ul>
   <div>
     <div class="page-header">
-      <h1 id="grid">Flavors & Images</h3>
+      <h2 id="grid">Flavors & Images</h2>
     </div>
     <p>Your appliance needs a minimum of one flavor and one image installed to provide service to users.  Click on the <strong>Install</strong> button next to the entries you want to intsall on your OpenStack cluster.  If you want to deactive a particular flavor or image, click on the <strong>Deactive</strong> button next to the entry.</p>
+    <p><em>Flavor and image types are synced hourly from the pool operator.  You can force a sync by clicking the button below.</em></p>
   
+    <button class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span> Sync Flavors & Images</button>
     <div class="page-header">
-      <h3 id="grid">Instance Flavors</h3>
+      <h3 id="grid">Instance Flavors {{csrf_token}}</h3>
     </div>
     <table class="table table-hover">
       <thead>
@@ -51,7 +53,7 @@
           <td>{{ flavor.vpu }}</td>
           <td>{{ flavor.mem }}</td>
           <td>{{ flavor.disk }}</td>
-          <td><button id="install-{{ flavor.id }}" class="btn btn-sm btn-success">Install</button></td>
+          <td><button id="flavor-install-{{ flavor.id }}" class="btn btn-sm btn-success">Install</button></td>
         </tr>
         {% endfor %}
       </tbody>
@@ -74,7 +76,7 @@
           <td>{{ image.id }}</td>
           <td>{{ image.name }}</td>
           <td>{{ image.size }}</td>
-          <td><button id="install-{{ image.id }}" class="btn btn-sm btn-success">Install</button></td>
+          <td><button id="image-install-{{ image.id }}" class="btn btn-sm btn-success">Install</button></td>
         </tr>
         {% endfor %}
       </tbody>
@@ -84,10 +86,33 @@
 {% endblock %}
 
 {% block javascript %}
-	// login button
-	$('#nav-login').on('click', function(e) { window.location = "/login" });
-	var themap = L.mapbox.map('map', 'kordless.gnm28jg1', {scrollWheelZoom: false, zoomControl: false}).setView([20, 20], 3);
-    setInterval(function(){themap.panBy([-1, 0]);},3000);
+  <script type="text/javascript">
+    $().ready(function() {
+      var csrf_token = "{{ csrf_token }}";
+      // refresh memcache of article buttons
+      $('button[id^="flavor-install-"]').each(function(index){
+        $('#'+this.id).click(function() {
+          flavor_id = this.id.split("-").pop();
+          console.log(flavor_id);
+          $.ajax({
+            url: '/api/flavors/'+flavor_id+'/install/'+'?_csrf_token='+csrf_token,
+            type: 'POST',
+          });
+        })
+      });
+      $('button[id^="image-install-"]').each(function(index){
+        $('#'+this.id).click(function() {
+          image_id = this.id.split("-").pop();
+          console.log(flavor_id);
+          $.ajax({
+            url: '/api/images/'+image_id+'/install/'+'?_csrf_token='+csrf_token,
+            type: 'POST',
+          });
+        })
+      });
+    });
+  </script>
+
 {% endblock %}
 
 {% block extras %}

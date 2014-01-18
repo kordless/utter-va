@@ -46,13 +46,18 @@
 
     <!-- JavaScript Libraries -->
     <script src="/js/bootstrap.min.js"></script>
-
-    <script>
-      $( document ).ready(function() {
-        {% block javascript %}
-        {% endblock %}
+    
+    <!-- Base Javascript -->
+    <script type="text/javascript">
+      $().ready(function() {
+        console.log("main")
       });
     </script>
+
+    <!-- Page Specific Javascript -->
+    {% block javascript %}
+    {% endblock %}
+
     {% block extras %}
     {% endblock %}
   </body>

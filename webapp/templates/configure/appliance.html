@@ -24,6 +24,8 @@
   <div class="page-header">
     <h2 id="grid">Applicance Settings</h2>
   </div>
+  <p>You can get an API key by logging into your account on {{ config['APP_NAME'] }}'s website and clicking on the <strong>API KEYS</strong> tab at the top.  Enter the <strong>API Key</strong> below and then use the map to adjust your location to reflect where the OpenStack cluster is located.</p>
+
   <form action="." method="post" class="form-horizontal" role="form">
     {{ form.csrf_token }}
     <div class="form-group">
@@ -52,40 +54,39 @@
 {% endblock %}
 
 {% block javascript %}
-	// login button
-	$('#nav-login').on('click', function(e) { window.location = "/login" });
-  
-  // the map
-  var map = L.mapbox.map('map', 'kordless.gnig3f1g')
-      .setView([{{ appliance['latitude'] }}, {{ appliance['longitude'] }}], 12);
+  <script type="text/javascript">
+    $().ready(function() {      
+      // the map
+      var map = L.mapbox.map('map', 'kordless.gnig3f1g').setView([{{ appliance['latitude'] }}, {{ appliance['longitude'] }}], 12);
 
-  // get the form inputs we want to update
-  var latitude = document.getElementById('latitude');
-  var longitude = document.getElementById('longitude');
+      // get the form inputs we want to update
+      var latitude = document.getElementById('latitude');
+      var longitude = document.getElementById('longitude');
 
-  var marker = L.marker([{{ appliance['latitude'] }}, {{ appliance['longitude'] }}], {
-      draggable: true
-  }).addTo(map);
+      var marker = L.marker([{{ appliance['latitude'] }}, {{ appliance['longitude'] }}], {
+          draggable: true
+      }).addTo(map);
 
-  // every time the marker is dragged, update the form
-  marker.on('dragend', ondragend);
+      // every time the marker is dragged, update the form
+      marker.on('dragend', ondragend);
 
-  // set the initial values in the form
-  ondragend();
+      // set the initial values in the form
+      ondragend();
 
-  function ondragend() {
-      var ll = marker.getLatLng();
-      latitude.value = ll.lat;
-      longitude.value = ll.lng;
-  }
+      function ondragend() {
+          var ll = marker.getLatLng();
+          latitude.value = ll.lat;
+          longitude.value = ll.lng;
+      }
 
-  $('.btn-toggle').click(function() {
-    $(this).find('.btn').toggleClass('active');
-    if ($(this).find('.btn-primary').size()>0) {
-      $(this).find('.btn').toggleClass('btn-primary');
-    }
-  });
-
+      $('.btn-toggle').click(function() {
+        $(this).find('.btn').toggleClass('active');
+        if ($(this).find('.btn-primary').size()>0) {
+          $(this).find('.btn').toggleClass('btn-primary');
+        }
+      });
+    });
+  </script>
 {% endblock %}
 
 {% block extras %}

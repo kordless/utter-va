@@ -1,12 +1,25 @@
 {% extends "base.html" %}
 {% block title %} - An error occurred{% endblock %}
 
+{% block page_styles %}
+    <!-- Config Page -->
+    <link href="/css/errors.css" rel="stylesheet">
+{% endblock %}
+
 {% block navbar %}
   {% include 'navbar.html' %}
 {% endblock %}
 
 {% block content %}
+<div class="container error-container">
   <h1>Unhandled Error</h1>
-  <p>An unhandled error occurred while processing your request.  This is our fault, and we are looking into it.</p>
-  <p>With very many apologies, we suggest that you return to our <a href="{{ url_for('index') }}">home page</a> and try again.</p>
+  <p>An unhandled error occurred while processing your request.  Something is wrong.  Maybe.</p>
+  <p>You should return to our <a href="{{ url_for('index') }}">home page</a> and try again.</p>
+</div>
+{% endblock %}
+
+{% block javascript %}
+{% endblock %}
+
+{% block extras %}
 {% endblock %}

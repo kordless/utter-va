@@ -1,9 +1,15 @@
 #!/bin/bash
 
 # name: install.sh
-# description: install script for stackmonkey controller vm
-# author: info@stackmonkey.com 
-# github: https://github.com/StackMonkey/stackmonkey-vm
+# description: install script for xovio controller vm
+# author: info@xovio.com 
+# github: https://github.com/StackMonkey/xovio-va
+
+# service token generation
+function token_gen() {
+    tr -cd '[:alnum:]' < /dev/urandom | fold -w64 | head -n1;
+}
+SERVICE_TOKEN=$(token_gen); 
 
 # update repos
 sudo apt-get update -y
@@ -16,6 +22,37 @@ sudo apt-get install libapache2-mod-wsgi -y
 sudo apt-get install build-essential -y
 sudo apt-get install python-dev -y
 sudo apt-get install python-virtualenv -y
+sudo apt-get install unzip -y
+sudo apt-get install monit -y
+
+# install ngrok
+sudo wget -qO /tmp/ngrok.zip https://dl.ngrok.com/linux_386/ngrok.zip
+sudo unzip /tmp/ngrok.zip
+sudo mv ngrok /usr/local/bin/ngrok
+
+# configure ngrok
+sudo cat <<EOF > /etc/ngrok
+auth_token: $NGROK_TOKEN
+tunnels:
+  $SERVICE_TOKEN:
+    proto:
+      https: "80"
+    auth: user:token
+EOF
+
+# configure monit
+sudo cat <<EOF > /etc/monit/conf.d/xovio
+set daemon 120
+with start delay 30
+check process ngrok matching "/usr/local/bin/ngrok -config /etc/ngrok start $SERVICE_TOKEN"
+start program = "/usr/bin/screen -d -m /usr/local/bin/ngrok -config /etc/ngrok start $SERVICE_TOKEN"
+stop program = "/usr/bin/killall ngrok"
+EOF
+
+exit;
+
+# restart monit
+service monit restart
 
 # install werkzeug
 sudo pip install Werkzeug
@@ -76,9 +113,11 @@ cd /var/www/
 sudo git clone https://github.com/StackMonkey/stackmonkey-vm.git stackmonkey
 
 # build the database and sync with stackmonkey.com
+su www-data
 cd /var/www/stackmonkey/
-./manage.py resetdb
+./manage.py resetdb  # FIX THIS SHIT
 ./manage.py sync
+exit
 
 # configure www directory
 sudo chown -R www-data:www-data /var/www/

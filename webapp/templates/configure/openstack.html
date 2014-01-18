@@ -25,6 +25,7 @@
     <h2 id="grid">OpenStack Credentials</h2>
   </div>
   <p>The OpenStack credentials used by this virtual appliance can be imported by uploading your <a href="http://docs.openstack.org/user-guide/content/cli_openrc.html"><strong>OpenStack API RC file</strong></a>. Navigate and login to your OpenStack UI and then click on the <strong>Access and Security</strong> tab to the left under the <strong>Project</strong> tab.  Click on the <strong>API Access</strong> tab at the top and then click on the <strong>Download OpenStack RC File</strong> button at the top right.  Save this file locally, then click on the <strong>Select RC File</strong> button below to upload.</p>
+  
   <p><em>Please note you will need to manually set the password below once you have imported the RC file.</em></p>
   
   <form action="." method=post enctype=multipart/form-data>
@@ -99,8 +100,6 @@
 {% endblock %}
 
 {% block javascript %}
-	// login button
-	$('#nav-login').on('click', function(e) { window.location = "/login" });
 {% endblock %}
 
 {% block extras %}

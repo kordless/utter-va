@@ -8,19 +8,43 @@ from webapp import app, db, bcrypt, login_manager
 from webapp.users.models import User
 from webapp.api.models import Images, Flavors
 from webapp.configure.models import OpenStack, Appliance
+from webapp.libs.openstack import ImageInstall, FlavorInstall
 
 mod = Blueprint('api', __name__)
 
-# remote sync connection
+# remote connection
 def server_connect( method = "version" ):
 	appliance = db.session.query(Appliance).first()
 	url = app.config['APP_WEBSITE'] + 'api/%s?ver=' % method + app.config['VERSION'] + '&apikey=' + appliance.apikey
 	response = urlopen(url, timeout=10).read()
 	return json.loads(response)
 
-@mod.route('/api/sync/images/', methods=('GET', 'POST'))
+# INSTALL METHODS
+@mod.route('/api/images/<int:image_id>/install/', methods=('GET', 'POST'))
 @login_required
-def configure_sync_images():
+def images_install(image_id):
+	try:
+		print "would install flavor %s" % image_id
+		return render_template('blank.html')
+	except Exception as ex:
+		print ex
+		return render_template('blank.html')
+
+@mod.route('/api/flavors/<int:flavor_id>/install/', methods=('GET', 'POST'))
+@login_required
+def flavors_install(flavor_id):
+	try:
+		print "would install image %s" % flavor_id
+		return render_template('blank.html')
+	except Exception as ex:
+		print ex
+		return render_template('blank.html')
+
+# SYNC METHODS
+# fetches data from pool operator and populates local tables
+@mod.route('/api/images/sync/', methods=('GET', 'POST'))
+@login_required
+def images_sync():
 	try:
 		remoteimages = server_connect("images")
 
@@ -61,9 +85,9 @@ def configure_sync_images():
 	except Exception as ex:
 		return render_template('response.json', response="fail on %s" % ex)	
 
-@mod.route('/api/sync/flavors/', methods=('GET', 'POST'))
+@mod.route('/api/flavors/sync/', methods=('GET', 'POST'))
 @login_required
-def configure_sync_flavors():
+def flavors_sync():
 	try:
 		remoteflavors = server_connect("flavors")
 
