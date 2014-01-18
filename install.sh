@@ -6,11 +6,7 @@
 # github: https://github.com/StackMonkey/xovio-va
 
 # service token generation
-function token_gen() {
-    tr -cd '[:alnum:]' < /dev/urandom | fold -w64 | head -n1;
-}
-SERVICE_TOKEN=$(token_gen)
-echo $SERVICE_TOKEN
+SERVICE_TOKEN=`tr -cd '[:alnum:]' < /dev/urandom | fold -w64 | head -n1;`
 
 # update repos
 sudo apt-get update -y
