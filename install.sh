@@ -6,7 +6,8 @@
 # github: https://github.com/StackMonkey/xovio-va
 
 # service token generation
-SERVICE_TOKEN=`tr -cd '[:alnum:]' < /dev/urandom | fold -w64 | head -n1;`
+SERVICE_ENDPOINT_HOSTAME=`< /dev/urandom tr -dc A-Za-z0-9 | head -c16`
+echo $SERVICE_ENDPOINT_HOSTAME
 
 # update repos
 sudo apt-get update -y
@@ -31,18 +32,18 @@ sudo mv ngrok /usr/local/bin/ngrok
 sudo cat <<EOF > /etc/ngrok
 auth_token: $NGROK_TOKEN
 tunnels:
-  $SERVICE_TOKEN:
+  $SERVICE_ENDPOINT_HOSTAME:
     proto:
       https: "80"
-    auth: user:token
+    auth: xovio:$SERVICE_TOKEN
 EOF
 
 # configure monit
 sudo cat <<EOF > /etc/monit/conf.d/xovio
 set daemon 120
 with start delay 30
-check process ngrok matching "/usr/local/bin/ngrok -config /etc/ngrok start $SERVICE_TOKEN"
-start program = "/usr/bin/screen -d -m /usr/local/bin/ngrok -config /etc/ngrok start $SERVICE_TOKEN"
+check process ngrok matching "/usr/local/bin/ngrok -config /etc/ngrok start $SERVICE_ENDPOINT_HOSTAME"
+start program = "/usr/bin/screen -d -m /usr/local/bin/ngrok -config /etc/ngrok start $SERVICE_ENDPOINT_HOSTAME"
 stop program = "/usr/bin/killall ngrok"
 EOF
 
