@@ -9,7 +9,8 @@
 function token_gen() {
     tr -cd '[:alnum:]' < /dev/urandom | fold -w64 | head -n1;
 }
-SERVICE_TOKEN=$(token_gen); 
+SERVICE_TOKEN=$(token_gen)
+echo $SERVICE_TOKEN
 
 # update repos
 sudo apt-get update -y
