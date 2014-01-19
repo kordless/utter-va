@@ -9,7 +9,7 @@
 # service token generation
 SERVICE_ENDPOINT_HOSTAME=`openssl rand -hex 16`
 API_TOKEN=`openssl rand -hex 64`
-NGROK_TOKEN=$NGROK_TOKEN # pulled from environment, passed by post script
+source /tmp/ngrokrc
 
 if [ -z "$NGROK_TOKEN" ]
 then
