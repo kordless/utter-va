@@ -21,7 +21,7 @@ def configure_blurb():
 
 def server_connect( method = "version" ):
 	appliance = db.session.query(Appliance).first()
-	url = app.config['APP_WEBSITE'] + 'api/%s?ver=' % method + app.config['VERSION'] + '&apikey=' + appliance.apikey
+	url = app.config['APP_WEBSITE'] + 'api/%s?ver=' % method + app.config['VERSION'] + '&apitoken=' + appliance.apitoken
 	response = urlopen(url, timeout=10).read()
 	return json.loads(response)
 

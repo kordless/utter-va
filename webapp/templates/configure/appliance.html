@@ -29,9 +29,22 @@
   <form action="." method="post" class="form-horizontal" role="form">
     {{ form.csrf_token }}
     <div class="form-group">
-      <label for="appliancekey" class="col-sm-2 control-label">API Key</label>
+      <label for="apitoken" class="col-sm-2 control-label">API Token</label>
       <div class="col-sm-6">
-        {{ form.apikey(class="form-control", value=appliance.apikey, placeholder="13afa9bb8b142d99b78bc143f754f736", required=true) }}
+        {{ form.apitoken(class="form-control", value=appliance.apitoken, placeholder="13afa9bb8b142d99b78bc143f754f736", required=true) }}
+      </div>
+      <button class="btn btn-sm btn-warning"><span class="glyphicon glyphicon-flash"></span> Register API Token</button>
+    </div>
+    <div class="form-group">
+      <label for="ngroktoken" class="col-sm-2 control-label">Ngrok Token</label>
+      <div class="col-sm-6">
+        {{ form.ngroktoken(class="form-control", value=appliance.ngroktoken, placeholder="We7kURnjZh7x_I-9YLV4", required=true) }}
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="serviceurl" class="col-sm-2 control-label">Service URL</label>
+      <div class="col-sm-6">
+        {{ form.serviceurl(class="form-control", value=appliance.serviceurl, placeholder="http://foobar.ngrok.com/", required=true) }}
       </div>
     </div>
     <div class="form-group">
@@ -57,7 +70,7 @@
   <script type="text/javascript">
     $().ready(function() {      
       // the map
-      var map = L.mapbox.map('map', 'kordless.gnig3f1g').setView([{{ appliance['latitude'] }}, {{ appliance['longitude'] }}], 12);
+      var map = L.mapbox.map('map', 'xovio.h1o6ii64').setView([{{ appliance['latitude'] }}, {{ appliance['longitude'] }}], 12);
 
       // get the form inputs we want to update
       var latitude = document.getElementById('latitude');

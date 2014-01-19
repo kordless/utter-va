@@ -2,12 +2,22 @@
 
 # name: install.sh
 # description: install script for xovio controller vm
+# compute-pool: stackmonkey.com
 # author: info@xovio.com 
 # github: https://github.com/StackMonkey/xovio-va
 
 # service token generation
 SERVICE_ENDPOINT_HOSTAME=`openssl rand -hex 16`
-echo $SERVICE_ENDPOINT_HOSTAME
+API_TOKEN=`openssl rand -hex 64`
+NGROK_TOKEN=$NGROK_TOKEN # pulled from environment, passed by post script
+
+if [ -z "$NGROK_TOKEN" ]
+then
+  echo "Starting installation."
+else
+  echo "Ngrok token missing.  Exiting install."
+  exit
+fi
 
 # update repos
 sudo apt-get update -y
@@ -29,25 +39,23 @@ sudo unzip /tmp/ngrok.zip
 sudo mv ngrok /usr/local/bin/ngrok
 
 # configure ngrok
-sudo cat <<EOF > /etc/ngrok
+sudo cat <<EOF > /root/.ngrok
 auth_token: $NGROK_TOKEN
 tunnels:
   $SERVICE_ENDPOINT_HOSTAME:
     proto:
       https: "80"
-    auth: xovio:$SERVICE_TOKEN
+    auth: xovio:$API_TOKEN
 EOF
 
 # configure monit
 sudo cat <<EOF > /etc/monit/conf.d/xovio
 set daemon 120
 with start delay 30
-check process ngrok matching "/usr/local/bin/ngrok -config /etc/ngrok start $SERVICE_ENDPOINT_HOSTAME"
-start program = "/usr/bin/screen -d -m /usr/local/bin/ngrok -config /etc/ngrok start $SERVICE_ENDPOINT_HOSTAME"
+check process ngrok matching "/usr/local/bin/ngrok start $SERVICE_ENDPOINT_HOSTAME"
+start program = "/usr/bin/screen -d -m /usr/local/bin/ngrok start $SERVICE_ENDPOINT_HOSTAME"
 stop program = "/usr/bin/killall ngrok"
 EOF
-
-exit;
 
 # restart monit
 service monit restart
@@ -108,14 +116,21 @@ EOF
 # check out stackgeek-vm repo
 sudo su
 cd /var/www/
-sudo git clone https://github.com/StackMonkey/stackmonkey-vm.git stackmonkey
+sudo git clone https://github.com/StackMonkey/xovio-va.git stackmonkey
+
+# setup token config
+sudo cat <<EOF > /var/www/stackmonkey/tokens.py
+    API_TOKEN = "$API_TOKEN"
+    SERVICE_ENDPOINT_HOSTAME = "$SERVICE_ENDPOINT_HOSTAME"
+    NGROK_TOKEN = "$NGROK_TOKEN"
+EOF
 
 # build the database and sync with stackmonkey.com
 su www-data
 cd /var/www/stackmonkey/
-./manage.py resetdb  # FIX THIS SHIT
-./manage.py sync
-exit
+/var/www/stackmonkey/manage.py resetdb  # FIX THIS SHIT
+/var/www/stackmonkey/manage.py sync
+/var/www/stackmonkey/manage.py insert tokens
 
 # configure www directory
 sudo chown -R www-data:www-data /var/www/

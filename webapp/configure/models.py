@@ -27,11 +27,15 @@ class OpenStack(CRUDMixin,  db.Model):
 class Appliance(CRUDMixin,  db.Model):
     __tablename__ = 'appliance'
     id = db.Column(db.Integer, primary_key=True)
-    apikey = db.Column(db.String(100), unique=True)
+    apitoken = db.Column(db.String(100), unique=True)
+    serviceurl = db.Column(db.String(100), unique=True)
+    ngroktoken = db.Column(db.String(100), unique=True)
     latitude = db.Column(db.String(100), unique=True)
     longitude = db.Column(db.String(100), unique=True)
 
-    def __init__(self, apikey=None, latitude=None, longitude=None):
-    	self.apikey = apikey
+    def __init__(self, apitoken=None, serviceurl=None, ngroktoken=None, latitude=None, longitude=None):
+    	self.apitoken = apitoken
+        self.serviceurl = serviceurl
+        self.ngroktoken = ngroktoken
     	self.latitude = latitude
     	self.longitude = longitude

@@ -20,7 +20,9 @@ CREATE TABLE openstack (
 DROP TABLE IF EXISTS appliance;
 CREATE TABLE appliance (
   id INTEGER NOT NULL,
-  apikey VARCHAR(100) NOT NULL,
+  apitoken VARCHAR(100) NOT NULL,
+  ngroktoken VARCHAR(100) NOT NULL,
+  serviceurl VARCHAR(100) NOT NULL,
   latitude VARCHAR(100) NOT NULL,
   longitude VARCHAR(100) NOT NULL,
   PRIMARY KEY (id)
