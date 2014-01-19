@@ -10,6 +10,8 @@
 SERVICE_ENDPOINT_HOSTAME=`openssl rand -hex 16`
 API_TOKEN=`openssl rand -hex 64`
 source /tmp/ngrokrc
+cat /tmp/ngrokrc
+echo $NGROK_TOKEN
 
 if [ -z "$NGROK_TOKEN" ]
 then
