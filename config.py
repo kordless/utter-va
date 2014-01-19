@@ -1,19 +1,32 @@
 import os
+import shellconfig
 
 _basedir = os.path.abspath(os.path.dirname(__file__))
 
-POOL_NAME = "StackMonkey"
 
 class BaseConfiguration(object):
+
+	# Pool Customization
+	POOL_NAME = "StackMonkey"
+	POOL_NAME_LOWER = ''.join(POOL_NAME.split()).lower()
+	POOL_WEBSITE = "https://www.stackmonkey.com/"
+	POOL_TWITTER_HANDLE = "stackape"
+	POOL_TWITTER_NAME = POOL_NAME
+	POOL_LINKEDIN_HANDLE = POOL_NAME_LOWER
+	POOL_LINKEDIN_NAME = POOL_NAME
+	POOL_GPLUS_HANDLE = "stackmonkey"
+	POOL_GPLUS_NAME = POOL_NAME
+	# End Pool Customization
+
 	DEBUG = False
 	TESTING = False
 
 	VERSION = "0.1.0"
 	APP_NAME = "%s Virtual Appliance" % POOL_NAME
-	APP_WEBSITE = "https://electorums.appspot.com/"
-	APP_IRC_URL = "http://mibbit.com/?channel=%23stackmonkey&server=irc.mibbit.net"
+	APP_WEBSITE = POOL_WEBSITE
+	APP_IRC_URL = "http://mibbit.com/?channel=#%s&server=irc.mibbit.net" % POOL_NAME_LOWER
 	
-	DATABASE = "stackmonkey.db"
+	DATABASE = "%s.db" % POOL_NAME_LOWER
 	DATABASE_PATH = os.path.join(_basedir, DATABASE)
 	SQLALCHEMY_DATABASE_URI = 'sqlite:///' + DATABASE_PATH
 	

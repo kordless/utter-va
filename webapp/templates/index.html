@@ -17,7 +17,7 @@
         <button id="get-started" class="btn btn-lg btn-warning">Get Started</button>
       </div>
       <div class="splash-signup">
-        Don't have a provider account yet?  Signup at <a href="{{ config['APP_WEBSITE'] }}/signup">Stackmonkey</a>.
+        Don't have a provider account yet?  Signup at <a href="{{ config['APP_WEBSITE'] }}/signup">{{ config['POOL_NAME'] }}</a>.
       </div>
     </div>
     <div id='map'></div>
@@ -29,7 +29,7 @@
     	// login button
     	$('#nav-login').on('click', function(e) { window.location = "/login" });
     	$('#get-started').on('click', function(e) { window.location = "/register" });
-    	var themap = L.mapbox.map('map', 'kordless.gnm28jg1', {scrollWheelZoom: false, zoomControl: false}).setView([20, 20], 3);
+    	var themap = L.mapbox.map('map', 'xovio.h1o6ii64', {scrollWheelZoom: false, zoomControl: false}).setView([20, 20], 3);
       setInterval(function(){themap.panBy([-1, 0]);},3000);
     });
   </script>
