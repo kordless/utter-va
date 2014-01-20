@@ -149,7 +149,7 @@ def resetdb(app):
 	return action
 
 def ngrok(app):
-	def action()
+	def action():
 		appliance = db.session.query(Appliance).first()
 		os.system('./resetdb.sh %s %s %s' % (appliance.ngroktoken, appliance.serviceurl, appliance.apitoken))
 		os.system('service monit restart')
