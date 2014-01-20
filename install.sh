@@ -7,19 +7,8 @@
 # github: https://github.com/StackMonkey/xovio-va
 
 # service token generation
-SERVICE_ENDPOINT_HOSTAME=`openssl rand -hex 16`
-API_TOKEN=`openssl rand -hex 64`
-source /tmp/ngrokrc
-cat /tmp/ngrokrc
-echo $NGROK_TOKEN
-
-if [ -z "$NGROK_TOKEN" ]
-then
-  echo "Starting installation."
-else
-  echo "Ngrok token missing.  Exiting install."
-  exit
-fi
+SERVICE_ENDPOINT_HOSTAME=`/usr/bin/openssl rand -hex 16`
+API_TOKEN=`/usr/bin/openssl rand -hex 64`
 
 # update repos
 sudo apt-get update -y
@@ -39,28 +28,6 @@ sudo apt-get install monit -y
 sudo wget -qO /tmp/ngrok.zip https://dl.ngrok.com/linux_386/ngrok.zip
 sudo unzip /tmp/ngrok.zip
 sudo mv ngrok /usr/local/bin/ngrok
-
-# configure ngrok
-sudo cat <<EOF > /root/.ngrok
-auth_token: $NGROK_TOKEN
-tunnels:
-  $SERVICE_ENDPOINT_HOSTAME:
-    proto:
-      https: "80"
-    auth: xovio:$API_TOKEN
-EOF
-
-# configure monit
-sudo cat <<EOF > /etc/monit/conf.d/xovio
-set daemon 120
-with start delay 30
-check process ngrok matching "/usr/local/bin/ngrok start $SERVICE_ENDPOINT_HOSTAME"
-start program = "/usr/bin/screen -d -m /usr/local/bin/ngrok start $SERVICE_ENDPOINT_HOSTAME"
-stop program = "/usr/bin/killall ngrok"
-EOF
-
-# restart monit
-service monit restart
 
 # install werkzeug
 sudo pip install Werkzeug

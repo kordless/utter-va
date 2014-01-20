@@ -148,6 +148,14 @@ def resetdb(app):
 		print "Database reset."
 	return action
 
+def ngrok(app):
+	def action()
+		appliance = db.session.query(Appliance).first()
+		os.system('./resetdb.sh %s %s %s' % (appliance.ngroktoken, appliance.serviceurl, appliance.apitoken))
+		os.system('service monit restart')
+		print "Database reset."
+	return action
+
 def serve(app):
 	def action():
 		from werkzeug import SharedDataMiddleware
