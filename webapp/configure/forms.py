@@ -16,9 +16,9 @@ class OpenStackForm(Form):
 
 
 class ApplianceForm(Form):
-	apitoken = TextField(validators=[Required()])
-	ngroktoken = TextField(validators=[Required()])
-	serviceurl = TextField(validators=[Required()])
+	apitoken = TextField()
+	ngroktoken = TextField()
+	serviceurl = TextField()
 	latitude = TextField(validators=[Required()])
 	longitude = TextField(validators=[Required()])
 

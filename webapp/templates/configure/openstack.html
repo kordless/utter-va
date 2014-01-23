@@ -17,17 +17,16 @@
     <li class="active">Configure</li>
   </ol>
   <ul class="nav nav-tabs">
-    <li><a href="/configure/">Appliance</a></li>
-    <li class="active"><a href="">OpenStack</a></li>
-    <li><a href="/configure/instances/">Instances & Flavors</a></li>
+    <li><a href="{{ url_for("configure.configure") }}">Appliance</a></li>
+    <li class="active"><a href="{{ url_for("configure.configure_openstack") }}">OpenStack</a></li>
+    <li><a href="{{ url_for("configure.configure_instances") }}">Instances & Flavors</a></li>
+    <li><a href="{{ url_for("configure.configure_wallets") }}">Wallets</a></li>
   </ul>
   <div class="page-header">
-    <h2 id="grid">OpenStack Credentials</h2>
+    <h3>OpenStack Credentials</h3>
+    <p>The OpenStack credentials used by this virtual appliance can be imported by uploading your <a href="http://docs.openstack.org/user-guide/content/cli_openrc.html"><strong>OpenStack API RC file</strong></a>. Navigate and login to your OpenStack UI and then click on the <strong>Access and Security</strong> tab to the left under the <strong>Project</strong> tab.  Click on the <strong>API Access</strong> tab at the top and then click on the <strong>Download OpenStack RC File</strong> button at the top right.  Save this file locally, then click on the <strong>Select RC File</strong> button below to upload.</p>
+    <p><em>Please note you will need to manually set the password below once you have imported the RC file.</em></p>
   </div>
-  <p>The OpenStack credentials used by this virtual appliance can be imported by uploading your <a href="http://docs.openstack.org/user-guide/content/cli_openrc.html"><strong>OpenStack API RC file</strong></a>. Navigate and login to your OpenStack UI and then click on the <strong>Access and Security</strong> tab to the left under the <strong>Project</strong> tab.  Click on the <strong>API Access</strong> tab at the top and then click on the <strong>Download OpenStack RC File</strong> button at the top right.  Save this file locally, then click on the <strong>Select RC File</strong> button below to upload.</p>
-  
-  <p><em>Please note you will need to manually set the password below once you have imported the RC file.</em></p>
-  
   <form action="." method=post enctype=multipart/form-data>
     {{ form.csrf_token }}
     <div class="fileinput fileinput-new" data-provides="fileinput">
@@ -43,13 +42,15 @@
   </form>
 
   <div class="row configure-errors">
-  {% with messages = get_flashed_messages() %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
-    {% for message in messages %}
-      <div class="col-md-4 alert alert-danger alert-dismissable">
+    {% for type, message in messages %}
+      {% if type == 'file-error' %}
+      <div class="col-md-4 alert alert-warning alert-dismissable">
         <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
         <strong>{{ message }}</strong>
       </div>
+      {% endif %}
     {% endfor %}
   {% endif %}
   {% endwith %}

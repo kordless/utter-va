@@ -39,28 +39,41 @@ def configure_instances():
 	
 	return render_template('configure/instances.html', flavors=flavors, images=images)
 
+# configure instances page
+@mod.route('/configure/wallet/', methods=('GET', 'POST'))
+@login_required
+def configure_wallets():
+	return render_template('configure/wallets.html')
 
 # configuration pages
 @mod.route('/configure/', methods=('GET', 'POST'))
 @login_required
 def configure():
 	form = ApplianceForm(request.form)
-	print form
 	if request.method == 'POST':
 		if form.validate_on_submit():
 			# try to select one and only record
 			appliance = db.session.query(Appliance).first()
 			
-			# delete existing entry
-			if appliance:
-				appliance.delete()
-				db.session.commit()
+			# create if no existing entry
+			if not appliance:
+				appliance = Appliance()
 			
+			# store ngrok info
+			current_ngrok_token = appliance.ngroktoken
+			new_ngrok_token = request.form['ngroktoken']
+
 			# create new entry, populate with form, write to db
-			appliance = Appliance()
 			form.populate_obj(appliance)
+			appliance.apitoken = request.form['api-token-hidden']
 			appliance.update(appliance)
 			db.session.commit()
+
+			# if the ngrok token changed, create a new service url
+			if current_ngrok_token != new_ngrok_token:
+				appliance.service_url_refresh()
+				appliance.update(appliance)
+				db.session.commit()
 
 			return redirect(url_for(".configure"))
 
@@ -89,6 +102,7 @@ def configure():
 @login_required
 def configure_openstack():
 	form = OpenStackForm(request.form)
+
 	if request.method == 'POST':
 		# take our file and loop through it grabbing key values
 		try:
@@ -127,7 +141,7 @@ def configure_openstack():
 		
 		elif file:
 			# file type not allowed
-			flash("File type not allowed or empty.  Try again.")
+			flash("File type not allowed or empty.  Try again.", 'file-error')
 		
 		else:
 			# user is manually updating form

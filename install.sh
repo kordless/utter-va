@@ -6,10 +6,6 @@
 # author: info@xovio.com 
 # github: https://github.com/StackMonkey/xovio-va
 
-# service token generation
-SERVICE_ENDPOINT_HOSTAME=`/usr/bin/openssl rand -hex 16`
-API_TOKEN=`/usr/bin/openssl rand -hex 64`
-
 # update repos
 sudo apt-get update -y
 
@@ -87,19 +83,11 @@ sudo su
 cd /var/www/
 sudo git clone https://github.com/StackMonkey/xovio-va.git stackmonkey
 
-# setup token config
-sudo cat <<EOF > /var/www/stackmonkey/tokens.py
-    API_TOKEN = "$API_TOKEN"
-    SERVICE_ENDPOINT_HOSTAME = "$SERVICE_ENDPOINT_HOSTAME"
-    NGROK_TOKEN = "$NGROK_TOKEN"
-EOF
-
 # build the database and sync with stackmonkey.com
 su www-data
 cd /var/www/stackmonkey/
 /var/www/stackmonkey/manage.py resetdb  # FIX THIS SHIT
 /var/www/stackmonkey/manage.py sync
-/var/www/stackmonkey/manage.py insert tokens
 
 # configure www directory
 sudo chown -R www-data:www-data /var/www/

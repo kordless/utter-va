@@ -21,8 +21,8 @@ DROP TABLE IF EXISTS appliance;
 CREATE TABLE appliance (
   id INTEGER NOT NULL,
   apitoken VARCHAR(100) NOT NULL,
-  ngroktoken VARCHAR(100) NOT NULL,
-  serviceurl VARCHAR(100) NOT NULL,
+  ngroktoken VARCHAR(100),
+  serviceurl VARCHAR(100),
   latitude VARCHAR(100) NOT NULL,
   longitude VARCHAR(100) NOT NULL,
   PRIMARY KEY (id)
@@ -31,6 +31,7 @@ CREATE TABLE appliance (
 DROP TABLE IF EXISTS images;
 CREATE TABLE images (
   id INTEGER NOT NULL,
+  osid VARCHAR(100),
   md5 VARCHAR(100) NOT NULL,
   name VARCHAR(100) NOT NULL,
   url VARCHAR(400) NOT NULL,
@@ -43,12 +44,12 @@ CREATE TABLE images (
 DROP TABLE IF EXISTS flavors;
 CREATE TABLE flavors (
   id INTEGER NOT NULL,
+  osid VARCHAR(100),
   name VARCHAR(100) NOT NULL,
   comment VARCHAR(200) NOT NULL,
   vpu INTEGER NOT NULL,
   mem INTEGER NOT NULL,
   disk INTEGER NOT NULL,
   flags INTEGER NOT NULL,
-  installed INTEGER NOT NULL,
   PRIMARY KEY (id)  
 );

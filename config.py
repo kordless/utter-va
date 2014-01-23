@@ -9,7 +9,7 @@ class BaseConfiguration(object):
 	# Pool Customization
 	POOL_NAME = "StackMonkey"
 	POOL_NAME_LOWER = ''.join(POOL_NAME.split()).lower()
-	POOL_WEBSITE = "https://www.stackmonkey.com/"
+	POOL_WEBSITE = "https://www.stackmonkey.com/".strip("/")
 	POOL_TWITTER_HANDLE = "stackape"
 	POOL_TWITTER_NAME = POOL_NAME
 	POOL_LINKEDIN_HANDLE = POOL_NAME_LOWER
@@ -40,7 +40,7 @@ class BaseConfiguration(object):
 
 class TestConfiguration(BaseConfiguration):
 	TESTING = True
-	APP_WEBSITE = "http://127.0.0.1:8080/"
+	APP_WEBSITE = "http://127.0.0.1:8080/".strip("/")
 	DATABASE = 'test.db'
 	DATABASE_PATH = os.path.join(_basedir, DATABASE)
 	SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'  # + DATABASE_PATH
@@ -50,4 +50,4 @@ class TestConfiguration(BaseConfiguration):
 
 class DebugConfiguration(BaseConfiguration):
 	DEBUG = True
-	APP_WEBSITE = "http://127.0.0.1:8080/"
+	APP_WEBSITE = "http://127.0.0.1:8080/".strip("/")

@@ -19,8 +19,8 @@
                     <li><a href="/status">Status</a></li>
                     <li><a href="/manage">Manage</a></li>
                     <li class="divider"></li>
-                    <li><a href="/configure/">Configure</a></li>
-                    <li><a href="/logout/">Logout</a></li>
+                    <li><a href="{{ url_for("configure.configure") }}">Configure</a></li>
+                    <li><a href="{{ url_for("users.logout") }}">Logout</a></li>
                   </ul>
                 </li>
                 {% elif path != "/login" %}

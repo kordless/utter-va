@@ -17,18 +17,18 @@
     <li class="active">Configure</li>
   </ol>
   <ul class="nav nav-tabs">
-    <li><a href="/configure/">Appliance</a></li>
-    <li><a href="/configure/openstack/">OpenStack</a></li>
-    <li class="active"><a href="/configure/instances/">Flavors & Images</a></li>
+    <li><a href="{{ url_for("configure.configure") }}">Appliance</a></li>
+    <li><a href="{{ url_for("configure.configure_openstack") }}">OpenStack</a></li>
+    <li class="active"><a href="{{ url_for("configure.configure_instances") }}">Instances & Flavors</a></li>
+    <li><a href="{{ url_for("configure.configure_wallets") }}">Wallets</a></li>
   </ul>
   <div>
     <div class="page-header">
-      <h2 id="grid">Flavors & Images</h2>
+      <h3>Flavors & Images</h3>
+      <p>Your appliance needs a minimum of one flavor and one image installed to provide service to users.  Click on the <strong>Install</strong> button next to the entries you want to intsall on your OpenStack cluster.  If you want to deactive a particular flavor or image, click on the <strong>Deactive</strong> button next to the entry.</p>
+      <p><em>Flavor and image types are synced hourly from the pool operator.  You can force a sync by clicking the button below.</em></p>
+    <button class="btn btn-default" id="sync-flavors-images"><span class="glyphicon glyphicon-refresh"></span> Sync Flavors & Images</button>
     </div>
-    <p>Your appliance needs a minimum of one flavor and one image installed to provide service to users.  Click on the <strong>Install</strong> button next to the entries you want to intsall on your OpenStack cluster.  If you want to deactive a particular flavor or image, click on the <strong>Deactive</strong> button next to the entry.</p>
-    <p><em>Flavor and image types are synced hourly from the pool operator.  You can force a sync by clicking the button below.</em></p>
-  
-    <button class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span> Sync Flavors & Images</button>
     <div class="page-header">
       <h3 id="grid">Instance Flavors {{csrf_token}}</h3>
     </div>
@@ -109,6 +109,24 @@
             type: 'POST',
           });
         })
+      });
+      $('#sync-flavors-images').click(function() {
+        $.ajax({
+          url: '{{ url_for("api.flavors_sync") }}',
+        }).done(function() {
+          $.ajax({
+            url: '{{ url_for("api.images_sync") }}',
+          }).done(function() {
+            location.reload();
+          });
+        });
+      });
+      $.ajax({
+        url: '{{ url_for("api.openstack_flavors") }}'
+      }).done(function(data) {
+        $.each(data["response"], function(index, value){
+          console.log(index+" "+value);
+        });
       });
     });
   </script>
