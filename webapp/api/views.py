@@ -7,7 +7,7 @@ from webapp import app, db, bcrypt, login_manager
 from webapp.users.models import User
 from webapp.api.models import Images, Flavors
 from webapp.configure.models import OpenStack, Appliance
-from webapp.libs.openstack import image_install, flavor_install, flavors_installed
+from webapp.libs.openstack import image_install, flavor_install, flavor_pause, flavor_remove, flavors_installed
 
 mod = Blueprint('api', __name__)
 
@@ -53,9 +53,9 @@ def token_validate():
 		return render_template('response.json', response=validate_token['response']), 403
 
 # INSTALL METHODS
-@mod.route('/api/images/<int:image_id>/install/', methods=('GET', 'POST'))
+@mod.route('/api/images/<int:image_id>/<string:image_state>/', methods=('GET', 'POST'))
 @login_required
-def images_install(image_id):
+def images_install(image_id, image_state):
 	try:
 		image = db.session.query(Images).filter_by(id=image_id).first()
 		return render_template('blank.html')
@@ -63,17 +63,22 @@ def images_install(image_id):
 		print ex
 		return render_template('blank.html')
 
-@mod.route('/api/flavors/<int:flavor_id>/install/', methods=('GET', 'POST'))
+@mod.route('/api/flavors/<int:flavor_id>/<string:flavor_state>/', methods=('GET', 'POST'))
 @login_required
-def flavors_install(flavor_id):
+def flavors_handler(flavor_id, flavor_state):
 	try:
 		# get the matching flavor
 		flavor = db.session.query(Flavors).filter_by(id=flavor_id).first()
-		
-		# tell OpenStack we have a new flavor and set the new osic with result
-		temp = flavor_install(flavor)
-		flavor.update(temp)
-
+		if flavor_state == "remove":
+			temp = flavor_remove(flavor)
+			flavor.update(temp)
+		elif flavor_state == "pause":
+			temp = flavor_pause(flavor)
+			flavor.update(temp)
+		else:
+			# tell OpenStack we have a new flavor and set the new osic with result
+			temp = flavor_install(flavor)
+			flavor.update(temp)
 		return render_template('blank.html')
 	
 	except Exception as ex:
@@ -113,7 +118,9 @@ def flavors_sync():
 		flavors = Flavors()
 		flavors.sync(remoteflavors)
 			
-		return render_template('response.json', response="success")	
+		# do a pass to update the flavor database
+		flavors = flavors_installed()
+		return jsonfiy(flavors)
 
 	except Exception as ex:
 		return render_template('response.json', response="fail on %s" % ex)	

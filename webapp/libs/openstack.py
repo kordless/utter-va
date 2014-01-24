@@ -7,6 +7,33 @@ from webapp import app, db
 def image_install():
 	pass
 
+def flavor_remove(flavor):
+	openstack = db.session.query(OpenStack).first()
+	
+	# what happens if they haven't configured it already?
+	if not openstack:
+		pass
+	
+	# establish connection to openstack and delete flavor
+	nova = client.Client(openstack.osusername, openstack.ospassword, openstack.tenantname, openstack.authurl, service_type="compute")
+	osflavor = nova.flavors.delete(flavor.osid)
+
+	# update our flavor to not be installed
+	flavor.osid = ""
+	flavor.active = 0
+	flavor.update(flavor)
+
+	# return
+	return flavor
+
+def flavor_pause(flavor):
+	# update flavor - seems like a bad place for this, but whatever
+	flavor.active = 0
+	flavor.update(flavor)
+
+	# return
+	return flavor
+
 def flavor_install(flavor):
 	# get the cluster configuration
 	openstack = db.session.query(OpenStack).first()
@@ -24,15 +51,11 @@ def flavor_install(flavor):
 
 	# update the appliance database with id
 	flavor.osid = osflavor.id
+	flavor.active = 1
 	flavor.update(flavor)
 
 	# return the updated flavor
 	return flavor
-
-def flavor_deactivate(flavor):
-	# get the cluster configuration
-	openstack = db.session.query(OpenStack).first()
-	
 
 def flavors_installed():
 	# get the cluster configuration
@@ -62,9 +85,16 @@ def flavors_installed():
 				results['results'].append({"id": flavor.id, "state": "active"})
 				install_flag = True
 			elif flavor.name == osflavor.name:
+				print "found a match, but not installed"
+				# if flavor names match, but osflavor.id does not, populate osid
+				# this happens if the flavor is already installed byt we don't know about it
 				flavor_iter = db.session.query(Flavors).filter_by(id=flavor.id).first()
-				flavor.osid = osflavor.id
+				flavor_iter.osid = osflavor.id
+				flavor_iter.active = 1
 				flavor_iter.update(flavor_iter)
+				results['results'].append({"id": flavor.id, "state": "active"})
+				install_flag = True
+
 		if not install_flag and flavor.id != "":
 			# clear this entry's id while we're here cause it's not installed
 			flavor_iter = db.session.query(Flavors).filter_by(id=flavor.id).first()

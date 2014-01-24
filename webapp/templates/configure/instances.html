@@ -53,7 +53,13 @@
           <td>{{ flavor.vpu }}</td>
           <td>{{ flavor.mem }}</td>
           <td>{{ flavor.disk }}</td>
-          <td><button id="flavor-install-{{ flavor.id }}" class="btn btn-sm btn-success"><span class="glyphicon glyphicon-cloud-upload"></span> Install</button></td>
+          {% if flavor.osid and flavor.active %}
+            <td><button id="flavor-install-{{ flavor.id }}" class="btn btn-sm btn-warning pause"><span class="glyphicon glyphicon-pause"></span> Pause</button></td>
+          {% elif flavor.osid %}
+            <td><button id="flavor-install-{{ flavor.id }}" class="btn btn-sm btn-danger remove"><span class="glyphicon glyphicon-remove"></span> Remove</button></td>
+          {% else %}
+            <td><button id="flavor-install-{{ flavor.id }}" class="btn btn-sm btn-success"><span class="glyphicon glyphicon-cloud-upload"></span> Install</button></td>
+          {% endif %}
         </tr>
         {% endfor %}
       </tbody>
@@ -90,30 +96,23 @@
     $().ready(function() {
       var csrf_token = "{{ csrf_token }}";
       // flavor buttons
-      $('button[id^="flavor-install-"]').each(function(index, elem){
-        flavor_id = this.id.split("-").pop();
-        if ($(elem).hasClass("pause")) {
-          $('#'+this.id).click(function() {
-            $.ajax({
-              url: '/api/flavors/'+flavor_id+'/pause/'+'?_csrf_token='+csrf_token,
-              type: 'POST',
-            });
+      $('button[id^="flavor-install-"]').each(function(index){
+        $('#'+this.id).click(function() {
+          flavor_id = this.id.split("-").pop();          
+          if ($('#'+this.id).hasClass("pause")) {
+            flavor_state = "pause";
+          } else if ($('#'+this.id).hasClass("remove")) {
+            flavor_state = "remove";
+          } else { 
+            flavor_state = "install";
+          }
+          $.ajax({
+            url: '/api/flavors/'+flavor_id+'/'+flavor_state+'/'+'?_csrf_token='+csrf_token,
+            type: 'POST',
+          }).done(function() {
+            location.reload();
           });
-        } else if ($(elem).hasClass("pause")) {
-          $('#'+this.id).click(function() {
-            $.ajax({
-              url: '/api/flavors/'+flavor_id+'/remove/'+'?_csrf_token='+csrf_token,
-              type: 'POST',
-            });
-          });
-        } else {
-          $('#'+this.id).click(function() {
-            $.ajax({
-              url: '/api/flavors/'+flavor_id+'/install/'+'?_csrf_token='+csrf_token,
-              type: 'POST',
-            });
-          });
-        }
+        });
       });
       // image buttons
       $('button[id^="image-install-"]').each(function(index, elem){
@@ -122,8 +121,11 @@
           $.ajax({
             url: '/api/images/'+image_id+'/install/'+'?_csrf_token='+csrf_token,
             type: 'POST',
+          }).done(function() {
+            console.log(image_id);
+            location.reload();
           });
-        })
+        });
       });
       // sync from remote pool button
       $('#sync-flavors-images').click(function(){
@@ -134,28 +136,8 @@
           $.ajax({
             url: '{{ url_for("api.images_sync") }}',
           }).done(function() {
-            location.reload();
+            // location.reload();
           });
-        });
-      });
-      // update installed item buttons - MOVE THIS SHIT TO TEMPLATE
-      $.ajax({
-        url: '{{ url_for("api.openstack_flavors") }}'
-      }).done(function(data) {
-        $.each(data['results'], function(index, value){
-          if (value['state'] == "active") {
-            $('#flavor-install-'+value['id'])
-              .addClass('btn-warning')
-              .addClass('pause')
-              .removeClass('btn-success')
-              .html('<span class="glyphicon glyphicon-pause"></span> Pause');
-          } else if (value['state'] == "paused") {
-            $('#flavor-install-'+value['id'])
-              .addClass('btn-danger')
-              .addClass('delete')
-              .removeClass('btn-success')
-              .html('<span class="glyphicon glyphicon-remove"></span> Remove');  
-          }
         });
       });
     });
@@ -164,5 +146,4 @@
 {% endblock %}
 
 {% block extras %}
-    <script src='//api.tiles.mapbox.com/mapbox.js/v1.6.0-beta0/mapbox.js'></script>
 {% endblock %}
