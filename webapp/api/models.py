@@ -1,7 +1,7 @@
 from webapp import db
 from webapp.mixins import CRUDMixin
 
-# images database
+# images object
 class Images(CRUDMixin,  db.Model):
     __tablename__ = 'images'
     id = db.Column(db.Integer, primary_key=True)
@@ -10,7 +10,7 @@ class Images(CRUDMixin,  db.Model):
     url = db.Column(db.String(400), unique=True)
     size = db.Column(db.Integer)
     flags = db.Column(db.Integer)
-    installed = db.Column(db.Integer)
+    active = db.Column(db.Integer)
 
     def __init__(self, md5=None, name=None, url=None, size=None, flags=None, installed=None):
         self.md5 = md5
@@ -37,8 +37,8 @@ class Images(CRUDMixin,  db.Model):
                 image.name = remoteimage['name']
                 image.url = remoteimage['url']
                 image.size = remoteimage['size']
+                image.active = 0
                 image.flags = remoteimage['flags']
-                image.installed = 0
 
                 # add and commit
                 db.session.add(image)
@@ -64,7 +64,7 @@ class Images(CRUDMixin,  db.Model):
                 db.session.commit()
 
 
-# flavors database
+# flavors object
 class Flavors(CRUDMixin,  db.Model):
     __tablename__ = 'flavors'
     id = db.Column(db.Integer, primary_key=True)
@@ -75,9 +75,9 @@ class Flavors(CRUDMixin,  db.Model):
     mem = db.Column(db.Integer)
     disk = db.Column(db.Integer)
     flags = db.Column(db.Integer)
-    installed = db.Column(db.Integer)
+    active = db.Column(db.Integer)
 
-    def __init__(self, name=None, osid=None, comment=None, vpu=None, mem=None, disk=None, flags=None, installed=None):
+    def __init__(self, name=None, osid=None, comment=None, vpu=None, mem=None, disk=None, flags=None, active=None):
         self.name = name
         self.osid = osid
         self.comment = comment
@@ -85,7 +85,7 @@ class Flavors(CRUDMixin,  db.Model):
         self.mem = mem
         self.disk = disk
         self.flags = flags
-        self.installed = installed
+        self.active = active
 
     def sync(self, remoteflavors=None):
         # update the database with the flavors
@@ -102,8 +102,8 @@ class Flavors(CRUDMixin,  db.Model):
                 flavor.mem = remoteflavor['mem']
                 flavor.disk = remoteflavor['disk']
                 flavor.flags = remoteflavor['flags']
-                flavor.installed = 0
-
+                flavor.active = 0
+                print flavor
                 # add and commit
                 db.session.add(flavor)
                 db.session.commit()

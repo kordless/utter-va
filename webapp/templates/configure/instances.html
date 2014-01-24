@@ -25,7 +25,7 @@
   <div>
     <div class="page-header">
       <h3>Flavors & Images</h3>
-      <p>Your appliance needs a minimum of one flavor and one image installed to provide service to users.  Click on the <strong>Install</strong> button next to the entries you want to intsall on your OpenStack cluster.  If you want to deactive a particular flavor or image, click on the <strong>Deactive</strong> button next to the entry.</p>
+      <p>Your appliance needs a minimum of one flavor and one image installed to provide service to users.  Click on the <strong>Install</strong> button next to the entries you want to intsall on your OpenStack cluster.  If you want to delete or pause a particular flavor or image, click on the <strong>Pause</strong> button next to the entry.</p>
       <p><em>Flavor and image types are synced hourly from the pool operator.  You can force a sync by clicking the button below.</em></p>
     <button class="btn btn-default" id="sync-flavors-images"><span class="glyphicon glyphicon-refresh"></span> Sync Flavors & Images</button>
     </div>
@@ -53,7 +53,7 @@
           <td>{{ flavor.vpu }}</td>
           <td>{{ flavor.mem }}</td>
           <td>{{ flavor.disk }}</td>
-          <td><button id="flavor-install-{{ flavor.id }}" class="btn btn-sm btn-success">Install</button></td>
+          <td><button id="flavor-install-{{ flavor.id }}" class="btn btn-sm btn-success"><span class="glyphicon glyphicon-cloud-upload"></span> Install</button></td>
         </tr>
         {% endfor %}
       </tbody>
@@ -76,7 +76,7 @@
           <td>{{ image.id }}</td>
           <td>{{ image.name }}</td>
           <td>{{ image.size }}</td>
-          <td><button id="image-install-{{ image.id }}" class="btn btn-sm btn-success">Install</button></td>
+          <td><button id="image-install-{{ image.id }}" class="btn btn-sm btn-success"><span class="glyphicon glyphicon-cloud-upload"></span> Install</button></td>
         </tr>
         {% endfor %}
       </tbody>
@@ -89,28 +89,45 @@
   <script type="text/javascript">
     $().ready(function() {
       var csrf_token = "{{ csrf_token }}";
-      // refresh memcache of article buttons
-      $('button[id^="flavor-install-"]').each(function(index){
-        $('#'+this.id).click(function() {
-          flavor_id = this.id.split("-").pop();
-          console.log(flavor_id);
-          $.ajax({
-            url: '/api/flavors/'+flavor_id+'/install/'+'?_csrf_token='+csrf_token,
-            type: 'POST',
+      // flavor buttons
+      $('button[id^="flavor-install-"]').each(function(index, elem){
+        flavor_id = this.id.split("-").pop();
+        if ($(elem).hasClass("pause")) {
+          $('#'+this.id).click(function() {
+            $.ajax({
+              url: '/api/flavors/'+flavor_id+'/pause/'+'?_csrf_token='+csrf_token,
+              type: 'POST',
+            });
           });
-        })
+        } else if ($(elem).hasClass("pause")) {
+          $('#'+this.id).click(function() {
+            $.ajax({
+              url: '/api/flavors/'+flavor_id+'/remove/'+'?_csrf_token='+csrf_token,
+              type: 'POST',
+            });
+          });
+        } else {
+          $('#'+this.id).click(function() {
+            $.ajax({
+              url: '/api/flavors/'+flavor_id+'/install/'+'?_csrf_token='+csrf_token,
+              type: 'POST',
+            });
+          });
+        }
       });
-      $('button[id^="image-install-"]').each(function(index){
+      // image buttons
+      $('button[id^="image-install-"]').each(function(index, elem){
         $('#'+this.id).click(function() {
           image_id = this.id.split("-").pop();
-          console.log(flavor_id);
           $.ajax({
             url: '/api/images/'+image_id+'/install/'+'?_csrf_token='+csrf_token,
             type: 'POST',
           });
         })
       });
-      $('#sync-flavors-images').click(function() {
+      // sync from remote pool button
+      $('#sync-flavors-images').click(function(){
+        console.log("sync");
         $.ajax({
           url: '{{ url_for("api.flavors_sync") }}',
         }).done(function() {
@@ -121,11 +138,24 @@
           });
         });
       });
+      // update installed item buttons - MOVE THIS SHIT TO TEMPLATE
       $.ajax({
         url: '{{ url_for("api.openstack_flavors") }}'
       }).done(function(data) {
-        $.each(data["response"], function(index, value){
-          console.log(index+" "+value);
+        $.each(data['results'], function(index, value){
+          if (value['state'] == "active") {
+            $('#flavor-install-'+value['id'])
+              .addClass('btn-warning')
+              .addClass('pause')
+              .removeClass('btn-success')
+              .html('<span class="glyphicon glyphicon-pause"></span> Pause');
+          } else if (value['state'] == "paused") {
+            $('#flavor-install-'+value['id'])
+              .addClass('btn-danger')
+              .addClass('delete')
+              .removeClass('btn-success')
+              .html('<span class="glyphicon glyphicon-remove"></span> Remove');  
+          }
         });
       });
     });

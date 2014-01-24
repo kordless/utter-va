@@ -1,7 +1,7 @@
 import re
 import os, sys, socket, json
 from urllib2 import urlopen
-from flask import Blueprint, render_template, flash, redirect, session, url_for, request, g
+from flask import Blueprint, render_template, jsonify, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from webapp import app, db, bcrypt, login_manager
 from webapp.users.models import User
@@ -58,7 +58,6 @@ def token_validate():
 def images_install(image_id):
 	try:
 		image = db.session.query(Images).filter_by(id=image_id).first()
-		print "would install flavor %s" % image
 		return render_template('blank.html')
 	except Exception as ex:
 		print ex
@@ -85,9 +84,7 @@ def flavors_install(flavor_id):
 @login_required
 def openstack_flavors():
 	flavors = flavors_installed()
-	response = app.make_response(render_template('response.json', response=flavors))
-	response.headers['Content-Type'] = 'application/json'
-	return response
+	return jsonify(flavors)
 
 # SYNC METHODS
 # fetches data from pool operator and populates local tables

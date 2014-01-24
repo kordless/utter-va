@@ -29,6 +29,11 @@ def flavor_install(flavor):
 	# return the updated flavor
 	return flavor
 
+def flavor_deactivate(flavor):
+	# get the cluster configuration
+	openstack = db.session.query(OpenStack).first()
+	
+
 def flavors_installed():
 	# get the cluster configuration
 	openstack = db.session.query(OpenStack).first()
@@ -44,23 +49,28 @@ def flavors_installed():
 	# get list of currently known flavors
 	flavors = db.session.query(Flavors).all()
 
-	installed = []
+	results = {'results': []}
 
+	# there's got to be a better way...probably with a generator
 	# flavors in appliance database
 	for flavor in flavors:
 		# flavors coming from OpenStack
 		for osflavor in osflavors:
 			install_flag = False
 			if flavor.osid == osflavor.id:
-				# indicated this is installed
-				installed.append({"id": flavor.id, "installed": True})
+				# indicated this is installed and active
+				results['results'].append({"id": flavor.id, "state": "active"})
 				install_flag = True
+			elif flavor.name == osflavor.name:
+				flavor_iter = db.session.query(Flavors).filter_by(id=flavor.id).first()
+				flavor.osid = osflavor.id
+				flavor_iter.update(flavor_iter)
 		if not install_flag and flavor.id != "":
-			# clear this entry's id
-			flavor2 = db.session.query(Flavors).filter_by(id=flavor.id).first()
-			flavor2.update(flavor2)
+			# clear this entry's id while we're here cause it's not installed
+			flavor_iter = db.session.query(Flavors).filter_by(id=flavor.id).first()
+			flavor_iter.update(flavor_iter)
 
-	return installed
+	return results
 
 def start_instance():
 	pass
