@@ -20,6 +20,9 @@ sudo apt-get install python-virtualenv -y
 sudo apt-get install unzip -y
 sudo apt-get install monit -y
 
+# install pyopenssl
+sudo pip install --upgrede pyopenssl
+
 # install ngrok
 sudo wget -qO /tmp/ngrok.zip https://dl.ngrok.com/linux_386/ngrok.zip
 sudo unzip /tmp/ngrok.zip

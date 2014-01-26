@@ -22,10 +22,28 @@
     <li class="active"><a href="{{ url_for("configure.configure_instances") }}">Instances & Flavors</a></li>
     <li><a href="{{ url_for("configure.configure_wallets") }}">Wallets</a></li>
   </ul>
+  <div class="modal fade" id="failure-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">OpenStack Cluster Error</h4>
+        </div>
+        <div class="modal-body">
+          <p>An error has occured while talking to the OpenStack cluster.  Please check your OpenStack credentials and try again.  If the problem persists, please open a ticket on the pool provider's website.</p>
+          <p><span id="failure-modal-message"></span></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button id="failure-modal-settings" type="button" class="btn btn-primary">OpenStack Settings</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
   <div>
     <div class="page-header">
       <h3>Flavors & Images</h3>
-      <p>Your appliance needs a minimum of one flavor and one image installed to provide service to users.  Click on the <strong>Install</strong> button next to the entries you want to intsall on your OpenStack cluster.  If you want to delete or pause a particular flavor or image, click on the <strong>Pause</strong> button next to the entry.</p>
+      <p>Your appliance needs a minimum of one flavor and one image installed to provide service to users.  Click on the <strong>Install</strong> button next to the entries you want to install on your OpenStack cluster.  If you want to delete or pause a particular flavor or image, click on the <strong>Pause</strong> button next to the entry.</p>
       <p><em>Flavor and image types are synced hourly from the pool operator.  You can force a sync by clicking the button below.</em></p>
     <button class="btn btn-default" id="sync-flavors-images"><span class="glyphicon glyphicon-refresh"></span> Sync Flavors & Images</button>
     </div>
@@ -38,27 +56,32 @@
           <th>ID</th>
           <th>Name</th>
           <th>Comment</th>
-          <th># VPUs</th>
-          <th>Memory (in MB)</th>
-          <th>Disk (in GB)</th>
-          <th></th>
+          <th class="text-center"># VPUs</th>
+          <th class="text-center">Memory (in MB)</th>
+          <th class="text-center">Disk (in GB)</th>
+          <th class="text-center">State</th>
+          <th class="text-center">Action</th>
         </tr>
       </thead>
       <tbody>
         {% for flavor in flavors %}
-        <tr>
+          {% if flavor.osid and flavor.active %}
+            <tr class="success">
+          {% else %}
+            <tr>
+          {% endif %}
           <td>{{ flavor.id }}</td>
           <td>{{ flavor.name }}</td>
           <td>{{ flavor.comment }}</td>
-          <td>{{ flavor.vpu }}</td>
-          <td>{{ flavor.mem }}</td>
-          <td>{{ flavor.disk }}</td>
+          <td class="text-center">{{ flavor.vpu }}</td>
+          <td class="text-center">{{ flavor.mem }}</td>
+          <td class="text-center">{{ flavor.disk }}</td>
           {% if flavor.osid and flavor.active %}
-            <td><button id="flavor-install-{{ flavor.id }}" class="btn btn-sm btn-warning pause"><span class="glyphicon glyphicon-pause"></span> Pause</button></td>
-          {% elif flavor.osid %}
-            <td><button id="flavor-install-{{ flavor.id }}" class="btn btn-sm btn-danger remove"><span class="glyphicon glyphicon-remove"></span> Remove</button></td>
+            <td class="text-center"><span class="glyphicon glyphicon-ok"></span></td>
+            <td class="text-center"><button id="flavor-install-{{ flavor.id }}" class="btn btn-sm btn-danger remove"><span class="glyphicon glyphicon-remove"></span> Delete</button></td>
           {% else %}
-            <td><button id="flavor-install-{{ flavor.id }}" class="btn btn-sm btn-success"><span class="glyphicon glyphicon-cloud-upload"></span> Install</button></td>
+            <td class="text-center"><span class="glyphicon glyphicon-remove"></span></td>
+            <td class="text-center"><button id="flavor-install-{{ flavor.id }}" class="btn btn-sm btn-success"><span class="glyphicon glyphicon-cloud-upload"></span> Install</button></td>
           {% endif %}
         </tr>
         {% endfor %}
@@ -72,17 +95,31 @@
         <tr>
           <th>ID</th>
           <th>Name</th>
-          <th>Size (in B)</th>
-          <th></th>
+          <th class="text-center">Size (in B)</th>
+          <th class="text-center">State</th>
+          <th class="text-center">Action</th>
         </tr>
       </thead>
       <tbody>
         {% for image in images %}
-        <tr>
+          {% if image.osid and image.active %}
+            <tr class="success">
+          {% else %}
+            <tr>
+          {% endif %}
           <td>{{ image.id }}</td>
           <td>{{ image.name }}</td>
-          <td>{{ image.size }}</td>
-          <td><button id="image-install-{{ image.id }}" class="btn btn-sm btn-success"><span class="glyphicon glyphicon-cloud-upload"></span> Install</button></td>
+          <td class="text-center">{{ image.size }}</td>
+          {% if image.osid and image.active %}
+            <td class="text-center"><span class="glyphicon glyphicon-ok"></span></td>
+            <td class="text-center"><button id="image-install-{{ image.id }}" class="btn btn-sm btn-danger remove"><span class="glyphicon glyphicon-remove"></span> Delete</button></td>
+          {% elif image.active %}
+            <td class="text-center"><span id="image-loading-{{ image.id }}"><img src="/img/loading.gif"/></span></td>
+            <td class="text-center"><button id="image-install-{{ image.id }}" class="btn btn-sm btn-warning" disabled><span class="glyphicon glyphicon-refresh"></span> Install</button></td>
+          {% else %}
+            <td class="text-center"><span class="glyphicon glyphicon-remove"></span></td>
+            <td class="text-center"><button id="image-install-{{ image.id }}" class="btn btn-sm btn-success"><span class="glyphicon glyphicon-cloud-upload"></span> Install</button></td>
+          {% endif %}
         </tr>
         {% endfor %}
       </tbody>
@@ -95,13 +132,15 @@
   <script type="text/javascript">
     $().ready(function() {
       var csrf_token = "{{ csrf_token }}";
+      // error modal settings link
+      $('#failure-modal-settings').click(function() {
+        window.open("{{ url_for("configure.configure_openstack") }}");
+      });
       // flavor buttons
       $('button[id^="flavor-install-"]').each(function(index){
         $('#'+this.id).click(function() {
           flavor_id = this.id.split("-").pop();          
-          if ($('#'+this.id).hasClass("pause")) {
-            flavor_state = "pause";
-          } else if ($('#'+this.id).hasClass("remove")) {
+          if ($('#'+this.id).hasClass("remove")) {
             flavor_state = "remove";
           } else { 
             flavor_state = "install";
@@ -115,15 +154,24 @@
         });
       });
       // image buttons
-      $('button[id^="image-install-"]').each(function(index, elem){
+      $('button[id^="image-install-"]').each(function(index){
         $('#'+this.id).click(function() {
-          image_id = this.id.split("-").pop();
+          image_id = this.id.split("-").pop();          
+          if ($('#'+this.id).hasClass("remove")) {
+            image_state = "remove";
+          } else { 
+            image_state = "install";
+          }
           $.ajax({
-            url: '/api/images/'+image_id+'/install/'+'?_csrf_token='+csrf_token,
+            url: '/api/images/'+image_id+'/'+image_state+'/'+'?_csrf_token='+csrf_token,
             type: 'POST',
-          }).done(function() {
-            console.log(image_id);
-            location.reload();
+          }).done(function(data) {
+            if (data.response.indexOf("fail") >= 0) {
+              $('#failure-modal-message').html("The message from the system was: "+data.response);
+              $('#failure-modal').modal('toggle')
+            } else {
+              location.reload();
+            }
           });
         });
       });
@@ -136,9 +184,24 @@
           $.ajax({
             url: '{{ url_for("api.images_sync") }}',
           }).done(function() {
-            // location.reload();
+            location.reload();
           });
         });
+      });
+      // look for loading image for images
+      // more hackish bullshit due to glanceclient
+      $('span[id^="image-loading-"]').each(function(index){
+        image_id = this.id.split("-").pop();
+        setInterval(function() {
+          $.ajax({
+            url: '/api/images/'+image_id+'/detail/',
+          }).done(function(data) {
+            console.log(data.image.active);
+            if (data.image.osid && data.image.active == 2) {
+              location.reload();
+            }
+          });
+        }, 3000);
       });
     });
   </script>

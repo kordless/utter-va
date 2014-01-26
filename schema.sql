@@ -35,6 +35,8 @@ CREATE TABLE images (
   md5 VARCHAR(100) NOT NULL,
   name VARCHAR(100) NOT NULL,
   url VARCHAR(400) NOT NULL,
+  diskformat VARCHAR(100) NOT NULL,
+  containerformat VARCHAR(100) NOT NULL,
   size INTEGER NOT NULL,
   active INTEGER NOT NULL,
   flags INTEGER NOT NULL,

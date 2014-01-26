@@ -5,18 +5,24 @@ from webapp.mixins import CRUDMixin
 class Images(CRUDMixin,  db.Model):
     __tablename__ = 'images'
     id = db.Column(db.Integer, primary_key=True)
+    osid = db.Column(db.String(100), unique=True)
     md5 = db.Column(db.String(100), unique=True)
     name = db.Column(db.String(100), unique=True)
     url = db.Column(db.String(400), unique=True)
+    diskformat = db.Column(db.String(100))
+    containerformat = db.Column(db.String(100))
     size = db.Column(db.Integer)
     flags = db.Column(db.Integer)
-    active = db.Column(db.Integer)
+    active = db.Column(db.Integer) # 0 - not active, 1 - installing, 2 - active
 
-    def __init__(self, md5=None, name=None, url=None, size=None, flags=None, installed=None):
+    def __init__(self, osid=None, md5=None, name=None, url=None, size=None, diskformat=None, containerformat=None, flags=None, installed=None):
+        self.osid = osid
         self.md5 = md5
         self.name = name
         self.url = url
         self.size = size
+        self.diskformat = diskformat
+        self.containerformat = containerformat
         self.flags = flags
         self.installed = installed
     
@@ -37,6 +43,8 @@ class Images(CRUDMixin,  db.Model):
                 image.name = remoteimage['name']
                 image.url = remoteimage['url']
                 image.size = remoteimage['size']
+                image.diskformat = remoteimage['diskformat']
+                image.containerformat = remoteimage['containerformat']
                 image.active = 0
                 image.flags = remoteimage['flags']
 
@@ -57,6 +65,8 @@ class Images(CRUDMixin,  db.Model):
                 image.name = remoteimage['name']
                 image.url = remoteimage['url']
                 image.size = remoteimage['size']
+                image.diskformat = remoteimage['diskformat']
+                image.containerformat = remoteimate['containerformat']
                 image.flags = remoteimage['flags']
                 
                 # udpate and commit
@@ -86,6 +96,9 @@ class Flavors(CRUDMixin,  db.Model):
         self.disk = disk
         self.flags = flags
         self.active = active
+
+    def __repr__(self):
+        return '<Flavor %r>' % (self.name)
 
     def sync(self, remoteflavors=None):
         # update the database with the flavors
