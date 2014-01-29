@@ -1,11 +1,85 @@
 from webapp import db
 from webapp.mixins import CRUDMixin
 
+# instances object
+class Instances(CRUDMixin, db.Model):
+    __tablename__ = 'instances'
+    id = db.Column(db.Integer, primary_key=True)
+    created = db.Column(db.Integer)
+    updated = db.Column(db.Integer) 
+    expires = db.Column(db.Integer)
+    osflavorid = db.Column(db.String(100))
+    osimageid = db.Column(db.String(100))
+    publicip = db.Column(db.String(100))
+    ssltunnel = db.Column(db.String(400))
+    osinstanceid = db.Column(db.String(100))
+    name = db.Column(db.String(100))
+    
+    state = db.Column(db.Integer) 
+    # instance state is one of:
+    # 0 - inactive, no payment address available
+    # 1 - payment address available
+    # 2 - payment observed from blockchain callback
+    # 3 - instance running
+    # 4 - instance halted
+    # 5 - instance decommissioned
+    
+    token = db.Column(db.String(100))
+    secret = db.Column(db.String(100))
+    confirmations = db.Column(db.Integer)
+    callbackurl = db.Column(db.String(400))
+    feepercent =db.Column(db.Float)
+    destination = db.Column(db.String(100))
+    inputaddress = db.Column(db.String(100))
+    transactionhash = db.Column(db.String(100))
+
+    def __init__(self, 
+        created=None,
+        updated=None,
+        expires=None,
+        osflavorid=None,
+        osimageid=None,
+        publicip=None,
+        ssltunnel=None,
+        osinstanceid=None,
+        name=None,
+        state=None,
+        token=None,
+        secret=None,
+        confirmations=None,
+        callbackurl=None,
+        feepercent=None,
+        destination=None,
+        inputaddress=None,
+        transactionhash=None
+    ):
+        self.created = created
+        self.updated = updated
+        self.expires = expires
+        self.osflavorid = osflavorid
+        self.osimageid = osimageid
+        self.publicip = publicip
+        self.ssltunnel = ssltunnel
+        self.osinstanceid = osinstanceid
+        self.name = name
+        self.state = state
+        self.token = token
+        self.secret = secret
+        self.confirmations = confirmations
+        self.callbackurl = callbackurl
+        self.feepercent = feepercent
+        self.destination = destination
+        self.inputaddress = inputaddress
+        self.transactionhash = transactionhash
+
+    def __repr__(self):
+        return '<Address %r>' % (self.name)
+
 # images object
 class Images(CRUDMixin,  db.Model):
     __tablename__ = 'images'
     id = db.Column(db.Integer, primary_key=True)
-    osid = db.Column(db.String(100), unique=True)
+    osid = db.Column(db.String(100))
     md5 = db.Column(db.String(100), unique=True)
     name = db.Column(db.String(100), unique=True)
     url = db.Column(db.String(400), unique=True)
@@ -15,7 +89,7 @@ class Images(CRUDMixin,  db.Model):
     flags = db.Column(db.Integer)
     active = db.Column(db.Integer) # 0 - not active, 1 - installing, 2 - active
 
-    def __init__(self, osid=None, md5=None, name=None, url=None, size=None, diskformat=None, containerformat=None, flags=None, installed=None):
+    def __init__(self, osid=None, md5=None, name=None, url=None, size=None, diskformat=None, containerformat=None, flags=None):
         self.osid = osid
         self.md5 = md5
         self.name = name
@@ -24,7 +98,6 @@ class Images(CRUDMixin,  db.Model):
         self.diskformat = diskformat
         self.containerformat = containerformat
         self.flags = flags
-        self.installed = installed
     
     def __repr__(self):
         return '<Image %r>' % (self.name)
@@ -66,7 +139,7 @@ class Images(CRUDMixin,  db.Model):
                 image.url = remoteimage['url']
                 image.size = remoteimage['size']
                 image.diskformat = remoteimage['diskformat']
-                image.containerformat = remoteimate['containerformat']
+                image.containerformat = remoteimage['containerformat']
                 image.flags = remoteimage['flags']
                 
                 # udpate and commit
@@ -116,7 +189,7 @@ class Flavors(CRUDMixin,  db.Model):
                 flavor.disk = remoteflavor['disk']
                 flavor.flags = remoteflavor['flags']
                 flavor.active = 0
-                print flavor
+
                 # add and commit
                 db.session.add(flavor)
                 db.session.commit()

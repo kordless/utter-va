@@ -20,6 +20,7 @@ CREATE TABLE openstack (
 DROP TABLE IF EXISTS appliance;
 CREATE TABLE appliance (
   id INTEGER NOT NULL,
+  paymentaddress VARCHAR(100),
   apitoken VARCHAR(100) NOT NULL,
   ngroktoken VARCHAR(100),
   serviceurl VARCHAR(100),
@@ -55,4 +56,28 @@ CREATE TABLE flavors (
   active INTEGER NOT NULL,
   flags INTEGER NOT NULL,
   PRIMARY KEY (id)  
+);
+
+DROP TABLE IF EXISTS instances;
+CREATE TABLE instances (
+  id INTEGER NOT NULL,
+  created INTEGER NOT NULL,
+  updated INTEGER NOT NULL,
+  expires INTEGER NOT NULL,
+  osflavorid INTEGER NOT NULL,
+  osimageid INTEGER NOT NULL,
+  publicip VARCHAR(100) NOT NULL,
+  ssltunnel VARCHAR(400) NOT NULL,
+  osinstanceid VARCHAR(100),
+  name VARCHAR(100) NOT NULL,
+  state INTEGER NOT NULL,
+  token VARCHAR(100) NOT NULL,
+  secret VARCHAR(100) NOT NULL,
+  confirmations INTEGER NOT NULL,
+  callbackurl VARCHAR(400) NOT NULL,
+  feepercent REAL NOT NULL,
+  destination VARCHAR NOT NULL,
+  inputaddress VARCHAR NOT NULL,
+  transactionhash VARCHAR NOT NULL,
+  PRIMARY KEY (id)
 );

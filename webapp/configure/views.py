@@ -1,15 +1,14 @@
-import re
-import os, sys, socket, json
+import re, os
 from urllib2 import urlopen
-from webapp.libs.geoip import get_geodata
 from flask import Blueprint, render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from webapp import app, db, bcrypt, login_manager
-from forms import OpenStackForm
-from forms import ApplianceForm
 from webapp.users.models import User
-from webapp.api.models import Images, Flavors
+from webapp.api.models import Images, Flavors, Instances
 from webapp.configure.models import OpenStack, Appliance
+from forms import OpenStackForm, ApplianceForm, InstanceForm
+from webapp.libs.geoip import get_geodata
+from webapp.libs.utils import blockchain_address, generate_token
 
 mod = Blueprint('configure', __name__)
 
@@ -26,24 +25,74 @@ def load_user(user_id):
 
 ALLOWED_EXTENSIONS = set(['sh'])
 def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+    return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
+# configure flavors and images page
+@mod.route('/configure/systems/', methods=('GET', 'POST'))
+@login_required
+def configure_systems():
+	flavors = db.session.query(Flavors).all()
+	images = db.session.query(Images).all()
+	
+	return render_template('configure/systems.html', flavors=flavors, images=images)
 
 # configure instances page
 @mod.route('/configure/instances/', methods=('GET', 'POST'))
 @login_required
 def configure_instances():
-	flavors = db.session.query(Flavors).all()
-	images = db.session.query(Images).all()
-	
-	return render_template('configure/instances.html', flavors=flavors, images=images)
+	form = InstanceForm(request.form)
 
-# configure instances page
-@mod.route('/configure/wallet/', methods=('GET', 'POST'))
-@login_required
-def configure_wallets():
-	return render_template('configure/wallets.html')
+	flavors = db.session.query(Flavors.osid, Flavors.name, Flavors.active).filter(Flavors.active.in_([1,2])).all()
+	images = db.session.query(Images.osid, Images.name, Images.active).filter(Images.active.in_([1,2])).all()
+	instances = db.session.query(Instances).all()
+	appliance = db.session.query(Appliance).first()
+
+	if request.method == 'POST':
+		if form.validate_on_submit():
+			instance = Instances()
+
+			# create a token and secret, call blockchain to create callback address
+			instance_token = generate_token(size=16, caselimit=True)
+			instance_secret = generate_token(size=16, caselimit=False)
+			callback_url = "%s/api/instances/%s/payment" % (appliance.serviceurl.strip("/"), instance_token)
+			response = blockchain_address(appliance.paymentaddress, callback_url)
+			
+			# test the response for validity
+			if response['response'] == "success":
+				# load form variables first
+				form.populate_obj(instance)
+
+				# get dict object from blockchain
+				result = response['result'] 
+
+				# update fields for loading into db
+				instance.created = 0
+				instance.updated = 0
+				instance.expires = 0
+				instance.publicip = ""
+				instance.ssltunel = ""
+				instance.osinstanceid = ""
+				# 'name' is poplulated by form
+				instance.state = 1 # indicate we have a payment address ready
+				instance.token = instance_token
+				instance.secret = instance_secret
+				instance.confirmations = 0
+				instance.callbackurl = callback_url
+				instance.feepercent = result['fee_percent']
+				instance.destination = appliance.paymentaddress
+				instance.inputaddress = result['input_address']
+				instance.transactionhash = ""
+
+				# write to db
+				instance.update(instance)
+
+			else:
+				flash("An error has occured with aquiring a payment address from Blockchain.")
+
+		else:
+			flash("A form validation error has occured.")
+
+	return render_template('configure/instances.html', form=form, instances=instances, flavors=flavors, images=images)
 
 # configuration pages
 @mod.route('/configure/', methods=('GET', 'POST'))
@@ -77,23 +126,36 @@ def configure():
 
 			return redirect(url_for(".configure"))
 
+		else:
+			for error in form.paymentaddress.errors:
+				flash(error)
+
 	# get existing form data
 	appliance = form.get_appliance()
 
 	# if no geodata, get it
 	if not appliance:
 		appliance = {}
-		geodata = get_geodata()
-		appliance['latitude'] = geodata['latitude']
-		appliance['longitude'] = geodata['longitude']
+		try:
+			geodata = get_geodata()
+			appliance['latitude'] = geodata['latitude']
+			appliance['longitude'] = geodata['longitude']
+		except:
+			appliance['latitude'] = 0
+			appliance['longitude'] = 0	
 	else:
 		try:
+			# just testing the values are correct
 			lat = float(appliance.latitude)
 			lon = float(appliance.longitude)
 		except ValueError, TypeError:
-			geodata = get_geodata()
-			appliance.latitude = geodata['latitude']
-			appliance.longitude = geodata['longitude']
+			try:
+				geodata = get_geodata()
+				appliance.latitude = geodata['latitude']
+				appliance.longitude = geodata['longitude']
+			except:
+				appliance.latitude = 0
+				appliance.longitude = 0		
 
 	return render_template('configure/appliance.html', form=form, appliance=appliance)
 

@@ -2,6 +2,7 @@ from webapp import db
 from webapp.mixins import CRUDMixin
 from webapp.libs.geoip import get_geodata
 from webapp.libs.utils import generate_token
+from webapp import app, db
 
 # openstack database
 class OpenStack(CRUDMixin,  db.Model):
@@ -29,14 +30,16 @@ class OpenStack(CRUDMixin,  db.Model):
 class Appliance(CRUDMixin,  db.Model):
     __tablename__ = 'appliance'
     id = db.Column(db.Integer, primary_key=True)
+    paymentaddress = db.Column(db.String(100), unique=True)
     apitoken = db.Column(db.String(100), unique=True)
     serviceurl = db.Column(db.String(100), unique=True)
     ngroktoken = db.Column(db.String(100), unique=True)
     latitude = db.Column(db.String(100), unique=True)
     longitude = db.Column(db.String(100), unique=True)
 
-    def __init__(self, apitoken=None, serviceurl=None, ngroktoken=None, latitude=None, longitude=None):
-       	self.apitoken = apitoken
+    def __init__(self, paymentaddress=None, apitoken=None, serviceurl=None, ngroktoken=None, latitude=None, longitude=None):
+       	self.paymentaddress = paymentaddress
+        self.apitoken = apitoken
         self.serviceurl = serviceurl
         self.ngroktoken = ngroktoken
     	self.latitude = latitude
@@ -64,3 +67,4 @@ class Appliance(CRUDMixin,  db.Model):
         # remainder of settings
         self.serviceurl = "http://hostname.example.com/"
         self.ngroktoken = ""
+        self.paymentaddress = ""

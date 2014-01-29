@@ -12,7 +12,9 @@
 .config-input {
   padding-bottom: 20px;
 }
-
+.modal-instructions {
+  padding-bottom: 20px;
+}
 .bump {
   top: -10px;
 }
