@@ -35,7 +35,7 @@ def sync(app):
 def reset(app):
 	def action():
 		# run database reset script
-		os.system('./resetdb.sh')
+		os.system('/var/www/xoviova/resetdb.sh')
 
 		# update appliance database
 		appliance = db.session.query(Appliance).first()
