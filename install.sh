@@ -6,8 +6,8 @@
 # github: https://github.com/StackMonkey/xovio-va
 
 # pool operator domian
-POOL_URL="stackmonkey.com"
-POOL_SHORT_NAME="stackmonkey"
+export POOL_URL="stackmonkey.com"
+export POOL_SHORT_NAME="stackmonkey"
 
 # update repos
 sudo apt-get update -y
@@ -19,7 +19,6 @@ sudo apt-get install python-pip -y
 sudo apt-get install libapache2-mod-wsgi -y
 sudo apt-get install build-essential -y
 sudo apt-get install python-dev -y
-sudo apt-get install python-virtualenv -y
 sudo apt-get install unzip -y
 sudo apt-get install monit -y
 
@@ -51,8 +50,8 @@ sudo pip install python-cinderclient
 sudo pip install python-novaclient
 
 # configure apache
-mkdir /var/log/$POOL_SHORT_NAME/
-chown -R www-data:www-data /var/log/$POOL_SHORT_NAME/
+sudo mkdir /var/log/$POOL_SHORT_NAME/
+sudo chown -R www-data:www-data /var/log/$POOL_SHORT_NAME/
 sudo cat <<EOF > /etc/apache2/sites-available/default
 <VirtualHost *:80>
     ServerName controller.$POOL_URL
@@ -130,20 +129,19 @@ EOF
 
 # check out stackgeek-vm repo
 sudo su
-cd /var/www/
+sudo cd /var/www/
 sudo git clone https://github.com/StackMonkey/xovio-va.git $POOL_SHORT_NAME
 
 # build the database and sync with pool operator
-su www-data
-cd /var/www/$POOL_SHORT_NAME/
-/var/www/$POOL_SHORT_NAME/manage.py reset
+sudo cd /var/www/$POOL_SHORT_NAME/
+sudo /var/www/$POOL_SHORT_NAME/manage.py reset
 
 # configure www directory
 sudo chown -R www-data:www-data /var/www/
 
 # install ssl
 sudo a2enmod ssl
-a2ensite default-ssl
+sudo a2ensite default-ssl
 
 # restart apache
 sudo service apache2 restart
