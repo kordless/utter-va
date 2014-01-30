@@ -128,10 +128,9 @@ sudo cat <<EOF > /etc/apache2/sites-available/default-ssl
 EOF
 
 # check out stackgeek-vm repo
-sudo git clone https://github.com/StackMonkey/xovio-va.git
+sudo git clone https://github.com/StackMonkey/xovio-va.git /var/www/xoviova
 
 # build the database and sync with pool operator
-sudo cd /var/www/xoviova/
 sudo /var/www/xoviova/manage.py reset
 
 # configure www directory
