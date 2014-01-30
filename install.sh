@@ -50,27 +50,27 @@ sudo pip install python-cinderclient
 sudo pip install python-novaclient
 
 # configure apache
-sudo mkdir /var/log/$POOL_SHORT_NAME/
-sudo chown -R www-data:www-data /var/log/$POOL_SHORT_NAME/
+sudo mkdir /var/log/xoviova/
+sudo chown -R www-data:www-data /var/log/xoviova/
 sudo cat <<EOF > /etc/apache2/sites-available/default
 <VirtualHost *:80>
-    ServerName controller.$POOL_URL
+    ServerName controller.xov.io
 
-    Alias /img/ "/var/www/$POOL_SHORT_NAME/webapp/static/img/"
-    Alias /css/ "/var/www/$POOL_SHORT_NAME/webapp/static/css/"
-    Alias /js/ "/var/www/$POOL_SHORT_NAME/webapp/static/js/"
-    Alias /fonts/ "/var/www/$POOL_SHORT_NAME/webapp/static/fonts/"
+    Alias /img/ "/var/www/xoviova/webapp/static/img/"
+    Alias /css/ "/var/www/xoviova/webapp/static/css/"
+    Alias /js/ "/var/www/xoviova/webapp/static/js/"
+    Alias /fonts/ "/var/www/xoviova/webapp/static/fonts/"
 
-    <Directory /var/www/$POOL_SHORT_NAME/webapp/static>
+    <Directory /var/www/xoviova/webapp/static>
         Order deny,allow
         Allow from all
     </Directory>
 
-    WSGIDaemonProcess $POOL_SHORT_NAME user=www-data group=www-data threads=5
-    WSGIScriptAlias / /var/www/$POOL_SHORT_NAME/wsgi.py
+    WSGIDaemonProcess xoviova user=www-data group=www-data threads=5
+    WSGIScriptAlias / /var/www/xoviova/wsgi.py
 
-    <Directory /var/www/$POOL_SHORT_NAME>
-        WSGIProcessGroup $POOL_SHORT_NAME
+    <Directory /var/www/xoviova>
+        WSGIProcessGroup xoviova
         WSGIApplicationGroup %{GLOBAL}
         WSGIScriptReloading On
         Order deny,allow
@@ -78,8 +78,8 @@ sudo cat <<EOF > /etc/apache2/sites-available/default
     </Directory>
 
     LogLevel warn
-    ErrorLog /var/log/$POOL_SHORT_NAME/error.log
-    CustomLog /var/log/$POOL_SHORT_NAME/access.log combined
+    ErrorLog /var/log/xoviova/error.log
+    CustomLog /var/log/xoviova/access.log combined
 </VirtualHost>
 EOF
 
@@ -87,22 +87,22 @@ EOF
 sudo cat <<EOF > /etc/apache2/sites-available/default-ssl
 <IfModule mod_ssl.c>
 <VirtualHost _default_:443>
-    ServerName controller.$POOL_SHORT_NAME.com
+    ServerName controller.xoviova.com
 
-    Alias /img/ "/var/www/$POOL_SHORT_NAME/webapp/static/img/"
-    Alias /css/ "/var/www/$POOL_SHORT_NAME/webapp/static/css/"
-    Alias /js/ "/var/www/$POOL_SHORT_NAME/webapp/static/js/"
-    Alias /fonts/ "/var/www/$POOL_SHORT_NAME/webapp/static/fonts/"
+    Alias /img/ "/var/www/xoviova/webapp/static/img/"
+    Alias /css/ "/var/www/xoviova/webapp/static/css/"
+    Alias /js/ "/var/www/xoviova/webapp/static/js/"
+    Alias /fonts/ "/var/www/xoviova/webapp/static/fonts/"
 
-    <Directory /var/www/$POOL_SHORT_NAME/webapp/static>
+    <Directory /var/www/xoviova/webapp/static>
         Order deny,allow
         Allow from all
     </Directory>
 
-    WSGIScriptAlias / /var/www/$POOL_SHORT_NAME/wsgi.py
+    WSGIScriptAlias / /var/www/xoviova/wsgi.py
 
-    <Directory /var/www/$POOL_SHORT_NAME>
-        WSGIProcessGroup $POOL_SHORT_NAME
+    <Directory /var/www/xoviova>
+        WSGIProcessGroup xoviova
         WSGIApplicationGroup %{GLOBAL}
         WSGIScriptReloading On
         SSLOptions +StdEnvVars
@@ -111,7 +111,7 @@ sudo cat <<EOF > /etc/apache2/sites-available/default-ssl
     </Directory>
 
     LogLevel warn
-    ErrorLog /var/log/$POOL_SHORT_NAME/error.log
+    ErrorLog /var/log/xoviova/error.log
     CustomLog ${APACHE_LOG_DIR}/ssl_access.log combined
 
     SSLEngine on
@@ -128,13 +128,11 @@ sudo cat <<EOF > /etc/apache2/sites-available/default-ssl
 EOF
 
 # check out stackgeek-vm repo
-sudo su
-sudo cd /var/www/
-sudo git clone https://github.com/StackMonkey/xovio-va.git $POOL_SHORT_NAME
+sudo git clone https://github.com/StackMonkey/xovio-va.git
 
 # build the database and sync with pool operator
-sudo cd /var/www/$POOL_SHORT_NAME/
-sudo /var/www/$POOL_SHORT_NAME/manage.py reset
+sudo cd /var/www/xoviova/
+sudo /var/www/xoviova/manage.py reset
 
 # configure www directory
 sudo chown -R www-data:www-data /var/www/
