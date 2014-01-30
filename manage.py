@@ -65,7 +65,7 @@ def serve(app):
 
 		# add static directory to be served by development server
 		app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {'/': os.path.join(os.path.dirname(__file__), './webapp/static') })
-		app.run(debug=False, host="0.0.0.0")
+		app.run(debug=True, host="0.0.0.0")
 		sys.exit()
 	
 	return action

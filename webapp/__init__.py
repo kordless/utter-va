@@ -95,7 +95,7 @@ del app.logger.handlers[:]
 
 handler = logging.StreamHandler()
 
-log_format = "%(asctime)s\t%(levelname)s\t%(user_id)s\t%(ip)s\t%(method)s\t%(url)s\t%(message)s"
+log_format = "%(levelname)s %(user_id)s\t%(ip)s\t%(method)s\t%(url)s\t%(message)s"
 formatter = logging.Formatter(log_format)
 handler.setFormatter(formatter)
 

@@ -62,7 +62,8 @@ def token_validate():
 # INSTANCE ADDRESS METHODS
 # deal with adding/removing/viewing instance addresses for deposit
 @mod.route('/api/instances/<int:address_id>/<string:address_method>', methods=('GET', 'POST'))
-@login_required
+# login credentials are not required for these methods
+# if ngrok is used, security is provided by http auth set in the ngrok config
 def address_handler(address_id, address_state):
 	# get the matching image
 	image = db.session.query(Images).filter_by(id=image_id).first()
