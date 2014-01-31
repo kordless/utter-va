@@ -112,15 +112,13 @@ sudo cat <<EOF > /etc/apache2/sites-available/default-ssl
 
     LogLevel warn
     ErrorLog /var/log/xoviova/error.log
-    CustomLog ${APACHE_LOG_DIR}/ssl_access.log combined
+    CustomLog /var/log/xoviova/ssl_access.log combined
 
     SSLEngine on
     SSLCertificateFile    /etc/ssl/certs/ssl-cert-snakeoil.pem
     SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
 
-    BrowserMatch "MSIE [2-6]" \
-        nokeepalive ssl-unclean-shutdown \
-        downgrade-1.0 force-response-1.0
+    BrowserMatch "MSIE [2-6]" nokeepalive ssl-unclean-shutdown downgrade-1.0 force-response-1.0
     BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 
 </VirtualHost>
@@ -130,11 +128,12 @@ EOF
 # check out stackgeek-vm repo
 sudo git clone https://github.com/StackMonkey/xovio-va.git /var/www/xoviova
 
-# build the database and sync with pool operator
-sudo /var/www/xoviova/manage.py reset
-
 # configure www directory
 sudo chown -R www-data:www-data /var/www/
+sudo chmod -R g+w www-data /var/www/
+
+# enable ubuntu user to run web stuff
+usermod -a -G www-data ubuntu
 
 # install ssl
 sudo a2enmod ssl
@@ -142,3 +141,6 @@ sudo a2ensite default-ssl
 
 # restart apache
 sudo service apache2 restart
+
+# build the database and sync with pool operator
+sudo su -c "/var/www/xoviova/manage.py reset" -s /bin/sh www-data

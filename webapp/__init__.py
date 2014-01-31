@@ -7,7 +7,7 @@ import os
 
 # app setup
 app = Flask(__name__) # main app object
-app.config.from_object('config.DebugConfiguration') # configuration
+app.config.from_object('config.BaseConfiguration') # configuration
 login_manager = LoginManager(app) # login manager
 manager = Manager(app) # shell actions manager
 db = SQLAlchemy(app) # database connection
@@ -95,7 +95,7 @@ del app.logger.handlers[:]
 
 handler = logging.StreamHandler()
 
-log_format = "%(levelname)s %(user_id)s\t%(ip)s\t%(method)s\t%(url)s\t%(message)s"
+log_format = "%(asctime)s %(levelname)s\t%(user_id)s\t%(ip)s\t%(method)s\t%(url)s\t%(message)s"
 formatter = logging.Formatter(log_format)
 handler.setFormatter(formatter)
 
