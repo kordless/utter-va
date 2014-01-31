@@ -43,7 +43,7 @@ def favicon():
 	return send_from_directory(os.path.join(app.root_path, 'static'), 'img/favicon.ico')
 
 
-@app.route("/")
+@app.route("/", methods=['GET', 'POST'])
 def index():
 	return render_template('index.html')
 

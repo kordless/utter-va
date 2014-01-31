@@ -16,7 +16,7 @@
         <div class="col-sm-6 col-md-4 col-md-offset-4">
             <div class="account-wall">
                 <img class="profile-img" src="/img/photo.png?sz=120" alt="">
-                <form action="." method="post" class="form-signin">
+                <form action="{{ url_for("users.login") }}" method="post" class="form-signin">
                     {{ form.csrf_token }}
                     {{ form.username(class="form-control", placeholder="Username", autofocus=true, required=true) }}
                     {{ form.password(class="form-control form-password", placeholder="Password", required=true) }}

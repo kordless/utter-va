@@ -43,7 +43,7 @@
     </li>
     <li class="active"><a href="{{ url_for("configure.configure_instances") }}">Instance Payments</a></li>
   </ul>
-  <form action="." method="post" class="form-horizontal" role="form">
+  <form action="{{ url_for("configure.configure_instances") }}" method="post" class="form-horizontal" role="form">
   <div class="modal fade" id="create-instance-modal">
     <div class="modal-dialog">
       <div class="modal-content">
