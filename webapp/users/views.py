@@ -12,7 +12,7 @@ def load_user(user_id):
 	return User.query.get(int(user_id))
 
 # home page
-@mod.route('/login/', methods=('GET', 'POST'))
+@mod.route('/login', methods=('GET', 'POST'))
 def login():
 	# if user is already logged in go to status
 	if current_user.is_authenticated():
@@ -32,14 +32,14 @@ def login():
 	return render_template('users/login.html', form=form)
 
 # logout route
-@mod.route('/logout/')
+@mod.route('/logout')
 @login_required
 def logout():
 	logout_user()
 	return redirect(url_for('index'))
 
 # register user
-@mod.route('/register/', methods=['GET', 'POST'])
+@mod.route('/register', methods=['GET', 'POST'])
 def register():
 	# register our form
 	form = RegisterForm(request.form)

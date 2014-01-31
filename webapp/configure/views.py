@@ -61,14 +61,14 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 # configure flavors and images page
-@mod.route('/configure/systems/', methods=('GET', 'POST'))
+@mod.route('/configure/systems', methods=('GET', 'POST'))
 @login_required
 def configure_systems():
 	# check configuration
 	settings = check_settings()
 
 	# NOTE: POST handling is done via the API methods
-	
+
 	# load flavors and images
 	flavors = db.session.query(Flavors).all()
 	images = db.session.query(Images).all()
@@ -76,7 +76,7 @@ def configure_systems():
 	return render_template('configure/systems.html', settings=settings, flavors=flavors, images=images)
 
 # configure instances page
-@mod.route('/configure/instances/', methods=('GET', 'POST'))
+@mod.route('/configure/instances', methods=('GET', 'POST'))
 @login_required
 def configure_instances():
 	form = InstanceForm(request.form)
@@ -139,7 +139,7 @@ def configure_instances():
 	return render_template('configure/instances.html', settings=settings, form=form, instances=instances, flavors=flavors, images=images)
 
 # configuration pages
-@mod.route('/configure/', methods=('GET', 'POST'))
+@mod.route('/configure', methods=('GET', 'POST'))
 @login_required
 def configure():
 	# check configuration
@@ -209,7 +209,7 @@ def configure():
 	return render_template('configure/appliance.html', settings=settings, form=form, appliance=appliance)
 
 
-@mod.route('/configure/openstack/', methods=('GET', 'POST'))
+@mod.route('/configure/openstack', methods=('GET', 'POST'))
 @login_required
 def configure_openstack():
 	# check configuration
