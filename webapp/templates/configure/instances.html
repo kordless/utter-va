@@ -17,10 +17,31 @@
     <li class="active">Configure</li>
   </ol>
   <ul class="nav nav-tabs">
-    <li><a href="{{ url_for("configure.configure") }}">Appliance</a></li>
-    <li><a href="{{ url_for("configure.configure_openstack") }}">OpenStack</a></li>
-    <li><a href="{{ url_for("configure.configure_systems") }}">Flavors & Images</a></li>
-    <li class="active"><a href="{{ url_for("configure.configure_instances") }}">Instance Addresses</a></li>
+    <li>
+      <a href="{{ url_for("configure.configure") }}">
+        {% if settings['appliance'] == False %}
+          <span id="appliance-settings" class="glyphicon glyphicon-exclamation-sign"></span>
+        {% endif %}
+        Appliance
+      </a>
+    </li>
+    <li>
+      <a href="{{ url_for("configure.configure_openstack") }}"> 
+        {% if settings['openstack'] == False %}
+          <span id="openstack-settings"class="glyphicon glyphicon-exclamation-sign"></span>
+        {% endif %}
+        OpenStack
+      </a>
+    </li>
+    <li>
+      <a href="{{ url_for("configure.configure_systems") }}">
+        {% if settings['systems'] == False %}
+          <span id="systems-settings"class="glyphicon glyphicon-exclamation-sign"></span>
+        {% endif %}
+        Flavors & Images
+      </a>
+    </li>
+    <li class="active"><a href="{{ url_for("configure.configure_instances") }}">Instance Payments</a></li>
   </ul>
   <form action="." method="post" class="form-horizontal" role="form">
   <div class="modal fade" id="create-instance-modal">
@@ -75,7 +96,7 @@
     <div class="page-header">
       <h3>Instance Addresses</h3>
       <p>An instance address represents a payment destination used for starting a predefined OpenStack instance on this appliance. Bitcoin payments to an instance address are monitored by this appliance via <a href="http://blockchanin.info/">Blockchain.info's</a> API based payment callback service.</p>
-      <p>Instance addresses are automatically created on this appliance via web hook callbacks initiated by the the <a href="{{ config['POOL_WEBSITE'] }}">{{ config['POOL_NAME'] }}</a> site.  Instances are not provisioned by this appliance until a payment has been verified as being sent by the end user to a corresponding instance address below.</p>
+      <p>Instance addresses are automatically created on this appliance via callbacks initiated by the the <a href="{{ config['POOL_WEBSITE'] }}">{{ config['POOL_NAME'] }}</a> site.  Instances are not provisioned by this appliance until a payment has been verified as being sent by the end user to a corresponding instance input address below.</p>
       <p>A manual instance address can be created by clicking the <strong>Create Instance Payment</strong> button.  The resulting address can be used for testing purposes, promotion on a third party website or for exchanging compute resources with an untrusted entity.</p>
     <button class="btn btn-default" id="create-instance-button"><span class="glyphicon glyphicon-credit-card"></span> Create Instance Address</button>
     </div>
@@ -104,7 +125,6 @@
             {% else %}
               None
             {% endif %}
-
           </td>
           <td>{{ instance.inputaddress }}</td>
           <td class="text-center">{{ instance.confirmations }}</td>
@@ -115,6 +135,7 @@
       </tbody>
     </table>
   </div>
+  <hr/>
 </div>
 {% endblock %}
 
@@ -126,11 +147,11 @@
       $('#create-instance-button').click(function() {
         $('#create-instance-modal').modal('toggle')
       });
-
     });
   </script>
 
 {% endblock %}
 
 {% block extras %}
+    <script src='/js/popovers.js'></script>
 {% endblock %}

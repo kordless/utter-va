@@ -53,6 +53,7 @@ sudo pip install python-novaclient
 sudo mkdir /var/log/xoviova/
 sudo chown -R www-data:www-data /var/log/xoviova/
 sudo cat <<EOF > /etc/apache2/sites-available/default
+WSGIDaemonProcess xoviova user=www-data group=www-data threads=5
 <VirtualHost *:80>
     ServerName controller.xov.io
 
@@ -66,7 +67,6 @@ sudo cat <<EOF > /etc/apache2/sites-available/default
         Allow from all
     </Directory>
 
-    WSGIDaemonProcess xoviova user=www-data group=www-data threads=5
     WSGIScriptAlias / /var/www/xoviova/wsgi.py
 
     <Directory /var/www/xoviova>
@@ -130,7 +130,7 @@ sudo git clone https://github.com/StackMonkey/xovio-va.git /var/www/xoviova
 
 # configure www directory
 sudo chown -R www-data:www-data /var/www/
-sudo chmod -R g+w www-data /var/www/
+sudo chmod -R g+w /var/www/
 
 # enable ubuntu user to run web stuff
 usermod -a -G www-data ubuntu

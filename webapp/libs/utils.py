@@ -3,7 +3,7 @@ from ast import literal_eval
 from urllib2 import urlopen, HTTPError
 from OpenSSL import SSL
 from webapp import app
-from webapp.api.models import Images, Flavors
+from webapp.api.models import Images, Flavors, Instances
 from webapp.libs.exceptions import InvalidAddress, InvalidCallbackURL
 
 def generate_token(size=64, caselimit=False):

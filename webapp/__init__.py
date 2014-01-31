@@ -1,13 +1,19 @@
+import os
 from flask import Flask, request, render_template, send_from_directory
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager, current_user
 from flask.ext.actions import Manager
 from flask.ext.bcrypt import Bcrypt
-import os
 
 # app setup
 app = Flask(__name__) # main app object
-app.config.from_object('config.BaseConfiguration') # configuration
+
+# configuration file
+if os.path.isfile('./DEV'): 
+	app.config.from_object('config.DebugConfiguration')
+else:
+	app.config.from_object('config.BaseConfiguration')
+
 login_manager = LoginManager(app) # login manager
 manager = Manager(app) # shell actions manager
 db = SQLAlchemy(app) # database connection

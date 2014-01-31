@@ -1,2 +1,3 @@
 #!/bin/bash
-sqlite3 /var/www/xoviova/xoviova.db < /var/www/xoviova/schema.sql
+# can take a parameter if needed for correct path
+sqlite3 $1./xoviova.db < $1./schema.sql

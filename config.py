@@ -9,12 +9,12 @@ class BaseConfiguration(object):
 	# Pool Customization
 	POOL_NAME = "StackMonkey"
 	POOL_NAME_LOWER = ''.join(POOL_NAME.split()).lower()
-	POOL_WEBSITE = "https://www.stackmonkey.com/".strip("/")
+	POOL_WEBSITE = "http://www.stackmonkey.com/".strip("/")
 	POOL_TWITTER_HANDLE = "stackape"
 	POOL_TWITTER_NAME = POOL_NAME
 	POOL_LINKEDIN_HANDLE = POOL_NAME_LOWER
 	POOL_LINKEDIN_NAME = POOL_NAME
-	POOL_GPLUS_HANDLE = "stackmonkey"
+	POOL_GPLUS_HANDLE = POOL_NAME_LOWER
 	POOL_GPLUS_NAME = POOL_NAME
 	# End Pool Customization
 
@@ -37,7 +37,7 @@ class BaseConfiguration(object):
 	
 	THREADS_PER_PAGE = 8
 
-
+# currently not used - revise
 class TestConfiguration(BaseConfiguration):
 	TESTING = True
 	APP_WEBSITE = "http://127.0.0.1:8080/".strip("/")

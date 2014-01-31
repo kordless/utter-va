@@ -25,7 +25,6 @@ class OpenStack(CRUDMixin,  db.Model):
     def __repr__(self):
         return '<TenantID %r>' % (self.tenantid)
 
-
 # appliance database
 class Appliance(CRUDMixin,  db.Model):
     __tablename__ = 'appliance'
@@ -45,16 +44,6 @@ class Appliance(CRUDMixin,  db.Model):
     	self.latitude = latitude
     	self.longitude = longitude
 
-    def token_refresh(self):
-        self.apitoken = generate_token(size=64)
-
-    def service_url_refresh(self):
-        hostname = generate_token(size=8, caselimit=True)
-        if self.ngroktoken:
-            self.serviceurl = "https://%s.ngrok.com/" % hostname
-        else:
-            self.serviceurl = "https://%s.example.com/" % hostname
-
     def initialize(self):
         # get geodata
         geo_data = get_geodata()
@@ -68,3 +57,19 @@ class Appliance(CRUDMixin,  db.Model):
         self.serviceurl = "http://hostname.example.com/"
         self.ngroktoken = ""
         self.paymentaddress = ""
+
+    def token_refresh(self):
+        self.apitoken = generate_token(size=64)
+
+    def service_url_refresh(self):
+        hostname = generate_token(size=8, caselimit=True)
+        if self.ngroktoken:
+            self.serviceurl = "https://%s.ngrok.com/" % hostname
+        else:
+            self.serviceurl = "https://%s.example.com/" % hostname
+
+    def check(self):
+        if self.paymentaddress and self.ngroktoken:
+            return True
+        else:
+            return False

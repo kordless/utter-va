@@ -1,30 +1,40 @@
 import os
 from subprocess import Popen
-from keystoneclient.v2_0 import client as keyclient
 from novaclient.v1_1 import client as novaclient
+from keystoneclient.v2_0 import client as keyclient
+from webapp import app, db
 from webapp.configure.models import OpenStack, Appliance
 from webapp.api.models import Flavors, Images
-from webapp import app, db
+from webapp.libs.exceptions import OpenStackConfiguration
 
-def openstack_auth_check(openstack):
-	keystone = keyclient.Client(
-		username = openstack.osusername,
-		password = openstack.ospassword,
-		tenant_id = openstack.tenantid,
-		auth_url = openstack.authurl
-	)
-	if not keystone.auth_token:
-		raise "fail on aquiring Openstack credentials."
+def openstack_auth_check():
+	# get the cluster configuration and check we are good to talk to openstack
+	openstack = db.session.query(OpenStack).first()
 
-	return
-
+	if openstack:
+		try:
+			keystone = keyclient.Client(
+				username = openstack.osusername,
+				password = openstack.ospassword,
+				tenant_id = openstack.tenantid,
+				auth_url = openstack.authurl
+			)
+		except:
+			return False
+	else:
+		return False
+	
+	return True
+	
 def image_install(image):
 	try:
-
-		# get the cluster configuration and check we are good to talk to openstack
-		openstack = db.session.query(OpenStack).first()
-		openstack_auth_check(openstack)
+		# try doing an auth
+		if not openstack_auth_check():
+			raise OpenStackConfiguration("OpenStack configuration isn't complete.")
 		
+		# get openstack credentials
+		openstack = db.session.query(OpenStack).first()
+
 		# this is hackish bullshit, but I couldn't figure out how to get the
 		# proper service URL for glance.  using command line version instead.
 		Popen(["glance", 
@@ -50,7 +60,7 @@ def image_install(image):
 		image.osid = ""
 		image.active = 0
 		image.update(image)
-		print "FAILFAIL"
+
 		# set the response
 		response = "fail on %s" % ex
 
@@ -65,7 +75,7 @@ def image_detail(image):
 		
 		# what happens if they haven't configured it already?
 		if not openstack:
-			raise "OpenStack configuration is missing."
+			raise OpenStackConfiguration("OpenStack configuration isn't complete.")
 
 		# connect to nova 
 		nova = novaclient.Client(openstack.osusername, openstack.ospassword, openstack.tenantname, openstack.authurl, service_type="compute")
@@ -102,7 +112,7 @@ def image_remove(image):
 	
 		# no configuration present
 		if not openstack:
-			raise "OpenStack configuration is missing."
+			raise OpenStackConfiguration("OpenStack configuration isn't complete.")
 	
 		# connect to nova
 		nova = novaclient.Client(openstack.osusername, openstack.ospassword, openstack.tenantname, openstack.authurl, service_type="compute")
@@ -189,7 +199,7 @@ def flavor_install(flavor):
 		
 		# what happens if they haven't configured it already?
 		if not openstack:
-			raise "OpenStack configuration is missing."
+			raise OpenStackConfiguration("OpenStack configuration isn't complete.")
 
 		# establish connection to openstack
 		nova = novaclient.Client(openstack.osusername, openstack.ospassword, openstack.tenantname, openstack.authurl, service_type="compute")
@@ -216,7 +226,7 @@ def flavor_remove(flavor):
 	
 		# what happens if they haven't configured it already?
 		if not openstack:
-			raise "fail on %s" % "OpenStack configuration is missing."
+			raise OpenStackConfiguration
 	
 		# establish connection to openstack and delete flavor
 		nova = novaclient.Client(openstack.osusername, openstack.ospassword, openstack.tenantname, openstack.authurl, service_type="compute")

@@ -11,7 +11,13 @@ from webapp.configure.models import OpenStack, Appliance
 from webapp.api.models import Images, Flavors
 from webapp.users.models import User
 
-app.config.from_object('config.DebugConfiguration') # configuration
+# configuration file
+if os.path.isfile('./DEV'): 
+	app.config.from_object('config.DebugConfiguration')
+else:
+	app.config.from_object('config.BaseConfiguration')
+
+# manager handler
 manager = Manager(app, default_help_actions=False)
 
 def configure_blurb():
@@ -19,6 +25,7 @@ def configure_blurb():
 	IP = socket.gethostbyname(hostname)
 	print "Visit http://%s/ to setup your appliance." % IP
 
+# not used here anymore - remove
 def server_connect( method = "version" ):
 	appliance = db.session.query(Appliance).first()
 	url = app.config['APP_WEBSITE'] + '/api/%s?ver=%s&apitoken=%s' % (method, app.config['VERSION'], appliance.apitoken)
@@ -34,8 +41,9 @@ def sync(app):
 
 def reset(app):
 	def action():
-		# run database reset script
-		os.system('/var/www/xoviova/resetdb.sh')
+		# run database reset script - use current path to run file
+		path = os.path.dirname(os.path.abspath(__file__))
+		os.system('%s/resetdb.sh %s/' % (path, path))
 
 		# update appliance database
 		appliance = db.session.query(Appliance).first()

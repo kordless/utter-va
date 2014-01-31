@@ -17,9 +17,30 @@
     <li class="active">Configure</li>
   </ol>
   <ul class="nav nav-tabs">
-    <li><a href="{{ url_for("configure.configure") }}">Appliance</a></li>
-    <li><a href="{{ url_for("configure.configure_openstack") }}">OpenStack</a></li>
-    <li class="active"><a href="{{ url_for("configure.configure_systems") }}">Flavors & Images</a></li>
+    <li>
+      <a href="{{ url_for("configure.configure") }}">
+        {% if settings['appliance'] == False %}
+          <span id="appliance-settings" class="glyphicon glyphicon-exclamation-sign"></span>
+        {% endif %}
+        Appliance
+      </a>
+    </li>
+    <li>
+      <a href="{{ url_for("configure.configure_openstack") }}"> 
+        {% if settings['openstack'] == False %}
+          <span id="openstack-settings"class="glyphicon glyphicon-exclamation-sign"></span>
+        {% endif %}
+        OpenStack
+      </a>
+    </li>
+    <li class="active">
+      <a href="{{ url_for("configure.configure_systems") }}">
+        {% if settings['systems'] == False %}
+          <span id="systems-settings"class="glyphicon glyphicon-exclamation-sign"></span>
+        {% endif %}
+        Flavors & Images
+      </a>
+    </li>
     <li><a href="{{ url_for("configure.configure_instances") }}">Instance Payments</a></li>
   </ul>
   <div class="modal fade" id="failure-modal">
@@ -125,6 +146,7 @@
       </tbody>
     </table>
   </div>
+  <hr/>
 </div>
 {% endblock %}
 
@@ -222,4 +244,5 @@
 {% endblock %}
 
 {% block extras %}
+  <script src='/js/popovers.js'></script>
 {% endblock %}

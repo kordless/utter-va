@@ -6,6 +6,7 @@ from webapp import app, db, bcrypt, login_manager
 from webapp.users.models import User
 from webapp.api.models import Images, Flavors, Instances
 from webapp.configure.models import OpenStack, Appliance
+from webapp.libs.openstack import openstack_auth_check
 from forms import OpenStackForm, ApplianceForm, InstanceForm
 from webapp.libs.geoip import get_geodata
 from webapp.libs.utils import blockchain_address, generate_token
@@ -17,6 +18,38 @@ def dequote(string):
 	if string.startswith('"') and string.endswith('"'):
 		string = string[1:-1]
 	return string
+
+# check our settings for warnings - tried to put this in utils.py to no avail
+def check_settings():
+	# openstack connected?
+	check_openstack = openstack_auth_check()
+	
+	# appliance setup?
+	appliance = db.session.query(Appliance).first()
+	check_appliance = appliance.check()
+	
+	# minimum one flavor installed?
+	flavor_active = False
+	flavors = db.session.query(Flavors).all()
+	for flavor in flavors:
+		if flavor.active:
+			flavor_active = True
+
+	# minimum one image installed?
+	image_active = False
+	images = db.session.query(Images).all()
+	for image in images:
+		if image.active:
+			image_active = True
+
+	# put both together
+	if image_active and flavor_active:
+		check_systems = True
+	else:
+		check_systems = False
+
+	settings = {"appliance": check_appliance, "systems": check_systems, "openstack": check_openstack}
+	return settings
 
 # user login callback
 @login_manager.user_loader
@@ -31,10 +64,16 @@ def allowed_file(filename):
 @mod.route('/configure/systems/', methods=('GET', 'POST'))
 @login_required
 def configure_systems():
+	# check configuration
+	settings = check_settings()
+
+	# NOTE: POST handling is done via the API methods
+	
+	# load flavors and images
 	flavors = db.session.query(Flavors).all()
 	images = db.session.query(Images).all()
 	
-	return render_template('configure/systems.html', flavors=flavors, images=images)
+	return render_template('configure/systems.html', settings=settings, flavors=flavors, images=images)
 
 # configure instances page
 @mod.route('/configure/instances/', methods=('GET', 'POST'))
@@ -42,9 +81,11 @@ def configure_systems():
 def configure_instances():
 	form = InstanceForm(request.form)
 
+	# check configuration
+	settings = check_settings()
+
 	flavors = db.session.query(Flavors.osid, Flavors.name, Flavors.active).filter(Flavors.active.in_([1,2])).all()
 	images = db.session.query(Images.osid, Images.name, Images.active).filter(Images.active.in_([1,2])).all()
-	instances = db.session.query(Instances).all()
 	appliance = db.session.query(Appliance).first()
 
 	if request.method == 'POST':
@@ -91,14 +132,22 @@ def configure_instances():
 
 		else:
 			flash("A form validation error has occured.")
+	
+	# load instances
+	instances = db.session.query(Instances).all()
 
-	return render_template('configure/instances.html', form=form, instances=instances, flavors=flavors, images=images)
+	return render_template('configure/instances.html', settings=settings, form=form, instances=instances, flavors=flavors, images=images)
 
 # configuration pages
 @mod.route('/configure/', methods=('GET', 'POST'))
 @login_required
 def configure():
+	# check configuration
+	settings = check_settings()
+	
+	# get the form
 	form = ApplianceForm(request.form)
+	
 	if request.method == 'POST':
 		if form.validate_on_submit():
 			# try to select one and only record
@@ -157,12 +206,16 @@ def configure():
 				appliance.latitude = 0
 				appliance.longitude = 0		
 
-	return render_template('configure/appliance.html', form=form, appliance=appliance)
+	return render_template('configure/appliance.html', settings=settings, form=form, appliance=appliance)
 
 
 @mod.route('/configure/openstack/', methods=('GET', 'POST'))
 @login_required
 def configure_openstack():
+	# check configuration
+	settings = check_settings()
+
+	# get the form
 	form = OpenStackForm(request.form)
 
 	if request.method == 'POST':
@@ -226,6 +279,6 @@ def configure_openstack():
 
 	# load form and existing openstack settings, if they exist
 	openstack = form.get_openstack()
-	return render_template('configure/openstack.html', form=form, openstack=openstack)	
+	return render_template('configure/openstack.html', settings=settings, form=form, openstack=openstack)	
 
 
