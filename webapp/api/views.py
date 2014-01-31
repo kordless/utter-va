@@ -35,7 +35,7 @@ def token_generate():
 	db.session.commit()
 	return render_template('response.json', response="success")
 
-@mod.route('/api/serviceurl/generate', methods=('GET', 'POST'))
+@mod.route('/api/serviceurl/generate', methods=['GET', 'POST'])
 @login_required
 def service_url_generate():
 	# update appliance database with a new service url
@@ -45,7 +45,7 @@ def service_url_generate():
 	db.session.commit()
 	return render_template('response.json', response="success")
 
-@mod.route('/api/token/validate', methods=('GET', 'POST'))
+@mod.route('/api/token/validate', methods=['GET', 'POST'])
 @login_required
 def token_validate():
 	validate_token = {}
@@ -61,7 +61,7 @@ def token_validate():
 
 # INSTANCE ADDRESS METHODS
 # deal with adding/removing/viewing instance addresses for deposit
-@mod.route('/api/instances/<int:address_id>/<string:address_method>', methods=('GET', 'POST'))
+@mod.route('/api/instances/<int:address_id>/<string:address_method>', methods=['GET', 'POST'])
 # login credentials are not required for these methods
 # if ngrok is used, security is provided by http auth set in the ngrok config
 def address_handler(address_id, address_state):
@@ -80,7 +80,7 @@ def address_handler(address_id, address_state):
 
 # CLUSTER METHODS
 # deal with adding/removing/viewing images and flavors
-@mod.route('/api/images/<int:image_id>/<string:image_method>', methods=('GET', 'POST'))
+@mod.route('/api/images/<int:image_id>/<string:image_method>', methods=['GET', 'POST'])
 @login_required
 def images_handler(image_id, image_method):
 	# get the matching image
@@ -95,7 +95,7 @@ def images_handler(image_id, image_method):
 	
 	return jsonify({"response": result['response'], "image": row2dict(result['image'])})
 
-@mod.route('/api/flavors/<int:flavor_id>/<string:flavor_method>', methods=('GET', 'POST'))
+@mod.route('/api/flavors/<int:flavor_id>/<string:flavor_method>', methods=['GET', 'POST'])
 @login_required
 def flavors_handler(flavor_id, flavor_method):
 	# get the matching flavor

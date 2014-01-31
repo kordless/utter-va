@@ -168,7 +168,7 @@
             flavor_state = "install";
           }
           $.ajax({
-            url: '/api/flavors/'+flavor_id+'/'+flavor_state+'/'+'?_csrf_token='+csrf_token,
+            url: '/api/flavors/'+flavor_id+'/'+flavor_state+'?_csrf_token='+csrf_token,
             type: 'POST',
           }).done(function(data) {
            if (data.response.indexOf("fail") >= 0) {
@@ -190,7 +190,7 @@
             image_state = "install";
           }
           $.ajax({
-            url: '/api/images/'+image_id+'/'+image_state+'/'+'?_csrf_token='+csrf_token,
+            url: '/api/images/'+image_id+'/'+image_state+'?_csrf_token='+csrf_token,
             type: 'POST',
           }).done(function(data) {
             if (data.response.indexOf("fail") >= 0) {
@@ -208,7 +208,7 @@
         image_id = this.id.split("-").pop();
         setInterval(function() {
           $.ajax({
-            url: '/api/images/'+image_id+'/detail/',
+            url: '/api/images/'+image_id+'/detail',
           }).done(function(data) {
             console.log(data.image.active);
             if (data.image.osid && data.image.active == 2) {
