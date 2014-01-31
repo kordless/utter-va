@@ -110,7 +110,7 @@ def flavors_handler(flavor_id, flavor_method):
 
 # SYNC METHODS
 # fetches data from pool operator and populates local tables
-@mod.route('/api/images/sync', methods=('GET', 'POST'))
+@mod.route('/api/images/sync', methods=['GET'])
 @login_required
 def images_sync():
 	try:
@@ -131,7 +131,7 @@ def images_sync():
 
 	return jsonify({"response": response})	
 
-@mod.route('/api/flavors/sync', methods=('GET', 'POST'))
+@mod.route('/api/flavors/sync', methods=['GET'])
 @login_required
 def flavors_sync():
 	try:

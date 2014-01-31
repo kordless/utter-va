@@ -12,7 +12,7 @@ def load_user(user_id):
 	return User.query.get(int(user_id))
 
 # home page
-@mod.route('/login', methods=('GET', 'POST'))
+@mod.route('/login', methods=['GET', 'POST'])
 def login():
 	# if user is already logged in go to status
 	if current_user.is_authenticated():
