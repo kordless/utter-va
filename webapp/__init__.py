@@ -4,9 +4,13 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager, current_user
 from flask.ext.actions import Manager
 from flask.ext.bcrypt import Bcrypt
+from webapp.libs.reverseproxy import ReverseProxied
 
 # app setup
 app = Flask(__name__) # main app object
+
+# reverse proxy setup
+app.wsgi_app = ReverseProxied(app.wsgi_app)
 
 # configuration file
 if os.path.isfile('./DEV'): 
@@ -43,7 +47,7 @@ def favicon():
 	return send_from_directory(os.path.join(app.root_path, 'static'), 'img/favicon.ico')
 
 
-@app.route("/", methods=['GET', 'POST'])
+@app.route("/", methods=['GET'])
 def index():
 	return render_template('index.html')
 
