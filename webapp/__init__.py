@@ -1,16 +1,23 @@
 import os
-from flask import Flask, request, render_template, send_from_directory
+from flask import Flask, request, Request, render_template, send_from_directory
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager, current_user
 from flask.ext.actions import Manager
 from flask.ext.bcrypt import Bcrypt
-from webapp.libs.reverseproxy import ReverseProxied
 
+# handle SSL termination through ngrok
+class ProxiedRequest(Request):
+    def __init__(self, environ, populate_request=True, shallow=False):
+        super(Request, self).__init__(environ, populate_request, shallow)
+        
+        if self.headers.get('X-Forwarded-Proto') == 'https':
+        	environ['wsgi.url_scheme'] = 'https'
+            
 # app setup
-app = Flask(__name__) # main app object
+app = Flask(__name__)
 
-# reverse proxy setup
-app.wsgi_app = ReverseProxied(app.wsgi_app)
+# apply SSL termination handling
+app.request_class = ProxiedRequest
 
 # configuration file
 if os.path.isfile('./DEV'): 

@@ -20,14 +20,14 @@ def login():
 
 	# if there are no users in the db redirect to register
 	if not db.session.query(User).first():
-		return redirect(url_for('.register', scheme="https"))
+		return redirect(url_for('.register'))
 
 	# load form and check login
 	form = LoginForm(request.form)
 	if form.validate_on_submit():
 		user = form.get_user()
 		login_user(user)
-		return redirect(request.args.get("next") or url_for("index", scheme="https"))
+		return redirect(request.args.get("next") or url_for("index"))
 	
 	return render_template('users/login.html', form=form)
 
