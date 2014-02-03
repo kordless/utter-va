@@ -157,6 +157,8 @@ EOF
 
 # restart monit service
 service monit restart
+sleep 2
+monit monitor all
 
 # build the database and sync with pool operator
 sudo su -c "/var/www/xoviova/manage.py install" -s /bin/sh www-data

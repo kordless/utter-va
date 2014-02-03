@@ -120,12 +120,20 @@ def tunnel(app):
 
 	return action
 
+def clean(app):
+	def action():
+		path = os.path.dirname(os.path.abspath(__file__))
+		os.system('rm tunnel.conf.*')
+	return action
+
+
 # command line commands
 manager.add_action('sync', sync)
 manager.add_action('reset', reset)
 manager.add_action('serve', serve)
 manager.add_action('install', install)
 manager.add_action('tunnel', tunnel)
+manager.add_action('clean', clean)
 
 if __name__ == "__main__":
 	manager.run()
