@@ -1,8 +1,8 @@
-from webapp import db
+from webapp import app, db
 from webapp.mixins import CRUDMixin
 from webapp.libs.geoip import get_geodata
 from webapp.libs.utils import generate_token
-from webapp import app, db
+from keystoneclient.v2_0 import client as keyclient
 
 # openstack database
 class OpenStack(CRUDMixin,  db.Model):
@@ -24,6 +24,26 @@ class OpenStack(CRUDMixin,  db.Model):
 
     def __repr__(self):
         return '<TenantID %r>' % (self.tenantid)
+
+    # check we are good to talk to openstack 
+    def check(self):
+        openstack = db.session.query(OpenStack).first()
+
+        if openstack:
+            try:
+                keystone = keyclient.Client(
+                    username = openstack.osusername,
+                    password = openstack.ospassword,
+                    tenant_id = openstack.tenantid,
+                    auth_url = openstack.authurl
+                )
+            except:
+                return False
+        else:
+            return False
+        
+        return True
+
 
 # appliance database
 class Appliance(CRUDMixin,  db.Model):
@@ -58,6 +78,9 @@ class Appliance(CRUDMixin,  db.Model):
         self.ngroktoken = ""
         self.paymentaddress = ""
 
+        # create entry
+        self.update(self)
+
     def token_refresh(self):
         self.apitoken = generate_token(size=64)
 
@@ -69,7 +92,8 @@ class Appliance(CRUDMixin,  db.Model):
             self.serviceurl = "https://%s.example.com/" % hostname
 
     def check(self):
-        if self.paymentaddress and self.ngroktoken:
+        appliance = db.session.query(Appliance).first()
+        if appliance.paymentaddress and appliance.ngroktoken:
             return True
         else:
             return False

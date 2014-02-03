@@ -1,5 +1,8 @@
+import json
+
 from webapp import db
 from webapp.mixins import CRUDMixin
+from webapp.libs.utils import server_connect, row2dict
 
 # instances object
 class Instances(CRUDMixin, db.Model):
@@ -102,49 +105,77 @@ class Images(CRUDMixin,  db.Model):
     def __repr__(self):
         return '<Image %r>' % (self.name)
 
-    def sync(self, remoteimages=None):
-        # update database for images
-        for remoteimage in remoteimages['images']:
-            image = db.session.query(Images).filter_by(md5=remoteimage['md5']).first()
-            
-            if image is None:
-                # we don't have the image coming in from the server
-                image = Images()
+    def check(self):
+        images = db.session.query(Images).all()
 
-                # need help here populating db object from dict - anyone?
-                image.md5 = remoteimage['md5']
-                image.name = remoteimage['name']
-                image.url = remoteimage['url']
-                image.size = remoteimage['size']
-                image.diskformat = remoteimage['diskformat']
-                image.containerformat = remoteimage['containerformat']
-                image.active = 0
-                image.flags = remoteimage['flags']
+        # minimum one image installed?
+        image_active = False
 
-                # add and commit
-                db.session.add(image)
-                db.session.commit()
-            else:
-                # we have the image already, so update
+        for image in images:
+            if image.active:
+                image_active = True
+
+        return image_active
+
+    def sync(self, apitoken):
+        # grab image list from pool server
+        response = server_connect(method="images", apitoken=apitoken)
+
+        if response['response'] == "success":
+            remoteimages = response['result']
+
+            # update database for images
+            for remoteimage in remoteimages['images']:
+                image = db.session.query(Images).filter_by(md5=remoteimage['md5']).first()
                 
-                # check if we need to delete image from local db
-                if remoteimage['flags'] == 9:
-                    image.delete(image)
-                    db.session.commit()
-                    continue
+                if image is None:
+                    # we don't have the image coming in from the server
+                    image = Images()
 
-                # need help here populating db object from dict - anyone?
-                image.md5 = remoteimage['md5']
-                image.name = remoteimage['name']
-                image.url = remoteimage['url']
-                image.size = remoteimage['size']
-                image.diskformat = remoteimage['diskformat']
-                image.containerformat = remoteimage['containerformat']
-                image.flags = remoteimage['flags']
-                
-                # udpate and commit
-                image.update(image)
-                db.session.commit()
+                    # create a new image
+                    image.md5 = remoteimage['md5']
+                    image.name = remoteimage['name']
+                    image.url = remoteimage['url']
+                    image.size = remoteimage['size']
+                    image.diskformat = remoteimage['diskformat']
+                    image.containerformat = remoteimage['containerformat']
+                    image.active = 0
+                    image.flags = remoteimage['flags']
+
+                    # add and commit
+                    image.update(image)
+
+                else:        
+                    # check if we need to delete image from local db
+                    if remoteimage['flags'] == 9:
+                        image.delete(image)
+
+                    # update image from remote images
+                    image.md5 = remoteimage['md5']
+                    image.name = remoteimage['name']
+                    image.url = remoteimage['url']
+                    image.size = remoteimage['size']
+                    image.diskformat = remoteimage['diskformat']
+                    image.containerformat = remoteimage['containerformat']
+                    image.flags = remoteimage['flags']
+                    
+                    # udpate
+                    image.update(image)
+
+            images = db.session.query(Images).all()
+
+            # overload the results with the list of current flavors
+            response['result']['images'] = []
+            images = db.session.query(Images).all()
+            for image in images:
+                response['result']['images'].append(row2dict(image))
+
+            return response
+
+        # failure contacting server
+        else:
+            # lift respose from server call to view
+            return response
 
 
 # flavors object
@@ -173,43 +204,73 @@ class Flavors(CRUDMixin,  db.Model):
     def __repr__(self):
         return '<Flavor %r>' % (self.name)
 
-    def sync(self, remoteflavors=None):
-        # update the database with the flavors
-        for remoteflavor in remoteflavors['flavors']:
-            flavor = db.session.query(Flavors).filter_by(name=remoteflavor['name']).first()
-            if flavor is None:
-                # we don't have the flavor coming in from the server
-                flavor = Flavors()
+    def check(self):
+        flavors = db.session.query(Flavors).all()
 
-                # need help here populating db object from dict - anyone?
-                flavor.name = remoteflavor['name']
-                flavor.comment = remoteflavor['comment']
-                flavor.vpu = remoteflavor['vpu']
-                flavor.mem = remoteflavor['mem']
-                flavor.disk = remoteflavor['disk']
-                flavor.flags = remoteflavor['flags']
-                flavor.active = 0
+        # minimum one flavor installed?
+        flavor_active = False
 
-                # add and commit
-                db.session.add(flavor)
-                db.session.commit()
-            else:
-                # we have the flavor already, so update
+        for flavor in flavors:
+            if flavor.active:
+                flavor_active = True
 
-                # check if we need to delete image from local db
-                if remoteflavor['flags'] == 9:
-                    flavor.delete(flavor)
-                    db.session.commit()
-                    continue
+        return flavor_active
 
-                # need help here populating db object from dict - anyone?
-                flavor.name = remoteflavor['name']
-                flavor.comment = remoteflavor['comment']
-                flavor.vpu = remoteflavor['vpu']
-                flavor.mem = remoteflavor['mem']
-                flavor.disk = remoteflavor['disk']
-                flavor.flags = remoteflavor['flags']
-                
-                # udpate and commit
-                flavor.update(flavor)
-                db.session.commit()
+    def sync(self, apitoken):
+        # grab image list from pool server
+        response = server_connect(method="flavors", apitoken=apitoken)
+
+        if response['response'] == "success":
+            remoteflavors = response['result']
+
+            # update the database with the flavors
+            for remoteflavor in remoteflavors['flavors']:
+                flavor = db.session.query(Flavors).filter_by(name=remoteflavor['name']).first()
+                if flavor is None:
+                    # we don't have the flavor coming in from the server
+                    flavor = Flavors()
+
+                    # create a new flavor
+                    flavor.name = remoteflavor['name']
+                    flavor.comment = remoteflavor['comment']
+                    flavor.vpu = remoteflavor['vpu']
+                    flavor.mem = remoteflavor['mem']
+                    flavor.disk = remoteflavor['disk']
+                    flavor.flags = remoteflavor['flags']
+                    flavor.active = 0
+
+                    # add and commit
+                    flavor.update(flavor)
+                else:
+                    # we have the flavor already, so update
+
+                    # check if we need to delete image from local db
+                    if remoteflavor['flags'] == 9:
+                        flavor.delete(flavor)
+                        continue
+
+                    # update existing flavor
+                    flavor.name = remoteflavor['name']
+                    flavor.comment = remoteflavor['comment']
+                    flavor.vpu = remoteflavor['vpu']
+                    flavor.mem = remoteflavor['mem']
+                    flavor.disk = remoteflavor['disk']
+                    flavor.flags = remoteflavor['flags']
+                    
+                    # udpate
+                    flavor.update(flavor)
+            
+
+            # overload the results with the list of current flavors
+            response['result']['flavors'] = []
+            flavors = db.session.query(Flavors).all()
+            for flavor in flavors:
+                response['result']['flavors'].append(row2dict(flavor))
+
+            return response
+
+        # failure contacting server
+        else:
+            # lift the response from server to view
+            return response
+

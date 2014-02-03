@@ -1,54 +1,47 @@
-import re, os
+import re
+import os
 from urllib2 import urlopen
-from flask import Blueprint, render_template, flash, redirect, session, url_for, request, g
+
+from flask import Blueprint, render_template, flash, redirect, session, url_for, request
 from flask.ext.login import login_user, logout_user, current_user, login_required
+
 from webapp import app, db, bcrypt, login_manager
 from webapp.users.models import User
 from webapp.api.models import Images, Flavors, Instances
 from webapp.configure.models import OpenStack, Appliance
-from webapp.libs.openstack import openstack_auth_check
-from forms import OpenStackForm, ApplianceForm, InstanceForm
+from webapp.configure.forms import OpenStackForm, ApplianceForm, InstanceForm
 from webapp.libs.geoip import get_geodata
-from webapp.libs.utils import blockchain_address, generate_token
+from webapp.libs.utils import generate_token
+from webapp.libs.blockchain import blockchain_address
 
 mod = Blueprint('configure', __name__)
 
-# quote strip
-def dequote(string):
-	if string.startswith('"') and string.endswith('"'):
-		string = string[1:-1]
-	return string
-
-# check our settings for warnings - tried to put this in utils.py to no avail
+# check settings for setup warning indicators
 def check_settings():
+	# objects
+	appliance = Appliance()
+	openstack = OpenStack()
+	images = Images()
+	flavors = Flavors()
+
 	# openstack connected?
-	check_openstack = openstack_auth_check()
+	check_openstack = openstack.check()
 	
 	# appliance setup?
-	appliance = db.session.query(Appliance).first()
 	check_appliance = appliance.check()
 	
-	# minimum one flavor installed?
-	flavor_active = False
-	flavors = db.session.query(Flavors).all()
-	for flavor in flavors:
-		if flavor.active:
-			flavor_active = True
-
-	# minimum one image installed?
-	image_active = False
-	images = db.session.query(Images).all()
-	for image in images:
-		if image.active:
-			image_active = True
-
-	# put both together
-	if image_active and flavor_active:
+	# one image and one flavor installed?
+	if images.check() and flavors.check():
 		check_systems = True
 	else:
 		check_systems = False
 
-	settings = {"appliance": check_appliance, "systems": check_systems, "openstack": check_openstack}
+	settings = {
+		"appliance": check_appliance, 
+		"systems": check_systems, 
+		"openstack": check_openstack
+	}
+	
 	return settings
 
 # user login callback
@@ -56,6 +49,7 @@ def check_settings():
 def load_user(user_id):
 	return User.query.get(int(user_id))
 
+# file upload extensions
 ALLOWED_EXTENSIONS = set(['sh'])
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
@@ -97,7 +91,7 @@ def configure_instances():
 			instance_secret = generate_token(size=16, caselimit=False)
 			callback_url = "%s/api/instances/%s/payment" % (appliance.serviceurl.strip("/"), instance_token)
 			response = blockchain_address(appliance.paymentaddress, callback_url)
-			
+			print response
 			# test the response for validity
 			if response['response'] == "success":
 				# load form variables first
@@ -144,7 +138,7 @@ def configure_instances():
 def configure():
 	# check configuration
 	settings = check_settings()
-	
+
 	# get the form
 	form = ApplianceForm(request.form)
 	
@@ -165,22 +159,24 @@ def configure():
 			form.populate_obj(appliance)
 			appliance.apitoken = request.form['api-token-hidden']
 			appliance.update(appliance)
-			db.session.commit()
 
 			# if the ngrok token changed, create a new service url
 			if current_ngrok_token != new_ngrok_token:
 				appliance.service_url_refresh()
 				appliance.update(appliance)
-				db.session.commit()
 
 			return redirect(url_for(".configure"))
 
 		else:
+			response = False
 			for error in form.paymentaddress.errors:
-				flash(error)
+				response = error
+			if not response:
+				response = "There were form errors. Please check your entries and try again."
+			flash(response, "form-error")
 
 	# get existing form data
-	appliance = form.get_appliance()
+	appliance = db.session.query(Appliance).first()
 
 	# if no geodata, get it
 	if not appliance:
@@ -193,8 +189,9 @@ def configure():
 			appliance['latitude'] = 0
 			appliance['longitude'] = 0	
 	else:
+		# populate the new form with seed location
 		try:
-			# just testing the values are correct
+			# test the values are correct
 			lat = float(appliance.latitude)
 			lon = float(appliance.longitude)
 		except ValueError, TypeError:
@@ -212,14 +209,27 @@ def configure():
 @mod.route('/configure/openstack', methods=['GET', 'POST'])
 @login_required
 def configure_openstack():
+# quote strip
+	def dequote(string):
+		if string.startswith('"') and string.endswith('"'):
+			string = string[1:-1]
+		return string
+
 	# check configuration
 	settings = check_settings()
 
 	# get the form
 	form = OpenStackForm(request.form)
 
+	# try to select one and only record
+	openstack = db.session.query(OpenStack).first()
+
+	# create new entry if configuration doesn't exist
+	if not openstack:
+		openstack = OpenStack()
+
 	if request.method == 'POST':
-		# take our file and loop through it grabbing key values
+		# handle a file upload
 		try:
 			file = request.files['file']
 		except:
@@ -232,16 +242,6 @@ def configure_openstack():
 				if len(keyval) > 0:
 					keyvals.update(keyval)
 			
-			# try to select one and only record
-			openstack = db.session.query(OpenStack).first()
-
-			# delete existing entry
-			if openstack:
-				openstack.delete()
-				db.session.commit()
-			
-			# create new entry handle
-			openstack = OpenStack()
 			
 			# set values from extracted lines above - needs SQL injection protection?
 			openstack.authurl = "%s" % dequote(keyvals['OS_AUTH_URL']) 
@@ -250,35 +250,27 @@ def configure_openstack():
 			openstack.osusername = "%s" % dequote(keyvals['OS_USERNAME']) 
 			openstack.ospassword = "changeme"
 
-			# write it out to database
-			db.session.add(openstack)
-			db.session.commit()
+			# update entry
+			openstack.update(openstack)
 		
 		elif file:
 			# file type not allowed
-			flash("File type not allowed or empty.  Try again.", 'file-error')
+			flash("File type not allowed or empty.  Try again.", "file-error")
 		
 		else:
 			# user is manually updating form
 			if form.validate_on_submit():
-				# try to select one and only record
-				openstack = db.session.query(OpenStack).first()
-
-				# delete existing entry
-				if openstack:
-					openstack.delete()
-					db.session.commit()
-				
-				# create new entry, populate with form, write to db
-				openstack = OpenStack()
+				# populate with form and update
 				form.populate_obj(openstack)
 				openstack.update(openstack)
-				db.session.commit()
 
 				return redirect(url_for(".configure_openstack"))
+			else:
+				flash("There were form errors. Please check your entries and try again.", "form-error")
 
-	# load form and existing openstack settings, if they exist
-	openstack = form.get_openstack()
+	# get existing form data
+	openstack = db.session.query(OpenStack).first()
+
 	return render_template('configure/openstack.html', settings=settings, form=form, openstack=openstack)	
 
 

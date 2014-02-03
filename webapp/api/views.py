@@ -1,30 +1,21 @@
-import re
-import os, sys, socket, json
+import os
+import sys
 from urllib2 import urlopen
+
 from flask import Blueprint, render_template, jsonify, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
+
 from webapp import app, db, bcrypt, login_manager
 from webapp.users.models import User
 from webapp.api.models import Images, Flavors
 from webapp.configure.models import OpenStack, Appliance
+from webapp.libs.utils import row2dict
 from webapp.libs.openstack import image_install, image_detail, image_remove, images_cleanup, flavor_install, flavor_remove, flavors_cleanup
 
 mod = Blueprint('api', __name__)
 
-def row2dict(row):
-    d = {}
-    for column in row.__table__.columns:
-        d[column.name] = getattr(row, column.name)
-
-    return d
-
-# remote connection
-def server_connect( method = "version" ):
-	appliance = db.session.query(Appliance).first()
-	url = app.config['APP_WEBSITE'] + '/api/%s?ver=' % method + app.config['VERSION'] + '&apitoken=' + appliance.apitoken
-	response = urlopen(url, timeout=10).read()
-	return json.loads(response)
-
+# TOKEN METHODS
+# issue new tokens and proxy validation to pool operator
 @mod.route('/api/token/generate', methods=('GET', 'POST'))
 @login_required
 def token_generate():
@@ -32,17 +23,7 @@ def token_generate():
 	appliance = db.session.query(Appliance).first()
 	appliance.token_refresh()
 	appliance.update(appliance)
-	db.session.commit()
-	return render_template('response.json', response="success")
 
-@mod.route('/api/serviceurl/generate', methods=['GET', 'POST'])
-@login_required
-def service_url_generate():
-	# update appliance database with a new service url
-	appliance = db.session.query(Appliance).first()
-	appliance.service_url_refresh()
-	appliance.update(appliance)
-	db.session.commit()
 	return render_template('response.json', response="success")
 
 @mod.route('/api/token/validate', methods=['GET', 'POST'])
@@ -58,6 +39,16 @@ def token_validate():
 	except:
 		validate_token['response'] = "invalid"
 		return render_template('response.json', response=validate_token['response']), 403
+
+@mod.route('/api/serviceurl/generate', methods=['GET', 'POST'])
+@login_required
+def service_url_generate():
+	# update appliance database with a new service url
+	appliance = db.session.query(Appliance).first()
+	appliance.service_url_refresh()
+	appliance.update(appliance)
+
+	return render_template('response.json', response="success")
 
 # INSTANCE ADDRESS METHODS
 # deal with adding/removing/viewing instance addresses for deposit
@@ -78,7 +69,7 @@ def address_handler(address_id, address_state):
 	return jsonify({"response": result['response'], "image": row2dict(result['image'])})
 
 
-# CLUSTER METHODS
+# SYSTEM METHODS
 # deal with adding/removing/viewing images and flavors
 @mod.route('/api/images/<int:image_id>/<string:image_method>', methods=['GET', 'POST'])
 @login_required
@@ -113,39 +104,30 @@ def flavors_handler(flavor_id, flavor_method):
 @mod.route('/api/images/sync', methods=['GET'])
 @login_required
 def images_sync():
-	try:
-		remoteimages = server_connect("images")
+	appliance = db.session.query(Appliance).first()
 
-		# update images from server
-		images = Images()
-		images.sync(remoteimages)
+	# update images from server
+	images = Images()
+	response = images.sync(appliance.apitoken)
 
-		# do a pass to cleanup the images database
-		results = images_cleanup()
+	if response['response'] == "success":
+	# do a pass to audit the images database with OpenStack's images
+		cleanup_response = images_cleanup(images.get_all())
 
-		# return the list of images
-		return jsonify(results)
-
-	except Exception as ex:
-		response = "fail on %s" % ex
-
-	return jsonify({"response": response})	
+	return jsonify(response)	
 
 @mod.route('/api/flavors/sync', methods=['GET'])
 @login_required
 def flavors_sync():
-	try:
-		remoteflavors = server_connect("flavors")
+	appliance = db.session.query(Appliance).first()
 
-		# update flavors from server
-		flavors = Flavors()
-		flavors.sync(remoteflavors)
+	# update flavors from server
+	flavors = Flavors()
+	response = flavors.sync(appliance.apitoken)
 
-		# do a pass to cleanup the flavor database
-		flavors = flavors_cleanup()
-		return jsonify(flavors)
+	if response['response'] == "success":
+		# do a pass to audit the flavors database with OpenStack's flavors
+		cleanup_response = flavors_cleanup(flavors.get_all())
+		print cleanup_response
 
-	except Exception as ex:
-		response = "fail on %s" % ex
-
-	return jsonify({"response": response})
+	return jsonify(response)

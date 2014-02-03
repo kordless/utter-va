@@ -44,19 +44,19 @@
     <li><a href="{{ url_for("configure.configure_instances") }}">Instance Payments</a></li>
   </ul>
   <div class="page-header">
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-danger alert-dismissable">
+          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+          <strong>{{ message }}</strong>
+        </div>
+      {% endfor %}
+    {% endif %}
+    {% endwith %}
     <h3>Appliance Configuration</h3>
     <p>Fill out the following form to configure your appliance.  Instructions for the form are available by hovering over the respective fields.</p>
     <p>
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-danger alert-dismissable">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-            <strong>{{ message }}</strong>
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
   </div>
   <form action="{{ url_for("configure.configure") }}" method="post" class="form-horizontal" role="form">
     {{ form.csrf_token }}
@@ -174,7 +174,7 @@
         apitoken = $('#api-token').val();
         window.open("{{ config['APP_WEBSITE'] }}"+"/tokens/register?token="+apitoken);
       });
-      $('#get-blockchain-wallet').click(function() {
+      $('#get-blockchain-address').click(function() {
         window.open("https://blockchain.info/wallet/new");
       });
       $('#get-ngrok-token').click(function() {

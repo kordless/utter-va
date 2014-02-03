@@ -1,40 +1,21 @@
 import os
 from subprocess import Popen
+
 from novaclient.v1_1 import client as novaclient
-from keystoneclient.v2_0 import client as keyclient
+
 from webapp import app, db
-from webapp.configure.models import OpenStack, Appliance
-from webapp.api.models import Flavors, Images
+from webapp.configure.models import OpenStack
 from webapp.libs.exceptions import OpenStackConfiguration
-
-def openstack_auth_check():
-	# get the cluster configuration and check we are good to talk to openstack
-	openstack = db.session.query(OpenStack).first()
-
-	if openstack:
-		try:
-			keystone = keyclient.Client(
-				username = openstack.osusername,
-				password = openstack.ospassword,
-				tenant_id = openstack.tenantid,
-				auth_url = openstack.authurl
-			)
-		except:
-			return False
-	else:
-		return False
-	
-	return True
 	
 def image_install(image):
 	try:
-		# try doing an auth
-		if not openstack_auth_check():
-			raise OpenStackConfiguration("OpenStack configuration isn't complete.")
-		
 		# get openstack credentials
 		openstack = db.session.query(OpenStack).first()
 
+		# try doing an auth
+		if not openstack.check():
+			raise OpenStackConfiguration("Check your OpenStack configuration.")
+		
 		# this is hackish bullshit, but I couldn't figure out how to get the
 		# proper service URL for glance.  using command line version instead.
 		Popen(["glance", 
@@ -138,59 +119,70 @@ def image_remove(image):
 
 	return ({"response": response, "image": image})
 
-def images_cleanup():
+def images_cleanup(images):
 	# get the cluster configuration
 	openstack = db.session.query(OpenStack).first()
+
+	# default response
+	response = {"response": "success", "result": "Cleanup successful."}
+
 	
-	# what happens if they haven't configured it already?
+	# if we can't talk to OpenStack
 	if not openstack:
-		pass
+		response['response'] = "fail"
+		response['result'] = "OpenStack configuration entry missing."
+		return response
+		
+	if not openstack.check():
+		response['response'] = "fail"
+		response['result'] = "Can't communicate with OpenStack cluster."
+		return response
 
-	# establish connection to openstack
-	nova = novaclient.Client(openstack.osusername, openstack.ospassword, openstack.tenantname, openstack.authurl, service_type="compute")
-	osimages = nova.images.list()
+	else:
+		# establish connection to openstack
+		nova = novaclient.Client(openstack.osusername, openstack.ospassword, openstack.tenantname, openstack.authurl, service_type="compute")
+		osimages = nova.images.list()
 
-	# get list of currently known images
-	images = db.session.query(Images).all()
+		# images in appliance database
+		for image in images:
+			# set this images to be not installed until we find out otherwise
+			install_flag = False
 
-	# create the results template
-	results = {'response': 'success', 'images': []}
-
-	# there's got to be a better way...probably with a generator
-	# images in appliance database
-	for image in images:
-		# set this images to be not installed until we find out otherwise
-		install_flag = False
-
-		# images coming from OpenStack
-		for osimage in osimages:
-			if image.osid == osimage.id:
-				# indicated this is installed and active
-				image_iter = db.session.query(Images).filter_by(id=image.id).first()
-				results['images'].append({"id": image.id, "active": 2})
-				install_flag = True
-				image_iter.active = 2
-				image_iter.update(image_iter)
-
-			elif image.name == osimage.name:
-				# if image names match, but osimage.id does not, populate osid
-				# this happens if the image is already installed & we don't know about it
-				image_iter = db.session.query(Images).filter_by(id=image.id).first()
-				image_iter.osid = osimage.id
-				image_iter.active = 1
-				image_iter.update(image_iter)
-				results['images'].append({"id": image.id, "active": 1})
-				install_flag = True
-
+			# images coming from OpenStack
+			for osimage in osimages:
+				if image.osid == osimage.id:
+					# indicate this is installed and active
+					if osimage.status == "ACTIVE":
+						print osimage.status
+						image.active = 2
+					else:
+						image.active = 1
+					image.update(image)
+					
+					# indicated this is installed and active
+					install_flag = True
+				
+				elif image.name == osimage.name:
+					# if image names match, but osimage.id does not, populate osid
+					# this happens if the image is already installed & we don't know about it
+					install_flag = True
+					image.osid = osimage.id
+					if osimage.status == "ACTIVE":
+						image.active = 2
+					else:
+						image.active = 1
+					image.update(image)
+					
+					# indicated this is installed and active
+					install_flag = True
+		
 		if not install_flag:
 			# clear this entry's id while we're here cause it's not installed
-			image_iter = db.session.query(Images).filter_by(id=image.id).first()
-			image_iter.osid = ""
-			image_iter.active = 0
-			image_iter.update(image_iter)
-			results['images'].append({"id": image.id, "active": 0})
-
-	return results
+			image.osid = ""
+			image.active = 0
+			image.update(image)
+			
+	return response
 
 def flavor_install(flavor):
 	try:
@@ -251,55 +243,61 @@ def flavor_remove(flavor):
 
 	return ({"response": response, "flavor": flavor})
 
-def flavors_cleanup():
+def flavors_cleanup(flavors):
 	# get the cluster configuration
 	openstack = db.session.query(OpenStack).first()
 	
-	# what happens if they haven't configured it already?
+	# default response
+	response = {"response": "success", "result": "Cleanup successful."}
+	
+	# if we can't talk to OpenStack
 	if not openstack:
-		pass
+		response['response'] = "fail"
+		response['result'] = "OpenStack configuration entry missing."
+		return response
 
-	# establish connection to openstack
-	nova = novaclient.Client(openstack.osusername, openstack.ospassword, openstack.tenantname, openstack.authurl, service_type="compute")
-	osflavors = nova.flavors.list()
+	if not openstack.check():
+		response['response'] = "fail"
+		response['result'] = "Can't communicate with OpenStack cluster."
+		return response
 
-	# get list of currently known flavors
-	flavors = db.session.query(Flavors).all()
+	else:
+		# establish connection to openstack
+		nova = novaclient.Client(openstack.osusername, openstack.ospassword, openstack.tenantname, openstack.authurl, service_type="compute")
+		osflavors = nova.flavors.list()
 
-	# create the results template
-	results = {'response': 'success', 'flavors': []}
+		# flavors in appliance database
+		for flavor in flavors:
+			# set this flavor to be not installed until we find out otherwise
+			install_flag = False
 
-	# there's got to be a better way...probably with a generator
-	# flavors in appliance database
-	for flavor in flavors:
-		# set this flavor to be not installed until we find out otherwise
-		install_flag = False
+			# flavors coming from OpenStack
+			for osflavor in osflavors:
+				if flavor.osid == osflavor.id:
+					# indicate flavor is installed and active
+					flavor.active = 1
+					flavor.update(flavor)
 
-		# flavors coming from OpenStack
-		for osflavor in osflavors:
-			if flavor.osid == osflavor.id:
-				# indicated this is installed and active
-				results['flavors'].append({"id": flavor.id, "state": "active"})
-				install_flag = True
-			elif flavor.name == osflavor.name:
-				# if flavor names match, but osflavor.id does not, populate osid
-				# this happens if the flavor is already installed & we don't know about it
-				flavor_iter = db.session.query(Flavors).filter_by(id=flavor.id).first()
-				flavor_iter.osid = osflavor.id
-				flavor_iter.active = 1
-				flavor_iter.update(flavor_iter)
-				results['flavors'].append({"id": flavor.id, "state": "active"})
-				install_flag = True
+					# indicated this is installed and active
+					install_flag = True
+				
+				elif flavor.name == osflavor.name:
+					# if flavor names match, but osflavor.id does not, populate osid
+					# this happens if the flavor is already installed & we don't know about it
+					flavor.osid = osflavor.id
+					flavor.active = 1
+					flavor.update(flavor)
 
-		if not install_flag:
-			# clear this entry's id while we're here cause it's not installed
-			flavor_iter = db.session.query(Flavors).filter_by(id=flavor.id).first()
-			flavor_iter.osid = ""
-			flavor_iter.active = 0
-			flavor_iter.update(flavor_iter)
-			results['flavors'].append({"id": flavor.id, "state": 0})
+					# indicated this is installed and active
+					install_flag = True
 
-	return results
+			if not install_flag:
+				# clear this entry's id while we're here cause it's not installed
+				flavor.osid = ""
+				flavor.active = 0
+				flavor.update(flavor)
+
+		return response
 
 def start_instance():
 	pass

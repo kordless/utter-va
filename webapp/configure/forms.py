@@ -1,10 +1,11 @@
 from flask.ext.wtf import Form, fields, validators
 from wtforms import TextField, PasswordField, IntegerField, DecimalField, ValidationError
 from wtforms.validators import Required, Email, EqualTo
+
+from webapp import db
 from webapp.configure.models import OpenStack, Appliance
 from webapp.api.models import Instances
-from webapp.libs.utils import blockchain_validate
-from webapp import db
+from webapp.libs.blockchain import blockchain_validate
 
 class OpenStackForm(Form):
 	authurl = TextField(validators=[Required()])
@@ -12,9 +13,6 @@ class OpenStackForm(Form):
 	tenantid = TextField(validators=[Required()])
 	osusername = TextField(validators=[Required()])
 	ospassword = PasswordField(validators=[Required()])
-
-	def get_openstack(self):
-		return db.session.query(OpenStack).first()
 
 def paymentaddress_validate(form, field):
 	result = blockchain_validate(field.data)
@@ -24,13 +22,11 @@ def paymentaddress_validate(form, field):
 class ApplianceForm(Form):
 	paymentaddress = TextField(validators=[Required(), paymentaddress_validate])
 	apitoken = TextField()
-	ngroktoken = TextField()
+	ngroktoken = TextField(validators=[Required("The SSL Tunnel Token is required.")])
 	serviceurl = TextField()
 	latitude = TextField(validators=[Required()])
 	longitude = TextField(validators=[Required()])
 
-	def get_appliance(self):
-		return db.session.query(Appliance).first()
 
 class InstanceForm(Form):
 	created = IntegerField()
@@ -50,6 +46,3 @@ class InstanceForm(Form):
 	destination = TextField()
 	inputaddress = TextField()
 	transactionhash = TextField()
-
-	def get_instance(self):
-		return db.session.query(Instance).first()

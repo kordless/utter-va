@@ -228,7 +228,7 @@
           }).done(function(data) {
             console.log(data);
             if (data.response.indexOf("fail") >= 0) {
-              {% if config['DEBdUG'] == True %}
+              {% if config['DEBUG'] == True %}
                 $('#failure-modal-message').html("The message from the system was: "+data.response);
               {% endif %}
               $('#failure-modal').modal('toggle')

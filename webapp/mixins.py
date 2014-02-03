@@ -5,6 +5,10 @@ class CRUDMixin(object):
 
     id = db.Column(db.Integer, primary_key=True)
 
+    @classmethod 
+    def get_all(cls):
+        return cls.query.all()
+        
     @classmethod
     def get_by_id(cls, id):
         if any(

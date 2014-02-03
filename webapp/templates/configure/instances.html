@@ -94,6 +94,16 @@
   </form>
   <div>
     <div class="page-header">
+      {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-danger alert-dismissable">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+            <strong>{{ message }}</strong>
+          </div>
+        {% endfor %}
+      {% endif %}
+      {% endwith %}
       <h3>Instance Addresses</h3>
       <p>An instance address represents a payment destination used for starting a predefined OpenStack instance on this appliance. Bitcoin payments to an instance address are monitored by this appliance via <a href="http://blockchanin.info/">Blockchain.info's</a> API based payment callback service.</p>
       <p>Instance addresses are automatically created on this appliance via callbacks initiated by the the <a href="{{ config['POOL_WEBSITE'] }}">{{ config['POOL_NAME'] }}</a> site.  Instances are not provisioned by this appliance until a payment has been verified as being sent by the end user to a corresponding instance input address below.</p>

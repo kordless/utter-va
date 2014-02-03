@@ -47,15 +47,17 @@
     <h3>OpenStack Credentials</h3>
     <p>The OpenStack credentials used by this virtual appliance can be imported by uploading your <a href="http://docs.openstack.org/user-guide/content/cli_openrc.html"><strong>OpenStack API RC file</strong></a>. Navigate and login to your OpenStack UI and then click on the <strong>Access and Security</strong> tab to the left under the <strong>Project</strong> tab.  Click on the <strong>API Access</strong> tab at the top and then click on the <strong>Download OpenStack RC File</strong> button at the top right.  Save this file locally, then click on the <strong>Select RC File</strong> button below to upload.</p>
     <p><em>Please note you will need to manually set the password below once you have imported the RC file.</em></p>
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        {% for message in messages %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for type, message in messages %}
+        {% if type == 'form-error' %}
           <div class="alert alert-danger alert-dismissable">
             <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
             <strong>{{ message }}</strong>
           </div>
-        {% endfor %}
-      {% endif %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
     {% endwith %}
   </div>
   <form action="{{ url_for("configure.configure_openstack") }}" method=post enctype=multipart/form-data>
