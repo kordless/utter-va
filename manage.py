@@ -106,6 +106,9 @@ def install(app):
 		flavors = Flavors()
 		response = flavors.sync(appliance.apitoken)
 
+		# configure output
+		configure_blurb()
+		
 	return action
 
 def tunnel(app):

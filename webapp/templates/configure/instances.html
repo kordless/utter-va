@@ -110,6 +110,7 @@
       <p>A manual instance address can be created by clicking the <strong>Create Instance Payment</strong> button.  The resulting address can be used for testing purposes, promotion on a third party website or for exchanging compute resources with an untrusted entity.</p>
     <button class="btn btn-default" id="create-instance-button"><span class="glyphicon glyphicon-credit-card"></span> Create Instance Address</button>
     </div>
+    {% if show_instances %}
     <div class="page-header">
       <h3 id="grid">Active Addresses</h3>
     </div>
@@ -144,8 +145,9 @@
         {% endfor %}
       </tbody>
     </table>
+    <hr/>
+    {% endif %}
   </div>
-  <hr/>
 </div>
 {% endblock %}
 

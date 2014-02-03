@@ -89,9 +89,11 @@ def configure_instances():
 			# create a token and secret, call blockchain to create callback address
 			instance_token = generate_token(size=16, caselimit=True)
 			instance_secret = generate_token(size=16, caselimit=False)
-			callback_url = "%s/api/instances/%s/payment" % (appliance.serviceurl.strip("/"), instance_token)
+			callback_url = "https://%s.%s/api/instances/%s/payment" % (appliance.subdomain, app.config['POOL_SSL_PROXY_DOMAIN'], instance_token)
+			
+			# give blockchain.info a holler
 			response = blockchain_address(appliance.paymentaddress, callback_url)
-			print response
+
 			# test the response for validity
 			if response['response'] == "success":
 				# load form variables first
@@ -129,8 +131,12 @@ def configure_instances():
 	
 	# load instances
 	instances = db.session.query(Instances).all()
+	if len(instances) > 0:
+		show_instances = True
+	else:
+		show_instances = False
 
-	return render_template('configure/instances.html', settings=settings, form=form, instances=instances, flavors=flavors, images=images)
+	return render_template('configure/instances.html', settings=settings, form=form, instances=instances, flavors=flavors, images=images, show_instances=show_instances)
 
 # configuration pages
 @mod.route('/configure', methods=['GET', 'POST'])

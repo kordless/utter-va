@@ -156,9 +156,9 @@ check process ngrok matching "/usr/local/bin/ngrok -config /var/www/xoviova/tunn
 EOF
 
 # restart monit service
-service monit restart
+sudo service monit restart
 sleep 2
-monit monitor all
+sudo monit monitor all
 
 # build the database and sync with pool operator
 sudo su -c "/var/www/xoviova/manage.py install" -s /bin/sh www-data

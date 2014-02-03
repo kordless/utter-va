@@ -102,7 +102,6 @@ class Appliance(CRUDMixin,  db.Model):
         # move file to backup
         tunnel_conf_file = '%s/%s' % (app.config['BASE_PATH'], app.config['POOL_TUNNEL_CONF'])
 
-        # move the conf file to a backup, just in case we need it
         try:
             with open(tunnel_conf_file):
                 tmpext = generate_token(size=6)
