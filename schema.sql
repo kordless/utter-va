@@ -23,7 +23,8 @@ CREATE TABLE appliance (
   paymentaddress VARCHAR(100),
   apitoken VARCHAR(100) NOT NULL,
   ngroktoken VARCHAR(100),
-  serviceurl VARCHAR(100),
+  subdomain VARCHAR(100),
+  secret VARCHAR(100),
   latitude VARCHAR(100) NOT NULL,
   longitude VARCHAR(100) NOT NULL,
   PRIMARY KEY (id)

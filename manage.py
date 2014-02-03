@@ -4,7 +4,9 @@
 import os
 import sys
 import json
+import yaml
 
+from subprocess import Popen
 from urllib2 import urlopen
 from flask import Flask
 from flaskext.actions import Manager
@@ -87,10 +89,43 @@ def serve(app):
 	
 	return action
 
+def install(app):
+	def action():
+		# run database reset script - use current path to run file
+		path = os.path.dirname(os.path.abspath(__file__))
+		os.system('%s/resetdb.sh %s/' % (path, path))
+
+		# initialize the appliance object
+		appliance = Appliance()
+		appliance.initialize()
+		
+		# sync to remote database
+		images = Images()
+		response = images.sync(appliance.apitoken)
+
+		flavors = Flavors()
+		response = flavors.sync(appliance.apitoken)
+
+	return action
+
+def tunnel(app):
+	def action():
+		# get the appliance configuration
+		appliance = db.session.query(Appliance).first()
+
+		if appliance.ngroktoken and appliance.paymentaddress:
+			appliance.build_tunnel_conf()		
+		else:
+			configure_blurb()
+
+	return action
+
 # command line commands
 manager.add_action('sync', sync)
 manager.add_action('reset', reset)
 manager.add_action('serve', serve)
+manager.add_action('install', install)
+manager.add_action('tunnel', tunnel)
 
 if __name__ == "__main__":
 	manager.run()

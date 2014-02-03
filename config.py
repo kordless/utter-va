@@ -1,8 +1,6 @@
 import os
-import shellconfig
 
 _basedir = os.path.abspath(os.path.dirname(__file__))
-
 
 class BaseConfiguration(object):
 
@@ -10,12 +8,15 @@ class BaseConfiguration(object):
 	POOL_NAME = "StackMonkey"
 	POOL_NAME_LOWER = ''.join(POOL_NAME.split()).lower()
 	POOL_WEBSITE = "http://www.stackmonkey.com/".strip("/")
+	POOL_SSL_PROXY_DOMAIN = "ngrok.com"
+	POOL_SSL_ADDRESS = "ngrokd.%s:443" % POOL_SSL_PROXY_DOMAIN
 	POOL_TWITTER_HANDLE = "stackape"
 	POOL_TWITTER_NAME = POOL_NAME
 	POOL_LINKEDIN_HANDLE = POOL_NAME_LOWER
 	POOL_LINKEDIN_NAME = POOL_NAME
 	POOL_GPLUS_HANDLE = POOL_NAME_LOWER
 	POOL_GPLUS_NAME = POOL_NAME
+	POOL_TUNNEL_CONF = 'tunnel.conf'
 	# End Pool Customization
 
 	DEBUG = False
@@ -37,6 +38,8 @@ class BaseConfiguration(object):
 	
 	THREADS_PER_PAGE = 8
 
+	BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+	
 # currently not used - revise
 class TestConfiguration(BaseConfiguration):
 	TESTING = True

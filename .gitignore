@@ -1,4 +1,5 @@
 *.pyc
 *.db
+tunnel.conf*
 DEV
 .DS_Store

@@ -186,13 +186,6 @@
         }).done(function() {
           location.reload();
         });
-      });
-      $('#refresh-service-url').click(function() {
-        $.ajax({
-          url: '{{ url_for("api.service_url_generate") }}',
-        }).done(function() {
-          location.reload();
-        });
       });       
     });
   </script>

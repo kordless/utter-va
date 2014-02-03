@@ -23,7 +23,6 @@ class ApplianceForm(Form):
 	paymentaddress = TextField(validators=[Required(), paymentaddress_validate])
 	apitoken = TextField()
 	ngroktoken = TextField(validators=[Required("The SSL Tunnel Token is required.")])
-	serviceurl = TextField()
 	latitude = TextField(validators=[Required()])
 	longitude = TextField(validators=[Required()])
 

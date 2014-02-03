@@ -1,3 +1,7 @@
+import os
+import yaml
+import shutil
+
 from webapp import app, db
 from webapp.mixins import CRUDMixin
 from webapp.libs.geoip import get_geodata
@@ -51,16 +55,18 @@ class Appliance(CRUDMixin,  db.Model):
     id = db.Column(db.Integer, primary_key=True)
     paymentaddress = db.Column(db.String(100), unique=True)
     apitoken = db.Column(db.String(100), unique=True)
-    serviceurl = db.Column(db.String(100), unique=True)
     ngroktoken = db.Column(db.String(100), unique=True)
+    subdomain = db.Column(db.String(100), unique=True)
+    secret = db.Column(db.String(100), unique=True)
     latitude = db.Column(db.String(100), unique=True)
     longitude = db.Column(db.String(100), unique=True)
 
-    def __init__(self, paymentaddress=None, apitoken=None, serviceurl=None, ngroktoken=None, latitude=None, longitude=None):
+    def __init__(self, paymentaddress=None, apitoken=None, ngroktoken=None, subdomain=None, secret=None, latitude=None, longitude=None):
        	self.paymentaddress = paymentaddress
         self.apitoken = apitoken
-        self.serviceurl = serviceurl
         self.ngroktoken = ngroktoken
+        self.subdomain = subdomain
+        self.secret = secret
     	self.latitude = latitude
     	self.longitude = longitude
 
@@ -74,8 +80,9 @@ class Appliance(CRUDMixin,  db.Model):
         self.apitoken = generate_token()
 
         # remainder of settings
-        self.serviceurl = "http://hostname.example.com/"
         self.ngroktoken = ""
+        self.subdomain = generate_token(size=16, caselimit=True)
+        self.secret = generate_token(size=8, caselimit=True)
         self.paymentaddress = ""
 
         # create entry
@@ -84,16 +91,49 @@ class Appliance(CRUDMixin,  db.Model):
     def token_refresh(self):
         self.apitoken = generate_token(size=64)
 
-    def service_url_refresh(self):
-        hostname = generate_token(size=8, caselimit=True)
-        if self.ngroktoken:
-            self.serviceurl = "https://%s.ngrok.com/" % hostname
-        else:
-            self.serviceurl = "https://%s.example.com/" % hostname
-
     def check(self):
         appliance = db.session.query(Appliance).first()
         if appliance.paymentaddress and appliance.ngroktoken:
             return True
         else:
             return False
+
+    def build_tunnel_conf(self):
+        # move file to backup
+        tunnel_conf_file = '%s/%s' % (app.config['BASE_PATH'], app.config['POOL_TUNNEL_CONF'])
+
+        # move the conf file to a backup, just in case we need it
+        try:
+            with open(tunnel_conf_file):
+                tmpext = generate_token(size=6)
+                shutil.move(tunnel_conf_file, "%s.%s" % (tunnel_conf_file, tmpext))
+        except IOError:
+            pass
+
+        # create yaml object and write to file
+        if self.paymentaddress and self.ngroktoken:
+            # build the auth parameters
+            auth = 'xoviova:%s' % self.secret
+
+            # set development port if we are in debug mode
+            if app.config['DEBUG']:
+                port = 5000
+            else:
+                port = 80
+
+            # create data structure for yaml file
+            data = dict(
+                auth_token = self.ngroktoken.encode('ascii','ignore'),
+                tunnels = dict(
+                    xoviova = dict(
+                        subdomain = self.subdomain.encode('ascii', 'ignore'),
+                        auth = auth.encode('ascii', 'ignore'),
+                        proto = dict(
+                            https = port
+                        )
+                    )
+                )
+            )
+            # write the yaml file out
+            with open(tunnel_conf_file, 'w') as yaml_file:
+                yaml_file.write( yaml.dump(data, default_flow_style=False))

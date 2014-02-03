@@ -160,10 +160,8 @@ def configure():
 			appliance.apitoken = request.form['api-token-hidden']
 			appliance.update(appliance)
 
-			# if the ngrok token changed, create a new service url
-			if current_ngrok_token != new_ngrok_token:
-				appliance.service_url_refresh()
-				appliance.update(appliance)
+			# build ngrok config file
+			appliance.build_tunnel_conf()
 
 			return redirect(url_for(".configure"))
 

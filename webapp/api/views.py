@@ -40,16 +40,6 @@ def token_validate():
 		validate_token['response'] = "invalid"
 		return render_template('response.json', response=validate_token['response']), 403
 
-@mod.route('/api/serviceurl/generate', methods=['GET', 'POST'])
-@login_required
-def service_url_generate():
-	# update appliance database with a new service url
-	appliance = db.session.query(Appliance).first()
-	appliance.service_url_refresh()
-	appliance.update(appliance)
-
-	return render_template('response.json', response="success")
-
 # INSTANCE ADDRESS METHODS
 # deal with adding/removing/viewing instance addresses for deposit
 @mod.route('/api/instances/<int:address_id>/<string:address_method>', methods=['GET', 'POST'])

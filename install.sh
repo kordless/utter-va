@@ -23,7 +23,7 @@ sudo apt-get install unzip -y
 sudo apt-get install monit -y
 
 # install pyopenssl
-sudo pip install --upgrede pyopenssl
+sudo pip install --upgrade pyopenssl
 
 # install ngrok
 sudo wget -qO /tmp/ngrok.zip https://dl.ngrok.com/linux_386/ngrok.zip
@@ -142,5 +142,22 @@ sudo a2ensite default-ssl
 # restart apache
 sudo service apache2 restart
 
+# configure monit
+sudo cat <<EOF > /etc/monit/conf.d/xoviova
+set httpd port 5150 and
+    use address localhost
+    allow localhost
+
+set daemon 120
+with start delay 10
+check process ngrok matching "/usr/local/bin/ngrok -config /var/www/xoviova/tunnel.conf start xoviova"
+    start program = "/var/www/xoviova/tunnel.sh"
+    stop program = "/usr/bin/killall screen"
+EOF
+
+# restart monit service
+service monit restart
+
 # build the database and sync with pool operator
-sudo su -c "/var/www/xoviova/manage.py reset" -s /bin/sh www-data
+sudo su -c "/var/www/xoviova/manage.py install" -s /bin/sh www-data
+
