@@ -20,11 +20,12 @@ CREATE TABLE openstack (
 DROP TABLE IF EXISTS appliance;
 CREATE TABLE appliance (
   id INTEGER NOT NULL,
-  paymentaddress VARCHAR(100),
   apitoken VARCHAR(100) NOT NULL,
   ngroktoken VARCHAR(100),
   subdomain VARCHAR(100),
   secret VARCHAR(100),
+  cbapikey VARCHAR(100),
+  cbapisecret VARCHAR(100),
   latitude VARCHAR(100) NOT NULL,
   longitude VARCHAR(100) NOT NULL,
   PRIMARY KEY (id)
@@ -67,15 +68,24 @@ CREATE TABLE instances (
   expires INTEGER NOT NULL,
   osflavorid INTEGER NOT NULL,
   osimageid INTEGER NOT NULL,
-  publicip VARCHAR(100) NOT NULL,
+  publicipv4 VARCHAR(100) NOT NULL,
+  publicipv6 VARCHAR(100) NOT NULL,
   ssltunnel VARCHAR(400) NOT NULL,
   osinstanceid VARCHAR(100),
   name VARCHAR(100) NOT NULL,
   state INTEGER NOT NULL,
   token VARCHAR(100) NOT NULL,
-  secret VARCHAR(100) NOT NULL,
+  paymentaddress VARCHAR NOT NULL,
+  hourlyrate INTEGER NOT NULL,
+  PRIMARY KEY (id)
+);
+
+DROP TABLE IF EXISTS payments;
+CREATE TABLE payments (
+  id INTEGER NOT NULL,
+  created INTEGER NOT NULL,
+  instancetoken INTEGER NOT NULL,
   confirmations INTEGER NOT NULL,
-  callbackurl VARCHAR(400) NOT NULL,
   feepercent REAL NOT NULL,
   destination VARCHAR NOT NULL,
   inputaddress VARCHAR NOT NULL,

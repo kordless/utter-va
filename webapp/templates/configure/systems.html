@@ -41,7 +41,7 @@
         Flavors & Images
       </a>
     </li>
-    <li><a href="{{ url_for("configure.configure_instances") }}">Instance Payments</a></li>
+    <li><a href="{{ url_for("configure.configure_instances") }}">Instances</a></li>
   </ul>
   <div class="modal fade" id="failure-modal">
     <div class="modal-dialog">
@@ -172,7 +172,7 @@
             type: 'POST',
           }).done(function(data) {
            if (data.response.indexOf("fail") >= 0) {
-              $('#failure-modal-message').html("The message from the system was: "+data.response);
+              $('#failure-modal-message').html("The message from the system was: "+data.result);
               $('#failure-modal').modal('toggle')
             } else {
               location.reload();
@@ -194,7 +194,7 @@
             type: 'POST',
           }).done(function(data) {
             if (data.response.indexOf("fail") >= 0) {
-              $('#failure-modal-message').html("The message from the system was: "+data.response);
+              $('#failure-modal-message').html("The message from the system was: "+data.result);
               $('#failure-modal').modal('toggle')
             } else {
               location.reload();
@@ -229,7 +229,7 @@
             console.log(data);
             if (data.response.indexOf("fail") >= 0) {
               {% if config['DEBUG'] == True %}
-                $('#failure-modal-message').html("The message from the system was: "+data.response);
+                $('#failure-modal-message').html("The message from the system was: "+data.result);
               {% endif %}
               $('#failure-modal').modal('toggle')
             } else {

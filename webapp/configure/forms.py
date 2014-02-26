@@ -1,10 +1,8 @@
 from flask.ext.wtf import Form, fields, validators
 from wtforms import TextField, PasswordField, IntegerField, DecimalField, ValidationError
-from wtforms.validators import Required, Email, EqualTo
+from wtforms.validators import Required
 
 from webapp import db
-from webapp.configure.models import OpenStack, Appliance
-from webapp.api.models import Instances
 from webapp.libs.blockchain import blockchain_validate
 
 class OpenStackForm(Form):
@@ -14,34 +12,18 @@ class OpenStackForm(Form):
 	osusername = TextField(validators=[Required()])
 	ospassword = PasswordField(validators=[Required()])
 
-def paymentaddress_validate(form, field):
-	result = blockchain_validate(field.data)
-	if result['response'] == "fail":
-		raise ValidationError("Invalid checksum for payment address '%s'." % field.data)
 
 class ApplianceForm(Form):
-	paymentaddress = TextField(validators=[Required(), paymentaddress_validate])
-	apitoken = TextField()
-	ngroktoken = TextField(validators=[Required("The SSL Tunnel Token is required.")])
-	latitude = TextField(validators=[Required()])
-	longitude = TextField(validators=[Required()])
+	cbapikey = TextField("Coinbase Client ID", validators=[Required()])
+	cbapisecret = TextField("Coinbase Client Secret", validators=[Required()])
+	apitoken = TextField("Pool API Token") # not submitted by form
+	ngroktoken = TextField("Ngrok Token", validators=[Required("The SSL Tunnel Token is required.")])
+	latitude = TextField("latitude", validators=[Required()])
+	longitude = TextField("longitude", validators=[Required()])
 
-
+# instance model is located in the API directory
 class InstanceForm(Form):
-	created = IntegerField()
-	updated = IntegerField() 
-	expires = IntegerField()
+	name = TextField(validators=[Required()])
 	osflavorid = TextField(validators=[Required()])
 	osimageid = TextField(validators=[Required()])
-	publicip = TextField()
-	ssltunnel = TextField()
-	instanceid = TextField()
-	name = TextField(validators=[Required()])
-	state = IntegerField()
-	secret = TextField()
-	confirmations = IntegerField()
-	callbackurl = TextField()
-	feepercent = DecimalField()
-	destination = TextField()
-	inputaddress = TextField()
-	transactionhash = TextField()
+	hourlyrate = IntegerField(validators=[Required()])

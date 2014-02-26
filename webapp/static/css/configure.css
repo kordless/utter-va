@@ -1,3 +1,6 @@
+.qr-code {
+  border: 1px solid #444;
+}
 .configure-errors {
   margin-left: 0px;
 }
@@ -39,6 +42,12 @@
   bottom:0;
   height: 500px;
   width:100%;
+}
+span.field-label-warning {
+  color: #a94442;
+}
+div.field-register {
+  padding-left: 0px;
 }
 .btn-file {
   overflow: hidden;

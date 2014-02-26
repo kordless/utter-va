@@ -3,6 +3,7 @@
 {% block page_styles %}
     <!-- Config Page -->
     <link href="/css/configure.css" rel="stylesheet">
+    <link href="/css/font-awesome.css" rel="stylesheet">
     <link href='//api.tiles.mapbox.com/mapbox.js/v1.6.0-beta0/mapbox.css' rel='stylesheet'>
 {% endblock %}
 
@@ -41,8 +42,28 @@
         Flavors & Images
       </a>
     </li>
-    <li class="active"><a href="{{ url_for("configure.configure_instances") }}">Instance Payments</a></li>
+    <li class="active"><a href="{{ url_for("configure.configure_instances") }}">Instances</a></li>
   </ul>
+  <div class="modal fade" id="show-instance-address-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Make Payment</h4>
+        </div>
+        <div class="modal-body">
+          <div class="modal-instructions">
+            <p>Please make a payment to the following Bitcoin address to start your instance.</p>
+            <p><img id="qr-code-image-src" class="qr-code centered" src=""/></p>
+            <p><strong><span id="bitcoin-address"></span></strong></p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <form action="{{ url_for("configure.configure_instances") }}" method="post" class="form-horizontal" role="form">
   <div class="modal fade" id="create-instance-modal">
     <div class="modal-dialog">
@@ -53,7 +74,8 @@
         </div>
         <div class="modal-body">
           <div class="modal-instructions">
-            <p>Use the form below to create a new instance address.  Name the instance and then choose the flavor and image type to use for starting after payment is received.</p>
+            <p>Use the form below to create a new instance payment address.  Name the instance and then choose the flavor and image type to use for starting after payment is received.  Set the hourly rate for the instance and click <strong>Create</strong> to create the instance address.</p>
+            <p><em>Note: Hourly rates are in <strong>μBTC</strong>. 1 μBTC is trading @ US${{ price }}.</em></p>
           </div>
           {{ form.csrf_token }}
           <div class="form-group">
@@ -82,7 +104,18 @@
               </select>
             </div>
           </div>
-          </form>
+          <div class="form-group">
+            <label for="image" class="col-sm-3 control-label">Rate/Hr</label>
+            <div class="col-sm-8">
+              <div class="input-group" id="form-hourly-rate">
+                {{ form.hourlyrate(class="form-control", placeholder="100", value="", required=true) }}
+                <span class="input-group-btn">
+                  <button id="toggle-cb-api-secret-again" class="btn btn-default" type="button">μ<span title="Hourly rate in Bitcoin." class="fa fa-bitcoin"></span>
+                  </button>
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -105,10 +138,11 @@
       {% endif %}
       {% endwith %}
       <h3>Instance Addresses</h3>
-      <p>An instance address represents a payment destination used for starting a predefined OpenStack instance on this appliance. Bitcoin payments to an instance address are monitored by this appliance via <a href="http://blockchanin.info/">Blockchain.info's</a> API based payment callback service.</p>
-      <p>Instance addresses are automatically created on this appliance via callbacks initiated by the the <a href="{{ config['POOL_WEBSITE'] }}">{{ config['POOL_NAME'] }}</a> site.  Instances are not provisioned by this appliance until a payment has been verified as being sent by the end user to a corresponding instance input address below.</p>
-      <p>A manual instance address can be created by clicking the <strong>Create Instance Payment</strong> button.  The resulting address can be used for testing purposes, promotion on a third party website or for exchanging compute resources with an untrusted entity.</p>
-    <button class="btn btn-default" id="create-instance-button"><span class="glyphicon glyphicon-credit-card"></span> Create Instance Address</button>
+      <p>An instance address creates a payment destination address for starting predefined OpenStack instances on this appliance. Instance addresses are automatically created on this appliance via callbacks initiated by the the <a href="{{ config['POOL_WEBSITE'] }}">{{ config['POOL_NAME'] }}</a> site.  Instances are not provisioned by this appliance until a payment has been verified as being sent by the end user to a corresponding instance address below.</p>
+      <p>A manual instance address can be created by clicking the <strong>Create Instance Address</strong> button.  The resulting address can be used for testing purposes.</p>
+      <p>You can also get the JavaScript code for embedding an instance payment widget on a third party site by clicking on <strong>Embed Instance Payment Widget</strong> button.  This can be used to sell services provided by this cluster independently of the pool operator.</p> 
+    <button class="btn btn-default" id="create-instance-button"><span class="fa fa-bitcoin"></span> Create Instance Address</button>
+    <button class="btn btn-default" id="create-instance-button"><span class="glyphicon glyphicon-export"></span> Embed Instance Payment Widget</button>
     </div>
     {% if show_instances %}
     <div class="page-header">
@@ -118,10 +152,9 @@
       <thead>
         <tr>
           <th>ID</th>
+          <th>Token</th>
           <th>Name</th>
-          <th>Instance ID</th>
           <th>Input Address</th>
-          <th class="text-center">Confirms</th>
           <th class="text-center">State</th>
           <th class="text-center">Action</th>
         </tr>
@@ -129,18 +162,11 @@
       <tbody>
         {% for instance in instances %}
           <td>{{ instance.id }}</td>
+          <td>{{ instance.token }}</td>
           <td>{{ instance.name }}</td>
-          <td>
-            {% if instance.osinstanceid %}
-              {{ instance.osinstanceid }}
-            {% else %}
-              None
-            {% endif %}
-          </td>
-          <td>{{ instance.inputaddress }}</td>
-          <td class="text-center">{{ instance.confirmations }}</td>
+          <td>{{ instance.paymentaddress }}</td>
           <td class="text-center">{{ instance.state }}</td>
-          <td class="text-center"><button id="instance-detail-{{ instance.id }}" class="btn btn-sm btn-info"><span class="glyphicon glyphicon-qrcode"></span> Detail</button></td>
+          <td class="text-center"><button id="instance-detail-{{ instance.token }}" class="btn btn-sm btn-info"><span class="glyphicon glyphicon-qrcode"></span> Detail</button></td>
         </tr>
         {% endfor %}
       </tbody>
@@ -158,6 +184,21 @@
       // error modal settings link
       $('#create-instance-button').click(function() {
         $('#create-instance-modal').modal('toggle')
+      });
+      // refresh memcache of article buttons
+      $('button[id^="instance-detail-"]').each(function(index){
+        $('#'+this.id).click(function() {
+          instance_token = this.id.split("-").pop();
+          $.ajax({
+            url: '/api/instances/'+instance_token+'/detail',
+            type: 'GET',
+          }).done(function(data) {
+            $('#bitcoin-address').html(data.result.paymentaddress);
+            $('#qr-code-image-src').attr("src","https://chart.googleapis.com/chart?chs=240x240&cht=qr&chl="+data.result.paymentaddress);
+            $('#show-instance-address-modal').modal('toggle');
+            console.log(data.result.paymentaddress);
+          });
+        })
       });
     });
   </script>
