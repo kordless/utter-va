@@ -12,60 +12,32 @@
 {% endblock %}
 
 {% block content %}
-<div class="container configure-container">
-  <ol class="breadcrumb">
-    <li><a href="/">Home</a></li>
-    <li class="active">Configure</li>
-  </ol>
-  <ul class="nav nav-tabs">
-    <li>
-      <a href="{{ url_for("configure.configure") }}">
-        {% if settings['appliance'] == False %}
-          <span id="appliance-settings" class="glyphicon glyphicon-exclamation-sign"></span>
-        {% endif %}
-        Appliance
-      </a>
-    </li>
-    <li>
-      <a href="{{ url_for("configure.configure_openstack") }}"> 
-        {% if settings['openstack'] == False %}
-          <span id="openstack-settings"class="glyphicon glyphicon-exclamation-sign"></span>
-        {% endif %}
-        OpenStack
-      </a>
-    </li>
-    <li>
-      <a href="{{ url_for("configure.configure_systems") }}">
-        {% if settings['systems'] == False %}
-          <span id="systems-settings"class="glyphicon glyphicon-exclamation-sign"></span>
-        {% endif %}
-        Flavors & Images
-      </a>
-    </li>
-    <li class="active"><a href="{{ url_for("configure.configure_instances") }}">Instances</a></li>
-  </ul>
-  <div class="modal fade" id="show-instance-address-modal">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h4 class="modal-title">Make Payment</h4>
+<!-- payment modal -->
+<div class="modal fade" id="show-instance-address-modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Make Payment</h4>
+      </div>
+      <div class="modal-body">
+        <div class="modal-instructions">
+          <p>Please make a payment to the following Bitcoin address to start your instance.</p>
+          <p><img id="qr-code-image-src" class="qr-code centered" src=""/></p>
+          <p><strong><span id="bitcoin-address"></span></strong></p>
         </div>
-        <div class="modal-body">
-          <div class="modal-instructions">
-            <p>Please make a payment to the following Bitcoin address to start your instance.</p>
-            <p><img id="qr-code-image-src" class="qr-code centered" src=""/></p>
-            <p><strong><span id="bitcoin-address"></span></strong></p>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
       </div>
     </div>
   </div>
+</div>
+<!-- end payment modal -->
+
+<!-- new instance address modal -->
+<div class="modal fade" id="create-instance-modal">
   <form action="{{ url_for("configure.configure_instances") }}" method="post" class="form-horizontal" role="form">
-  <div class="modal fade" id="create-instance-modal">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -118,61 +90,110 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <button id="instance-create" type="submit" class="btn btn-primary">Create</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button id="instance-create" type="submit" class="btn btn-danger">Create Address</button>
         </div>
       </div>
     </div>
-  </div>
   </form>
-  <div>
-    <div class="page-header">
-      {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-danger alert-dismissable">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-            <strong>{{ message }}</strong>
+</div>
+<!-- end modal -->
+
+<div class="container content">
+  <div class="row">
+
+    <!-- nav pills -->
+    <div class="col-md-2">
+      <ul class="nav nav-pills nav-stacked">
+        <li>
+          <a href="#">
+            Status
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for("configure.configure") }}">
+            Appliance
+            {% if settings['appliance'] == False %}
+              <span id="appliance-settings" class="glyphicon glyphicon-exclamation-sign"></span>
+            {% endif %}
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('configure.configure_openstack') }}">
+            OpenStack
+            {% if settings['openstack'] == False %}
+              <span id="openstack-settings"class="glyphicon glyphicon-exclamation-sign"></span>
+            {% endif %}
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('configure.configure_systems') }}">
+            Flavors & Images
+            {% if settings['systems'] == False %}
+              <span id="systems-settings"class="glyphicon glyphicon-exclamation-sign"></span>
+            {% endif %}
+          </a>
+        </li>
+        <li class="active"><a href="{{ url_for('configure.configure_instances') }}">Instances</a></li>
+      </ul>
+    </div>
+
+    <!-- form on right side -->
+    <div class="col-md-10">
+
+      <!-- form header -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="section-header">
+            <h2><small>Instance Addresses</small></h2>
+            <p>An instance address creates a payment destination address for starting predefined OpenStack instances on this appliance. Instance addresses are automatically created on this appliance via callbacks initiated by the the <a href="{{ config['POOL_WEBSITE'] }}">{{ config['POOL_NAME'] }}</a>.</p>
           </div>
-        {% endfor %}
+        </div>
+      </div>
+
+      {% if show_instances %}
+      <div class="row">
+        <div class="col-md-12">
+
+          <div class="section-header">
+            <h2><small>Active Addresses</small></h2>
+          </div>
+          
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Token</th>
+                <th>Name</th>
+                <th>Input Address</th>
+                <th class="text-center">State</th>
+                <th class="text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for instance in instances %}
+                <td>{{ instance.id }}</td>
+                <td>{{ instance.token }}</td>
+                <td>{{ instance.name }}</td>
+                <td>{{ instance.paymentaddress }}</td>
+                <td class="text-center">{{ instance.state }}</td>
+                <td class="text-center"><button id="instance-detail-{{ instance.token }}" class="btn btn-sm btn-danger"><span class="glyphicon glyphicon-qrcode"></span> Detail</button></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
       {% endif %}
-      {% endwith %}
-      <h3>Instance Addresses</h3>
-      <p>An instance address creates a payment destination address for starting predefined OpenStack instances on this appliance. Instance addresses are automatically created on this appliance via callbacks initiated by the the <a href="{{ config['POOL_WEBSITE'] }}">{{ config['POOL_NAME'] }}</a> site.  Instances are not provisioned by this appliance until a payment has been verified as being sent by the end user to a corresponding instance address below.</p>
-      <p>A manual instance address can be created by clicking the <strong>Create Instance Address</strong> button.  The resulting address can be used for testing purposes.</p>
-      <p>You can also get the JavaScript code for embedding an instance payment widget on a third party site by clicking on <strong>Embed Instance Payment Widget</strong> button.  This can be used to sell services provided by this cluster independently of the pool operator.</p> 
-    <button class="btn btn-default" id="create-instance-button"><span class="fa fa-bitcoin"></span> Create Instance Address</button>
-    <button class="btn btn-default" id="create-instance-button"><span class="glyphicon glyphicon-export"></span> Embed Instance Payment Widget</button>
+
+      <div class="row">
+        <div class="col-md-5">
+          <button class="btn btn-success" id="create-instance-button">Create Instance Address</button>
+        </div>
+      </div>
+
     </div>
-    {% if show_instances %}
-    <div class="page-header">
-      <h3 id="grid">Active Addresses</h3>
-    </div>
-    <table class="table table-hover">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Token</th>
-          <th>Name</th>
-          <th>Input Address</th>
-          <th class="text-center">State</th>
-          <th class="text-center">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for instance in instances %}
-          <td>{{ instance.id }}</td>
-          <td>{{ instance.token }}</td>
-          <td>{{ instance.name }}</td>
-          <td>{{ instance.paymentaddress }}</td>
-          <td class="text-center">{{ instance.state }}</td>
-          <td class="text-center"><button id="instance-detail-{{ instance.token }}" class="btn btn-sm btn-info"><span class="glyphicon glyphicon-qrcode"></span> Detail</button></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <hr/>
-    {% endif %}
+  
   </div>
 </div>
 {% endblock %}

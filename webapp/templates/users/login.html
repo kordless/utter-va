@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
 {% block page_styles %}
-    <!-- Home Page -->
-    <link href="/css/login.css" rel="stylesheet">
-    <link href='//api.tiles.mapbox.com/mapbox.js/v1.6.0-beta0/mapbox.css' rel='stylesheet'>
+  <!-- Home Page -->
+  <link href="/css/login.css" rel="stylesheet">
+  <link href='https://api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.css' rel='stylesheet' />
 {% endblock %}
 
 {% block navbar %}
@@ -12,47 +12,36 @@
 
 {% block content %}
 <div class="login-container">
-    <div class="row">
-        <div class="col-sm-6 col-md-4 col-md-offset-4">
-            <div class="account-wall">
-                <img class="profile-img" src="/img/photo.png?sz=120" alt="">
-                <form action="{{ url_for("users.login") }}" method="post" class="form-signin">
-                    {{ form.csrf_token }}
-                    {{ form.username(class="form-control", placeholder="Username", autofocus=true, required=true) }}
-                    {{ form.password(class="form-control form-password", placeholder="Password", required=true) }}
-                    {% with messages = get_flashed_messages() %}
-                        {% if messages %}
-                            {% for message in messages %}
-                            <div class="alert alert-info alert-dismissable">
-                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                                <strong>{{ message }}</strong>
-                            </div>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
-                    {% for error in form.password.errors %}<div class="alert alert-danger">{{ error }} <a href="http://stackmonkey.com/faq#vmuserpass"> Need help?</a></div>{% endfor %}
-                    <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
-                    <a href="{{ config['APP_WEBSITE'] }}/provider" class="pull-right need-help">Need a provider account?</a><span class="clearfix"></span>
-                </form>
-            </div>
-        </div>
+  <div class="row">
+    <div class="col-sm-6 col-md-4 col-md-offset-4">
+      <div class="account-wall">
+        <img class="profile-img" src="/img/photo.png?sz=120" alt="">
+        <form action="{{ url_for("users.login") }}" method="post" class="form-signin">
+          {{ form.csrf_token }}
+          {{ form.username(class="form-control", placeholder="Username", autofocus=true, required=true) }}
+          {{ form.password(class="form-control form-password", placeholder="Password", required=true) }}
+          <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+          <a href="{{ config['APP_WEBSITE'] }}/login" class="pull-right need-help">Need a provider account?</a><span class="clearfix"></span>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
 <div id='map'></div>
 {% endblock %}
 
 {% block javascript %}
-    <script type="text/javascript">
-    $().ready(function() {
-       // login button
-       $('#nav-login').on('click', function(e) { window.location = "/login" });
-       $('#get-started').on('click', function(e) { window.location = "/getstarted" });
-       var themap = L.mapbox.map('map', 'xovio.h1o6ii64', {scrollWheelZoom: false, zoomControl: false}).setView([20, 20], 3);
-        setInterval(function(){themap.panBy([-1, 0]);},3000);
-    });
-    </script>
+<script type="text/javascript">
+  $().ready(function() {
+    // login button
+    $('#nav-login').on('click', function(e) { window.location = "/login" });
+    $('#get-started').on('click', function(e) { window.location = "/getstarted" });
+    var themap = L.mapbox.map('map', 'xovio.h1o6ii64', {scrollWheelZoom: false, zoomControl: false}).setView([20, 20], 3);
+    setInterval(function(){themap.panBy([-1, 0]);},3000);
+  });
+</script>
 {% endblock %}
 
 {% block extras %}
-    <script src='//api.tiles.mapbox.com/mapbox.js/v1.6.0-beta0/mapbox.js'></script>
+  <script src='https://api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.js'></script>
 {% endblock %}

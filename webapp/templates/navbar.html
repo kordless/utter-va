@@ -2,12 +2,16 @@
   {# body level #}    
     <div class="navbar-wrapper">
       <div class="container">
-        <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="navbar navbar-fixed-top" role="navigation">
           <div class="container">
             <div class="navbar-header">
-              <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle Menu</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
               </button>
-              <a class="navbar-brand navbar-logo" href="/"><span class="glyphicon glyphicon-align-justify"></span>{{ config['APP_NAME'] }}</a>
+              <a class="navbar-brand navbar-logo" href="/"><span class="glyphicon glyphicon-align-justify"></span> {{ config['APP_NAME'] }}</a>
             </div>
             <div class="navbar-collapse collapse navbar-right">
               <ul class="nav navbar-nav">
@@ -17,9 +21,15 @@
                   <ul class="dropdown-menu">
                     <li class="dropdown-header">Virtual Appliance</li>
                     <li><a href="/status">Status</a></li>
-                    <li><a href="/manage">Manage</a></li>
-                    <li class="divider"></li>
                     <li><a href="{{ url_for("configure.configure") }}">Configure</a></li>
+                    <li class="divider"></li>
+                    <li class="dropdown-header">OpenStack</li>
+                    <li><a href="{{ url_for("configure.configure_openstack") }}">Settings</a></li>
+                    <li><a href="{{ url_for("configure.configure_openstack") }}">Flavors & Images</a></li>
+                    <li class="divider"></li>
+                    <li class="dropdown-header">Instances</li>
+                    <li><a href="{{ url_for("configure.configure_instances") }}">Active Addresses</a></li>
+                    <li class="divider"></li>
                     <li><a href="{{ url_for("users.logout") }}">Logout</a></li>
                   </ul>
                 </li>

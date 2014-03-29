@@ -6,11 +6,11 @@ from webapp import db
 from webapp.libs.blockchain import blockchain_validate
 
 class OpenStackForm(Form):
-	authurl = TextField(validators=[Required()])
-	tenantname = TextField(validators=[Required()])
-	tenantid = TextField(validators=[Required()])
-	osusername = TextField(validators=[Required()])
-	ospassword = PasswordField(validators=[Required()])
+	authurl = TextField("Authentication URL", validators=[Required()])
+	tenantname = TextField("Tenant Name", validators=[Required()])
+	tenantid = TextField("Tenant ID", validators=[Required()])
+	osusername = TextField("OpenStack Username", validators=[Required()])
+	ospassword = PasswordField("OpenStack Password", validators=[Required()])
 
 
 class ApplianceForm(Form):

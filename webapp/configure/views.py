@@ -98,7 +98,7 @@ def configure():
 		else:
 			# form was not valid, so show errors	
 			response = "There were form errors. Please check your entries and try again."
-			flash(response, "form-error")
+			flash(response, "error")
 	
 	# page is GET'ing data
 	else:
@@ -188,10 +188,11 @@ def configure_openstack():
 				# populate with form and update
 				form.populate_obj(openstack)
 				openstack.update(openstack)
+				flash("OpenStack settings updated!", "success")
 
 				return redirect(url_for(".configure_openstack"))
 			else:
-				flash("There were form errors. Please check your entries and try again.", "form-error")
+				flash("There were form errors. Please check your entries and try again.", "error")
 
 	# get existing form data
 	openstack = db.session.query(OpenStack).first()
@@ -225,7 +226,8 @@ def configure_instances():
 			
 			# call the coinbase method to create address
 			response = coinbase_generate_address(appliance=appliance, callback_url=callback_url, label=instance_token)
-
+			print response
+			
 			# test the response for validity
 			if response['response'] == "success":
 				# load form variables first
@@ -249,7 +251,7 @@ def configure_instances():
 				instance.update(instance)
 
 			else:
-				flash("An error has occured with aquiring a payment address from Coinbase.")
+				flash("An error has occured with aquiring a payment address from Coinbase.", error)
 
 		else:
 			flash("A form validation error has occured.")

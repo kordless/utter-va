@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "macros.html" as macros %}
 
 {% block page_styles %}
     <!-- Config Page -->
@@ -11,142 +12,125 @@
 {% endblock %}
 
 {% block content %}
-<div class="container configure-container">
-  <ol class="breadcrumb">
-    <li><a href="/">Home</a></li>
-    <li class="active">Configure</li>
-  </ol>
-  <ul class="nav nav-tabs">
-    <li>
-      <a href="{{ url_for("configure.configure") }}">
-        {% if settings['appliance'] == False %}
-          <span id="appliance-settings" class="glyphicon glyphicon-exclamation-sign"></span>
-        {% endif %}
-        Appliance
-      </a>
-    </li>
-    <li>
-      <a href="{{ url_for("configure.configure_openstack") }}"> 
-        {% if settings['openstack'] == False %}
-          <span id="openstack-settings"class="glyphicon glyphicon-exclamation-sign"></span>
-        {% endif %}
-        OpenStack
-      </a>
-    </li>
-    <li class="active">
-      <a href="{{ url_for("configure.configure_systems") }}">
-        {% if settings['systems'] == False %}
-          <span id="systems-settings"class="glyphicon glyphicon-exclamation-sign"></span>
-        {% endif %}
-        Flavors & Images
-      </a>
-    </li>
-    <li><a href="{{ url_for("configure.configure_instances") }}">Instances</a></li>
-  </ul>
-  <div class="modal fade" id="failure-modal">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h4 class="modal-title">OpenStack Error</h4>
+<div class="container content">
+  <div class="row">
+
+    {{ macros.nav_pills("systems", settings) }}
+
+    <!-- form on right side -->
+    <div class="col-md-10">
+
+      <!-- form header -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="section-header">
+            <h2><small>Flavors & Images</small></h2>
+            <p>Your appliance needs a minimum of one flavor and one image installed to provide service to users.  Click on the <strong>Install</strong> button next to the entries you want to install on your OpenStack cluster.  If you want to delete or pause a particular flavor or image, click on the <strong>Pause</strong> button next to the entry.</p>
+            <p><em>Flavor and image types are synced hourly from the pool operator.  You can force a sync by clicking the button below.</em></p>
+            <button class="btn btn-warning" id="sync-flavors-images"><span class="glyphicon glyphicon-refresh"></span> Sync Flavors & Images</button>
+          </div>
         </div>
-        <div class="modal-body">
-          <p>An error has occured while talking to the OpenStack cluster.  Please check your OpenStack credentials and try again.  If the problem persists, please open a ticket on the pool provider's website.</p>
-          <p><span id="failure-modal-message"></span></p>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="section-header">
+            <h2><small>System Flavors</small></h2>
+          </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <button id="failure-modal-settings" type="button" class="btn btn-primary">OpenStack Settings</button>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Comment</th>
+                <th class="text-center"># VPUs</th>
+                <th class="text-center">Memory (in MB)</th>
+                <th class="text-center">Disk (in GB)</th>
+                <th class="text-center">State</th>
+                <th class="text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for flavor in flavors %}
+                {% if flavor.osid and flavor.active %}
+                  <tr class="success">
+                {% else %}
+                  <tr>
+                {% endif %}
+                <td>{{ flavor.id }}</td>
+                <td>{{ flavor.name }}</td>
+                <td>{{ flavor.comment }}</td>
+                <td class="text-center">{{ flavor.vpu }}</td>
+                <td class="text-center">{{ flavor.mem }}</td>
+                <td class="text-center">{{ flavor.disk }}</td>
+                {% if flavor.osid and flavor.active %}
+                  <td class="text-center"><span class="glyphicon glyphicon-ok"></span></td>
+                  <td class="text-center"><button id="flavor-install-{{ flavor.id }}" class="btn btn-sm btn-danger remove"><span class="glyphicon glyphicon-remove"></span> Delete</button></td>
+                {% else %}
+                  <td class="text-center"><span class="glyphicon glyphicon-remove"></span></td>
+                  <td class="text-center"><button id="flavor-install-{{ flavor.id }}" class="btn btn-sm btn-success"><span class="glyphicon glyphicon-cloud-upload"></span> Install</button></td>
+                {% endif %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
-      </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-  </div><!-- /.modal -->
-  <div>
-    <div class="page-header">
-      <h3>Flavors & Images</h3>
-      <p>Your appliance needs a minimum of one flavor and one image installed to provide service to users.  Click on the <strong>Install</strong> button next to the entries you want to install on your OpenStack cluster.  If you want to delete or pause a particular flavor or image, click on the <strong>Pause</strong> button next to the entry.</p>
-      <p><em>Flavor and image types are synced hourly from the pool operator.  You can force a sync by clicking the button below.</em></p>
-    <button class="btn btn-default" id="sync-flavors-images"><span class="glyphicon glyphicon-refresh"></span> Sync Flavors & Images</button>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="section-header">
+            <h2><small>System Images</small></h2>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th class="text-center">Size (in B)</th>
+                <th class="text-center">State</th>
+                <th class="text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for image in images %}
+                {% if image.osid and image.active %}
+                  <tr class="success">
+                {% else %}
+                  <tr>
+                {% endif %}
+                <td>{{ image.id }}</td>
+                <td>{{ image.name }}</td>
+                <td class="text-center">{{ image.size }}</td>
+                {% if image.osid and image.active %}
+                  <td class="text-center"><span class="glyphicon glyphicon-ok"></span></td>
+                  <td class="text-center"><button id="image-install-{{ image.id }}" class="btn btn-sm btn-danger remove"><span class="glyphicon glyphicon-remove"></span> Delete</button></td>
+                {% elif image.active %}
+                  <td class="text-center"><span id="image-loading-{{ image.id }}"><img src="/img/loading.gif"/></span></td>
+                  <td class="text-center"><button id="image-install-{{ image.id }}" class="btn btn-sm btn-warning" disabled><span class="glyphicon glyphicon-refresh"></span> Install</button></td>
+                {% else %}
+                  <td class="text-center"><span class="glyphicon glyphicon-remove"></span></td>
+                  <td class="text-center"><button id="image-install-{{ image.id }}" class="btn btn-sm btn-success"><span class="glyphicon glyphicon-cloud-upload"></span> Install</button></td>
+                {% endif %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
-    <div class="page-header">
-      <h3 id="grid">System Flavors</h3>
-    </div>
-    <table class="table table-hover">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Comment</th>
-          <th class="text-center"># VPUs</th>
-          <th class="text-center">Memory (in MB)</th>
-          <th class="text-center">Disk (in GB)</th>
-          <th class="text-center">State</th>
-          <th class="text-center">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for flavor in flavors %}
-          {% if flavor.osid and flavor.active %}
-            <tr class="success">
-          {% else %}
-            <tr>
-          {% endif %}
-          <td>{{ flavor.id }}</td>
-          <td>{{ flavor.name }}</td>
-          <td>{{ flavor.comment }}</td>
-          <td class="text-center">{{ flavor.vpu }}</td>
-          <td class="text-center">{{ flavor.mem }}</td>
-          <td class="text-center">{{ flavor.disk }}</td>
-          {% if flavor.osid and flavor.active %}
-            <td class="text-center"><span class="glyphicon glyphicon-ok"></span></td>
-            <td class="text-center"><button id="flavor-install-{{ flavor.id }}" class="btn btn-sm btn-danger remove"><span class="glyphicon glyphicon-remove"></span> Delete</button></td>
-          {% else %}
-            <td class="text-center"><span class="glyphicon glyphicon-remove"></span></td>
-            <td class="text-center"><button id="flavor-install-{{ flavor.id }}" class="btn btn-sm btn-success"><span class="glyphicon glyphicon-cloud-upload"></span> Install</button></td>
-          {% endif %}
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <div class="page-header">
-      <h3 id="grid">System Images</h3>
-    </div>
-    <table class="table table-hover">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th class="text-center">Size (in B)</th>
-          <th class="text-center">State</th>
-          <th class="text-center">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for image in images %}
-          {% if image.osid and image.active %}
-            <tr class="success">
-          {% else %}
-            <tr>
-          {% endif %}
-          <td>{{ image.id }}</td>
-          <td>{{ image.name }}</td>
-          <td class="text-center">{{ image.size }}</td>
-          {% if image.osid and image.active %}
-            <td class="text-center"><span class="glyphicon glyphicon-ok"></span></td>
-            <td class="text-center"><button id="image-install-{{ image.id }}" class="btn btn-sm btn-danger remove"><span class="glyphicon glyphicon-remove"></span> Delete</button></td>
-          {% elif image.active %}
-            <td class="text-center"><span id="image-loading-{{ image.id }}"><img src="/img/loading.gif"/></span></td>
-            <td class="text-center"><button id="image-install-{{ image.id }}" class="btn btn-sm btn-warning" disabled><span class="glyphicon glyphicon-refresh"></span> Install</button></td>
-          {% else %}
-            <td class="text-center"><span class="glyphicon glyphicon-remove"></span></td>
-            <td class="text-center"><button id="image-install-{{ image.id }}" class="btn btn-sm btn-success"><span class="glyphicon glyphicon-cloud-upload"></span> Install</button></td>
-          {% endif %}
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <!-- end right side -->
+
   </div>
-  <hr/>
 </div>
 {% endblock %}
 
@@ -154,10 +138,12 @@
   <script type="text/javascript">
     $().ready(function() {
       var csrf_token = "{{ csrf_token }}";
+      
       // error modal settings link
       $('#failure-modal-settings').click(function() {
         window.open("{{ url_for("configure.configure_openstack") }}");
       });
+
       // flavor buttons
       $('button[id^="flavor-install-"]').each(function(index){
         $('#'+this.id).click(function() {
@@ -172,14 +158,15 @@
             type: 'POST',
           }).done(function(data) {
            if (data.response.indexOf("fail") >= 0) {
-              $('#failure-modal-message').html("The message from the system was: "+data.result);
-              $('#failure-modal').modal('toggle')
+              alertify.log("Could not install flavor.  Check your OpenStack settings!", "error");
+              $("#openstack-settings").trigger('mouseenter');
             } else {
               location.reload();
             }
           });
         });
       });
+
       // image buttons
       $('button[id^="image-install-"]').each(function(index){
         $('#'+this.id).click(function() {
@@ -194,14 +181,15 @@
             type: 'POST',
           }).done(function(data) {
             if (data.response.indexOf("fail") >= 0) {
-              $('#failure-modal-message').html("The message from the system was: "+data.result);
-              $('#failure-modal').modal('toggle')
+              alertify.log("Could not install image.  Check your OpenStack settings!", "error");
+              $("#openstack-settings").trigger('mouseenter');
             } else {
               location.reload();
             }
           });
         });
       });
+
       // look for loading image for images
       // more hackish bullshit due to glanceclient
       $('span[id^="image-loading-"]').each(function(index){
@@ -217,6 +205,7 @@
           });
         }, 3000);
       });
+
       // sync from remote pool button
       $('#sync-flavors-images').click(function(){
         console.log("sync");
@@ -228,10 +217,10 @@
           }).done(function(data) {
             console.log(data);
             if (data.response.indexOf("fail") >= 0) {
+              alertify.log("Could not establish a connection with the OpenStack cluster.  Check your settings!", "error");
               {% if config['DEBUG'] == True %}
-                $('#failure-modal-message').html("The message from the system was: "+data.result);
+                alertify.log(data.result, "info");
               {% endif %}
-              $('#failure-modal').modal('toggle')
             } else {
               location.reload();
             }

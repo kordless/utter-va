@@ -85,8 +85,6 @@ CREATE TABLE payments (
   id INTEGER NOT NULL,
   created INTEGER NOT NULL,
   instancetoken INTEGER NOT NULL,
-  confirmations INTEGER NOT NULL,
-  feepercent REAL NOT NULL,
   destination VARCHAR NOT NULL,
   inputaddress VARCHAR NOT NULL,
   transactionhash VARCHAR NOT NULL,

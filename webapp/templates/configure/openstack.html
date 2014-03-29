@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "macros.html" as macros %}
 
 {% block page_styles %}
     <!-- Config Page -->
@@ -11,130 +12,122 @@
 {% endblock %}
 
 {% block content %}
-<div class="container configure-container">
-  <ol class="breadcrumb">
-    <li><a href="/">Home</a></li>
-    <li class="active">Configure</li>
-  </ol>
-  <ul class="nav nav-tabs">
-    <li>
-      <a href="{{ url_for("configure.configure") }}">
-        {% if settings['appliance'] == False %}
-          <span id="appliance-settings" class="glyphicon glyphicon-exclamation-sign"></span>
-        {% endif %}
-        Appliance
-      </a>
-    </li>
-    <li class="active">
-      <a href="{{ url_for("configure.configure_openstack") }}"> 
-        {% if settings['openstack'] == False %}
-          <span id="openstack-settings"class="glyphicon glyphicon-exclamation-sign"></span>
-        {% endif %}
-        OpenStack
-      </a>
-    </li>
-    <li>
-      <a href="{{ url_for("configure.configure_systems") }}">
-        {% if settings['systems'] == False %}
-          <span id="systems-settings"class="glyphicon glyphicon-exclamation-sign"></span>
-        {% endif %}
-        Flavors & Images
-      </a>
-    </li>
-    <li><a href="{{ url_for("configure.configure_instances") }}">Instances</a></li>
-  </ul>
-  <div class="page-header">
-    <h3>OpenStack Credentials</h3>
-    <p>The OpenStack credentials used by this virtual appliance can be imported by uploading your <a href="http://docs.openstack.org/user-guide/content/cli_openrc.html"><strong>OpenStack API RC file</strong></a>. Navigate and login to your OpenStack UI and then click on the <strong>Access and Security</strong> tab to the left under the <strong>Project</strong> tab.  Click on the <strong>API Access</strong> tab at the top and then click on the <strong>Download OpenStack RC File</strong> button at the top right.  Save this file locally, then click on the <strong>Select RC File</strong> button below to upload.</p>
-    <p><em>Please note you will need to manually set the password below once you have imported the RC file.</em></p>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for type, message in messages %}
-        {% if type == 'form-error' %}
-          <div class="alert alert-danger alert-dismissable">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-            <strong>{{ message }}</strong>
+<div class="container content">
+  <div class="row">
+
+    {{ macros.nav_pills("openstack", settings) }}
+
+    <!-- form on right side -->
+    <div class="col-md-10">
+
+      <!-- form header -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="section-header">
+            <h2><small>OpenStack Credentials</small></h2>
+            <p>The OpenStack credentials used by this virtual appliance can be imported by uploading your <a href="http://docs.openstack.org/user-guide/content/cli_openrc.html"><strong>OpenStack API RC file</strong></a>. Navigate and login to your OpenStack UI and then click on the <strong>Access and Security</strong> tab to the left under the <strong>Project</strong> tab.  Click on the <strong>API Access</strong> tab at the top and then click on the <strong>Download OpenStack RC File</strong> button at the top right.  Save this file locally, then click on the <strong>Select RC File</strong> button below to upload.</p>
+            <p><em>Please note you will need to manually set the password below once you have imported the RC file.</em></p>
           </div>
-        {% endif %}
-      {% endfor %}
-    {% endif %}
-    {% endwith %}
-  </div>
-  <form action="{{ url_for("configure.configure_openstack") }}" method=post enctype=multipart/form-data>
-    {{ form.csrf_token }}
-    <div class="fileinput fileinput-new" data-provides="fileinput">
-      <span class="btn btn-default btn-file">
-        <span class="fileinput-new">Select RC File</span>
-        <span class="fileinput-exists">Change</span>
-        <input type="file" name="file">
-      </span>
-      <span class="fileinput-filename"></span>
-      <a href="#" class="close fileinput-exists" data-dismiss="fileinput" style="float: none">&times;</a>
-    </div>
-    <span class="configure-upload"><input class="btn btn-warning" type="submit" value="Upload"></span>
-  </form>
+        </div>
+      </div>
 
-  <div class="row configure-errors">
-  {% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for type, message in messages %}
-      {% if type == 'file-error' %}
-      <div class="col-md-4 alert alert-warning alert-dismissable">
-        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-        <strong>{{ message }}</strong>
+      <!-- form content -->
+      <div class="row">
+        <div class="col-md-8">
+          <form action="{{ url_for("configure.configure_openstack") }}" method=post enctype=multipart/form-data>
+            {{ form.csrf_token }}
+    
+            <div class="fileinput fileinput-new" data-provides="fileinput">
+              <span class="btn btn-info btn-file">
+                <span class="fileinput-new">Select RC File</span>
+                <span class="fileinput-exists">Change</span>
+                <input type="file" name="file">
+              </span>
+              <span class="fileinput-filename"></span>
+              <a href="#" class="close fileinput-exists" data-dismiss="fileinput" style="float: none">&times;</a>
+            </div>
+            <span class="configure-upload"><input class="btn btn-warning" type="submit" value="Upload"></span>
+          </form>
+        </div>
       </div>
-      {% endif %}
-    {% endfor %}
-  {% endif %}
-  {% endwith %}
-  </div>
 
-  <div class="page-header">
-    <h3 id="grid">Update Configuration</h3>
+      <!-- form header -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="section-header">
+            <h2><small>OpenStack Configuration</small></h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- form content -->
+      <div class="row">
+        <div class="col-md-10">
+          <form action="{{ url_for("configure.configure_openstack") }}" method="post" class="form-horizontal" role="form">
+            {{ form.csrf_token }}
+            
+            <div class="row form-group {% if form.authurl.errors %}has-error{% endif %}">
+              <div class="col-md-8">
+                {{ form.authurl.label(class="control-label") }}
+                {{ form.authurl(class="form-control", id="authurl", value=openstack.authurl, placeholder="http://10.0.1.100:5000/v2.0", required=true) }}
+              </div>
+            </div>
+
+            <div class="row form-group {% if form.tenantname.errors %}has-error{% endif %}">
+              <div class="col-md-8">
+                {{ form.tenantname.label(class="control-label") }}
+                {{ form.tenantname(class="form-control", value=openstack.tenantname, placeholder="StackMonkey", required=true) }}
+              </div>
+            </div>
+
+            <div class="row form-group {% if form.tenantid.errors %}has-error{% endif %}">
+              <div class="col-md-8">
+                {{ form.tenantid.label(class="control-label") }}
+                {{ form.tenantid(class="form-control", value=openstack.tenantid, placeholder="78e98e2295344aabb82135d75bbab06e", required=true) }}
+              </div>
+            </div>
+            
+            <div class="row form-group {% if form.osusername.errors %}has-error{% endif %}">
+              <div class="col-md-6">
+                {{ form.osusername.label(class="control-label") }}
+                {{ form.osusername(class="form-control", value=openstack.osusername, placeholder="monkey", required=true) }}
+              </div>
+            </div>
+            
+            <div class="row form-group {% if form.ospassword.errors %}has-error{% endif %}">
+              <div class="col-md-6">
+                {{ form.ospassword.label(class="control-label") }}
+                {{ form.ospassword(class="form-control", value=openstack.ospassword, placeholder="******", required=true) }}
+              </div>
+            </div>
+            
+            <div class="row form-group {% if form.authurl.errors %}has-error{% endif %}">
+              <div class="col-md-6">
+                <button type="submit" class="btn btn-success">Save Configuration</button>
+              </div>
+            </div>
+          
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+
   </div>
-  <form action="{{ url_for("configure.configure_openstack") }}" method="post" class="form-horizontal" role="form">
-    {{ form.csrf_token }}
-    <div class="form-group">
-      <label for="appliancekey" class="col-sm-2 control-label">Auth URL</label>
-      <div class="col-sm-6">
-        {{ form.authurl(class="form-control", value=openstack.authurl, placeholder="http://10.0.1.100:5000/v2.0", required=true) }}
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="appliancekey" class="col-sm-2 control-label">Tenant Name</label>
-      <div class="col-sm-6">
-        {{ form.tenantname(class="form-control", value=openstack.tenantname, placeholder="StackMonkey", required=true) }}
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="appliancekey" class="col-sm-2 control-label">Tenant ID</label>
-      <div class="col-sm-6">
-        {{ form.tenantid(class="form-control", value=openstack.tenantid, placeholder="78e98e2295344aabb82135d75bbab06e", required=true) }}
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="appliancekey" class="col-sm-2 control-label">OpenStack Username</label>
-      <div class="col-sm-6">
-        {{ form.osusername(class="form-control", value=openstack.osusername, placeholder="monkey", required=true) }}
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="appliancekey" class="col-sm-2 control-label">OpenStack Password</label>
-      <div class="col-sm-6">
-        {{ form.ospassword(class="form-control", value=openstack.ospassword, placeholder="******", required=true) }}
-      </div>
-    </div>
-    <div class="form-group">
-      <div class="col-sm-offset-2 col-sm-10">
-        <button type="submit" class="btn btn-success"><span class="glyphicon glyphicon-floppy-disk"></span> Save Configuration</button>
-      </div>
-    </div>
-  </form>
-  <hr/>
 </div>
 {% endblock %}
 
 {% block javascript %}
+  <script type="text/javascript">
+    $().ready(function() {
+      var error = "{{ settings['openstack'] }}";
+      console.log(error);
+      if (error == "False") { 
+        alertify.log("Could not establish a connection with the OpenStack cluster.  Check your settings!", "error");
+      }
+    });
+  </script>
 {% endblock %}
 
 {% block extras %}

@@ -1,33 +1,21 @@
 $().ready(function() {
   // help popovers
+  $("#hover-cb-api-secret").popover({ 
+    title: '<strong>Coinbase Client Secret</strong>', 
+    content: '<p>Enter your Coinbase <strong>API secret</strong> here.</p>', 
+    html: true, 
+    trigger: "hover",
+    placement: "top"
+  }).blur(function () {
+    $(this).popover('hide');
+  });
   $("#hover-cb-api-key").popover({ 
     title: '<strong>Coinbase Client ID</strong>', 
     content: '<p>Enter your Coinbase <strong>API Key</strong>. Toggle visibility of the ' +
               '<strong>API Secret</strong> with the <span class="glyphicon glyphicon-eye-open"></span> icon.</p>', 
     html: true, 
     trigger: "hover",
-    placement: "left"
-  }).blur(function () {
-    $(this).popover('hide');
-  });
-  $("#hover-cb-api-secret").popover({ 
-    title: '<strong>Coinbase Client Secret</strong>', 
-    content: '<p>Enter your Coinbase <strong>API secret</strong> here.</p>', 
-    html: true, 
-    trigger: "hover",
-    placement: "left"
-  }).blur(function () {
-    $(this).popover('hide');
-  });
-  $("#hover-api-token").popover({ 
-    title: '<strong>API Token</strong>', 
-    content: '<p>Click the <span class="glyphicon glyphicon-refresh"></span> button to the right to generate a new ' +
-              'API token.  If the <strong>Register API Token</strong> button is orange, click it to link ' +
-              'the current API token to your account. <em>Please note you cannot manually enter an API token ' +
-              'on this page</em>.</p>', 
-    html: true,
-    trigger: "hover",
-    placement: "left"
+    placement: "top"
   }).blur(function () {
     $(this).popover('hide');
   });
@@ -36,7 +24,18 @@ $().ready(function() {
     content: "<p>Use the <span class='glyphicon glyphicon-cog'></span> button to access the ngrok.com website to get a token.</p>", 
     html: true,
     trigger: "hover",
-    placement: "left"
+    placement: "top"
+  }).blur(function () {
+    $(this).popover('hide');
+  });
+  $("#hover-api-token").popover({ 
+    title: '<strong>API Token</strong>', 
+    content: '<p>Click the <span class="glyphicon glyphicon-refresh"></span> button to the right to generate a new ' +
+              'API token.  If the <strong>Register API Token</strong> button is orange, click it to link ' +
+              'the current API token to your account.</p>', 
+    html: true,
+    trigger: "hover",
+    placement: "top"
   }).blur(function () {
     $(this).popover('hide');
   });
@@ -47,7 +46,7 @@ $().ready(function() {
               'obtained from the geo IP lookup.</p>', 
     html: true,
     trigger: "hover",
-    placement: "left"
+    placement: "top"
   }).blur(function () {
     $(this).popover('hide');
   });
@@ -62,7 +61,7 @@ $().ready(function() {
   });
   $("#openstack-settings").popover({ 
     title: '<strong>Warning</strong>', 
-    content: "<p>A connection to an OpenStack cluster cannot be made.</p>", 
+    content: "<p>Could not establish a connection with the OpenStack cluster.  Check your settings!</p>", 
     html: true,
     trigger: "hover",
     placement: "bottom"

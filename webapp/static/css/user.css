@@ -1,0 +1,41 @@
+html, body {
+}
+.content {
+	margin-top: 70px;
+  margin-bottom: 70px;
+	background-color: white;
+}
+.page-header > h1, .page-header > h2 , .page-header {
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
+.section-header > h1, .section-header > h2 {
+	padding-bottom: 10px;
+	margin-top: 10px;
+	margin-bottom: 20px;
+	border-bottom: 1px solid #eee;
+}
+.form-padding {
+	margin-bottom: 20px;
+}
+.form-buttons {
+  margin-left: 30px;
+}
+#new-group-create-button {
+  margin-top: 25px;
+}
+.steps {
+  margin-bottom: 30px;
+}
+.nav-pills a {
+	text-decoration: none;
+}
+h2 small {
+	color: #777;
+}
+#login-tfa {
+  margin-top: 10px;
+}
+.nav-stacked {
+  padding-top: 20px;
+}

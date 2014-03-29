@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% import "macros.html" as macros %}
 
 {% block page_styles %}
     <!-- Config Page -->
     <link href="/css/configure.css" rel="stylesheet">
-    <link href='//api.tiles.mapbox.com/mapbox.js/v1.6.0-beta0/mapbox.css' rel='stylesheet'>
+    <link href='https://api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.css' rel='stylesheet' />
 {% endblock %}
 
 {% block navbar %}
@@ -11,153 +12,111 @@
 {% endblock %}
 
 {% block content %}
-<div class="container configure-container">
-  <ol class="breadcrumb">
-    <li><a href="/">Home</a></li>
-    <li class="active">Configure</li>
-  </ol>
-  <ul class="nav nav-tabs">
-    <li class="active">
-      <a href="{{ url_for("configure.configure") }}">
-        {% if settings['appliance'] == False %}
-          <span id="appliance-settings" class="glyphicon glyphicon-exclamation-sign"></span>
-        {% endif %}
-        Appliance
-      </a>
-    </li>
-    <li>
-      <a href="{{ url_for("configure.configure_openstack") }}">
-        {% if settings['openstack'] == False %}
-          <span id="openstack-settings"class="glyphicon glyphicon-exclamation-sign"></span>
-        {% endif %}
-        OpenStack
-      </a>
-    </li>
-    <li>
-      <a href="{{ url_for("configure.configure_systems") }}">
-        {% if settings['systems'] == False %}
-          <span id="systems-settings"class="glyphicon glyphicon-exclamation-sign"></span>
-        {% endif %}
-        Flavors & Images
-      </a>
-    </li>
-    <li><a href="{{ url_for("configure.configure_instances") }}">Instances</a></li>
-  </ul>
-  <div class="page-header">
-    <h3>Appliance Configuration</h3>
-    <p>Fill out the following form to configure your appliance.  Instructions are available by hovering over the respective fields.  This appliance needs to have a regsitered API token and a valid <a href="https://coinbase.com/account/api" target="_blank">Coinbase API key and secret</a> created before it will function.  If you don't have a Coinbase account, you can <a href="https://coinbase.com/?r=52a9c6bf937ab6453a00001e&utm_campaign=user-referral&src=referral-link" target="_blank">signup for Coinbase here</a>.</p>
+<div class="container content">
+  <div class="row">
+
+    {{ macros.nav_pills("appliance", settings) }}
+
+    <!-- form on right side -->
+    <div class="col-md-10">
+
+      <!-- form header -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="section-header">
+            <h2><small>Appliance Configuration</small></h2>
+            <p>Fill out the following form to configure your appliance. This appliance needs to have a regsitered API token and a valid <a href="https://coinbase.com/account/api" target="_blank">Coinbase API key and secret</a> created before it will function. If you don't have a Coinbase account, you can <a href="https://coinbase.com/?r=52a9c6bf937ab6453a00001e&utm_campaign=user-referral&src=referral-link" target="_blank">signup for Coinbase here</a>.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- form content -->
+      <div class="row">
+        <div class="col-md-10">
+          <form action="{{ url_for("configure.configure") }}" method="post" class="form-horizontal" role="form">
+            {{ form.csrf_token }}
+
+            <div class="row form-group">
+              <div class="col-md-10">
+                {{ form.apitoken.label(class="control-label") }}
+                <div class="input-group" id="hover-api-token">
+                  {{ form.apitoken(value=appliance.apitoken, class="form-control", disabled=true, id="api-token", required=true) }}
+                  <span class="input-group-btn">
+                    <button id="refresh-api-token" class="btn btn-default" type="button">
+                      <span title="Refresh token." class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                  </span>
+                </div>
+              </div>
+              <div class="col-md-2 field-register">
+                <button id="register-api-token" class="btn btn-{{ button.class }}" type="button"><span class="glyphicon glyphicon-{{ button.icon }}"></span> {{ button.text }}</button>
+              </div>
+            </div>
+            
+            <div class="row form-group {% if form.cbapikey.errors %}has-error{% endif %}">
+              <div class="col-md-10">
+                {{ form.cbapikey.label(class="control-label") }}
+                <div class="input-group" id="hover-cb-api-key">
+                  {{ form.cbapikey(value=appliance.cbapikey, id="coinbase-api-key", placeholder="1bQDVJWdmCmyvx2o", class="form-control") }}
+                  <span class="input-group-btn">
+                    <button id="toggle-cb-api-secret" class="btn btn-default" type="button">
+                      <span title="Show/hide Coinbase API secret." class="glyphicon glyphicon-eye-open"></span>
+                    </button>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="row form-group {% if form.cbapisecret.errors %}has-error{% endif %}" id="form-cb-api-secret">
+              <div class="col-md-10">
+                {{ form.cbapisecret.label(class="control-label") }}
+                <div class="input-group {% if settings['appliance'] == False %}hide-input{% endif %}" id="hover-cb-api-secret">
+                  {{ form.cbapisecret(value=appliance.cbapisecret, id="coinbase-api-secret", placeholder="mvGCqnSP1KWVFOULPGQTthxsFVQOKyP8", class="form-control") }}
+                  <span class="input-group-btn">
+                    <button id="toggle-cb-api-secret-again" class="btn btn-default" type="button">
+                      <span title="Hide the Coinbase API secret." class="glyphicon glyphicon-eye-close"></span>
+                    </button>
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row form-group {% if form.ngroktoken.errors %}has-error{% endif %}">
+              <div class="col-md-10">
+                {{ form.ngroktoken.label(class="control-label") }}
+                <div class="input-group" id="hover-ngrok-token">
+                  {{ form.ngroktoken(value=appliance.ngroktoken, id="ngrok-token", placeholder="W7ern1ph6Q_I-95L54", class="form-control", required=true) }}
+                  <span class="input-group-btn">
+                    <button id="get-ngrok-token" class="btn btn-default" type="button"><span class="glyphicon glyphicon-cog"></span></button>
+                  </span>            
+                </div>
+              </div>
+            </div>
+
+            <div class="row form-group">
+              <div class="col-md-10">
+                <label for="servicelocation" class="control-label">Service Location</label>
+                <div id='map'></div>
+                <div class='map-overlay'>
+                  <div class="input-group {% if form.latitude.errors %}has-error{% endif %}">
+                    {{ form.latitude.label(class="control-label") }}
+                    {{ form.latitude(class="form-control", value=appliance.latitude, size=25) }}
+                  </div>
+                  <div class="input-group {% if form.longitude.errors %}has-error{% endif %}">
+                    {{ form.longitude.label(class="control-label") }}
+                    {{ form.longitude(class="form-control", value=appliance.longitude, size=25) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <button type="submit" class="btn btn-success">Save Configuration</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
   </div>
-  {% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for type, message in messages %}
-      {% if type == 'form-error' %}
-        <div id="form-errors" class="alert alert-danger alert-dismissable">
-          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-          <strong>{{ message }}</strong>
-        </div>
-      {% endif %}
-    {% endfor %}
-  {% endif %}
-  {% endwith %}
-  <form action="{{ url_for("configure.configure") }}" method="post" class="form-horizontal" role="form">
-    
-    {{ form.csrf_token }}
-    
-    <div class="form-group">
-      {% if form.apitoken.errors %}<span class="field-label-warning">{% endif %}
-      {{ form.apitoken.label(class="col-sm-2 control-label") }}
-      {% if form.apitoken.errors %}</span>{% endif %}
-      <div class="col-sm-8">
-        <div class="input-group" id="hover-api-token">
-          {{ form.apitoken(value=appliance.apitoken, class="form-control", disabled=true, id="api-token", required=true) }}
-          <span class="input-group-btn">
-            <button id="refresh-apitoken" class="btn btn-default" type="button">
-              <span class="glyphicon glyphicon-refresh"></span>
-            </button>
-          </span>
-        </div>
-      </div>
-
-      <div class="col-sm-2 field-register">
-        <button id="register-apitoken" class="btn btn-{{ button.class }} btn-block" type="button"><span class="glyphicon glyphicon-{{ button.icon }}"></span> {{ button.text }}</button>
-      </div>
-    </div>
-    
-    <div class="form-group">
-      {% if form.cbapikey.errors %}<span class="field-label-warning">{% endif %}
-      {{ form.cbapikey.label(class="col-sm-2 control-label") }}
-      {% if form.cbapikey.errors %}</span>{% endif %}
-      <div class="col-sm-8">
-        <div class="input-group" id="hover-cb-api-key">
-          {{ form.cbapikey(value=appliance.cbapikey, id="coinbase-api-key", placeholder="1bQDVJWdmCmyvx2o", class="form-control", required=true) }}
-          <span class="input-group-btn">
-            <button id="toggle-cb-api-secret" class="btn btn-default" type="button">
-              <span title="Show/hide Coinbase API secret." class="glyphicon glyphicon-eye-open"></span>
-            </button>
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <div class="form-group" id="form-cb-api-secret">
-      {% if form.cbapisecret.errors %}<span class="field-label-warning">{% endif %}
-      {{ form.cbapisecret.label(class="col-sm-2 control-label") }}
-      {% if form.cbapisecret.errors %}</span>{% endif %}
-      <div class="col-sm-8">
-        {% if settings['appliance'] == False %}
-        <div class="input-group" id="hover-cb-api-secret">
-        {% else %}
-        <div class="input-group hide-input" id="hover-cb-api-secret">
-        {% endif %}
-          {{ form.cbapisecret(value=appliance.cbapisecret, id="coinbase-api-secret", placeholder="mvGCqnSP1KWVFOULPGQTthxsFVQOKyP8", class="form-control", required=true) }}
-          <span class="input-group-btn">
-            <button id="toggle-cb-api-secret-again" class="btn btn-default" type="button">
-              <span title="Hide the Coinbase API secret." class="glyphicon glyphicon-eye-close"></span>
-            </button>
-          </span>
-        </div>
-      </div>
-    </div>
-    
-    <div class="form-group">
-      {% if form.ngroktoken.errors %}<span class="field-label-warning">{% endif %}
-      {{ form.ngroktoken.label(class="col-sm-2 control-label") }}
-      {% if form.ngroktoken.errors %}</span>{% endif %}
-      <div class="col-sm-8">
-        <div class="input-group" id="hover-ngrok-token">
-          {{ form.ngroktoken(value=appliance.ngroktoken, id="ngrok-token", placeholder="W7ern1ph6Q_I-95L54", class="form-control", required=true) }}
-          <span class="input-group-btn">
-            <button id="get-ngrok-token" class="btn btn-default" type="button"><span class="glyphicon glyphicon-cog"></span></button>
-          </span>            
-        </div>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label for="servicelocation" class="col-sm-2 control-label">Service Location</label>
-      <div class="col-sm-8">
-        <div id='map'></div>
-        <div class='map-overlay'>
-          {% if form.latitude.errors %}<span class="field-label-warning">{% endif %}
-          {{ form.latitude.label(class="control-label") }}
-          {% if form.latitude.errors %}</span>{% endif %}
-          {{ form.latitude(class="form-control", value=appliance.latitude, size=25, required=true) }}
-          {% if form.longitude.errors %}<span class="field-label-warning">{% endif %}
-          {{ form.longitude.label(class="control-label") }}
-          {% if form.longitude.errors %}</span>{% endif %}
-          {{ form.longitude(class="form-control", value=appliance.longitude, size=25, required=true) }}
-        </div>
-      </div>
-    </div>
-    
-    <div class="form-group">
-      <label for="ngroktoken" class="col-sm-2 control-label"></label>
-      <div class="col-sm-8">
-        <button type="submit" class="btn btn-success"><span class="glyphicon glyphicon-floppy-disk"></span> Save Configuration</button>
-      </div>
-    </div>
-  </form>
-  <hr/>
 </div>
 {% endblock %}
 
@@ -165,14 +124,14 @@
   <script type="text/javascript">
     $().ready(function() {     
       // the map
-      var map = L.mapbox.map('map', 'xovio.h1o6ii64').setView([{{ appliance['latitude'] }}, {{ appliance['longitude'] }}], 12);
+      var map = L.mapbox.map('map', 'kordless.gnm28jg1').setView([{{ appliance['latitude'] }}, {{ appliance['longitude'] }}], 12);
 
       // get the form inputs we want to update
       var latitude = document.getElementById('latitude');
       var longitude = document.getElementById('longitude');
 
       var marker = L.marker([{{ appliance['latitude'] }}, {{ appliance['longitude'] }}], {
-          draggable: true
+        draggable: true
       }).addTo(map);
 
       // every time the marker is dragged, update the form
@@ -189,9 +148,9 @@
       }
 
       // click on things
-      $('#register-apitoken').click(function() {
+      $('#register-api-token').click(function() {
         apitoken = $('#api-token').val();
-        window.open("{{ config['APP_WEBSITE'] }}"+"/tokens/register?token="+apitoken,"_blank");
+        window.open("{{ config['APP_WEBSITE'] }}"+"/appliances/new/?token="+apitoken,"_blank");
       });
       $('.btn-toggle').click(function() {
         $(this).find('.btn').toggleClass('active');
@@ -225,6 +184,6 @@
 {% endblock %}
 
 {% block extras %}
-    <script src='//api.tiles.mapbox.com/mapbox.js/v1.6.0-beta0/mapbox.js'></script>
+    <script src='https://api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.js'></script>
     <script src='/js/popovers.js'></script>
 {% endblock %}

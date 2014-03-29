@@ -43,7 +43,7 @@ class BaseConfiguration(object):
 # currently not used - revise
 class TestConfiguration(BaseConfiguration):
 	TESTING = True
-	APP_WEBSITE = "http://127.0.0.1:8080/".strip("/")
+	APP_WEBSITE = "http://0.0.0.0:8079/".strip("/")
 	DATABASE = 'test.db'
 	DATABASE_PATH = os.path.join(_basedir, DATABASE)
 	SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'  # + DATABASE_PATH
@@ -53,4 +53,4 @@ class TestConfiguration(BaseConfiguration):
 
 class DebugConfiguration(BaseConfiguration):
 	DEBUG = True
-	APP_WEBSITE = "http://127.0.0.1:8080/".strip("/")
+	APP_WEBSITE = "http://0.0.0.0:8079/".strip("/")

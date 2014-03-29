@@ -166,6 +166,10 @@ def coinbase_generate_address(appliance=None, callback_url=None, label=None):
 
 	# call coinbase
 	try:
+		print url
+		print data
+		print appliance.cbapikey
+		print signature
 		result = json.loads(opener.open(Request(url, data)).read())
 
 		# check the returned data matches what we sent - adding "instance-" to the label check

@@ -1,6 +1,70 @@
+html, body {
+}
+.content {
+  margin-top: 70px;
+  margin-bottom: 70px;
+  background-color: white;
+}
+.page-header > h1, .page-header > h2 , .page-header {
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+.section-header > h1, .section-header > h2 {
+  padding-bottom: 10px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+.form-padding {
+  margin-bottom: 20px;
+}
+.form-buttons {
+  margin-left: 30px;
+}
+#new-group-create-button {
+  margin-top: 25px;
+}
+.steps {
+  margin-bottom: 30px;
+}
+.nav-pills a {
+  text-decoration: none;
+}
+h2 small {
+  color: #777;
+}
+#login-tfa {
+  margin-top: 10px;
+}
+.nav-stacked {
+  padding-top: 20px;
+}
 .qr-code {
   border: 1px solid #444;
 }
+
+/* appliance form styles */
+#register-api-token {
+  margin-top: 27px;
+}
+#refresh-api-token {
+  border-color: #E6E9ED;
+  background-color: #E6E9ED;
+}
+#api-token {
+  border: 1px solid #AAB2BC;
+}
+button#refresh-api-token, 
+button#toggle-cb-api-secret, 
+button#toggle-cb-api-secret-again, 
+button#get-ngrok-token {
+  color: #434A54;
+}
+button#refresh-api-token:hover {
+  background-color: white;
+}
+
+/* error handling */
 .configure-errors {
   margin-left: 0px;
 }
@@ -24,7 +88,7 @@
 .map-overlay {
     position:absolute;
     background: rgba(255, 255, 255, 0.5);
-    top:5px;
+    top:32px;
     right:20px;
     width: 150px;
     padding:5px;
@@ -66,6 +130,8 @@ div.field-register {
   direction: ltr;
   cursor: pointer;
 }
+
+/* file upload styles */
 .fileinput {
   margin-bottom: 9px;
   display: inline-block;
@@ -108,37 +174,4 @@ div.field-register {
 }
 .fileinput-new .input-group .btn-file.btn-lg {
   border-radius: 0 6px 6px 0;
-}
-.form-group.has-warning .fileinput .uneditable-input {
-  color: #c09853;
-  border-color: #faebcc;
-}
-.form-group.has-warning .fileinput .fileinput-preview {
-  color: #c09853;
-}
-.form-group.has-warning .fileinput .thumbnail {
-  border-color: #faebcc;
-}
-.form-group.has-error .fileinput .uneditable-input {
-  color: #b94a48;
-  border-color: #ebccd1;
-}
-.form-group.has-error .fileinput .fileinput-preview {
-  color: #b94a48;
-}
-.form-group.has-error .fileinput .thumbnail {
-  border-color: #ebccd1;
-}
-.form-group.has-success .fileinput .uneditable-input {
-  color: #468847;
-  border-color: #d6e9c6;
-}
-.form-group.has-success .fileinput .fileinput-preview {
-  color: #468847;
-}
-.form-group.has-success .fileinput .thumbnail {
-  border-color: #d6e9c6;
-}
-.input-group-addon:not(:first-child) {
-  border-left: 0;
 }
