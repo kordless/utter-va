@@ -92,7 +92,6 @@ def configure():
 			# build ngrok config file
 			appliance.build_tunnel_conf()
 
-
 			return redirect(url_for(".configure"))
 
 		else:

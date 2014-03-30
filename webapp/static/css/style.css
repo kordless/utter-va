@@ -3,9 +3,14 @@ html, body {
   height: 100%;
   font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
+/* don't underline .btns looking like .btns */
 a:link, a:visited, a:hover, a:active {
-  text-decoration: underline;
   color: #222;
+  text-decoration: underline;
+}
+a:link.btn, a:visited.btn {
+  color: #fff;
+  text-decoration: none;
 }
 .breadcrumb-arrow {
   background-color: #f8f8f8;
