@@ -163,12 +163,13 @@ sudo monit monitor all
 # build the database and sync with pool operator
 sudo su -c "/var/www/xoviova/manage.py install" -s /bin/sh www-data
 
-# install crontab for www-data
-MINUTE=$RANDOM
-let "MINUTE %= 60"
+# install crontab for www-data to run every 30 minutes
+FIRST=`tr -cd 0-9 </dev/urandom | head -c 2`
+SECOND=`expr $FIRST + 30`
+SECOND=`expr $SECOND % 60`
+
 sudo cat <<EOF > /var/www/xoviova/crontab
 # run hourly flavor/image sync with server
-$MINUTE * * * * /var/www/xoviova/manage.py sync > /dev/null 2>&1
+$FIRST,$SECOND * * * * /var/www/xoviova/manage.py sync > /dev/null 2>&1
 EOF
 sudo crontab -u www-data /var/www/xoviova/crontab
-

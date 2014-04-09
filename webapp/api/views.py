@@ -9,13 +9,13 @@ from webapp import app, db, bcrypt, login_manager
 from webapp.users.models import User
 from webapp.api.models import Images, Flavors, Instances
 from webapp.configure.models import OpenStack, Appliance
-from webapp.libs.utils import row2dict
+from webapp.libs.utils import row2dict, server_connect
 from webapp.libs.openstack import image_install, image_detail, image_remove, images_cleanup, flavor_install, flavor_remove, flavors_cleanup, instance_start
 
 mod = Blueprint('api', __name__)
 
 # TOKEN METHODS
-# issue new tokens and proxy validation to pool operator
+# issue new api token to be used with pool operator
 @mod.route('/api/token/generate', methods=('GET', 'POST'))
 @login_required
 def token_generate():
@@ -26,11 +26,20 @@ def token_generate():
 
 	return render_template('response.json', response="success")
 
-# TUNNEL METHODS
-@mod.route('/api/tunnel/test', methods=['GET', 'POST'])
+# pole handler to validate saved token with pool operator
+@mod.route('/api/token/check', methods=('GET', 'POST'))
 @login_required
-def tunnel_test():
-	return render_template('blank.html')
+def token_validate():
+	# update appliance database with a new token
+	appliance = db.session.query(Appliance).first()
+	
+	# check with pool operator
+	response = server_connect(method="authorization", apitoken=appliance.apitoken)
+
+	if response['response'] == "success":
+		return jsonify(response)
+	else:
+		return jsonify(response), 401
 
 # INSTANCE ADDRESS METHODS
 # deal with adding/removing/viewing instance addresses for deposit

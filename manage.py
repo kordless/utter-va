@@ -148,7 +148,7 @@ def tunnel(app):
 		# get the appliance configuration
 		appliance = db.session.query(Appliance).first()
 
-		if appliance.ngroktoken and appliance.paymentaddress:
+		if appliance.ngroktoken:
 			appliance.build_tunnel_conf()		
 		else:
 			configure_blurb()

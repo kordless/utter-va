@@ -11,14 +11,17 @@ from webapp.api.models import Images, Flavors, Instances
 from webapp.configure.models import OpenStack, Appliance
 from webapp.configure.forms import OpenStackForm, ApplianceForm, InstanceForm
 from webapp.libs.geoip import get_geodata
-from webapp.libs.utils import generate_token, server_connect, coinbase_generate_address, coinbase_get_quote
+from webapp.libs.utils import generate_token, server_connect, ngrok_check
+from webapp.libs.utils import coinbase_generate_address, coinbase_get_quote, coinbase_check
 
 mod = Blueprint('configure', __name__)
 
 # check settings for setup warning indicators
+# this feels pretty rough given split between model and util.py calls
+# needs cleanup - TODO
 def check_settings():
 	# objects
-	appliance = Appliance()
+	appliance = Appliance().get()
 	openstack = OpenStack()
 	images = Images()
 	flavors = Flavors()
@@ -26,8 +29,18 @@ def check_settings():
 	# openstack connected?
 	check_openstack = openstack.check()
 	
-	# appliance setup?
-	check_appliance = appliance.check()
+	# externals working?
+	# check_ngrok = ngrok_check(appliance)
+	check_ngrok = ngrok_check(appliance)
+	check_coinbase = coinbase_check(appliance)
+
+	# token valid?
+	response = server_connect('authorization', appliance.apitoken)
+	print response
+	if response['response'] == "success":
+		check_token = True
+	else:
+		check_token = False
 	
 	# one image and one flavor installed?
 	if images.check() and flavors.check():
@@ -36,9 +49,11 @@ def check_settings():
 		check_systems = False
 
 	settings = {
-		"appliance": check_appliance, 
 		"systems": check_systems, 
-		"openstack": check_openstack
+		"openstack": check_openstack,
+		"coinbase": check_coinbase,
+		"ngrok": check_ngrok,
+		"token": check_token,
 	}
 	
 	return settings
@@ -65,7 +80,7 @@ def configure_systems():
 	# load flavors and images
 	flavors = db.session.query(Flavors).all()
 	images = db.session.query(Images).all()
-	
+
 	return render_template('configure/systems.html', settings=settings, flavors=flavors, images=images)
 
 # configuration pages
@@ -92,6 +107,10 @@ def configure():
 			# build ngrok config file
 			appliance.build_tunnel_conf()
 
+			# form was valid, so say thanks	
+			response = "Setting have been saved."
+			flash(response, "success")
+
 			return redirect(url_for(".configure"))
 
 		else:
@@ -117,18 +136,26 @@ def configure():
 				appliance.latitude = 0
 				appliance.longitude = 0		
 	
-	# check configuration
+	# check configuration and show messages
 	settings = check_settings()
-
-	# register token button
-	validate_token = server_connect('validate', appliance.apitoken)
-
-	if validate_token['result'] == "valid":
-		register_button = {"icon": "check", "class": "success", "text": "Registered"} 
-	else:
-		register_button = {"icon": "flash", "class": "warning", "text": "Register API Token"} 
 	
-	return render_template('configure/appliance.html', settings=settings, form=form, appliance=appliance, button=register_button)
+	if settings['token'] == False:
+		# show error	
+		response = "Please register the API token."
+		flash(response, "error")
+	
+	if settings['coinbase'] == False:
+		# show error	
+		response = "Please enter valid Coinbase credentials."
+		flash(response, "error")
+
+	if settings['ngrok'] == False:
+		# show error
+		response = "The Ngrok SSL tunnel is NOT running."
+		flash(response, "error")
+
+	# return the template
+	return render_template('configure/appliance.html', settings=settings, form=form, appliance=appliance)
 
 @mod.route('/configure/openstack', methods=['GET', 'POST'])
 @login_required
@@ -165,7 +192,6 @@ def configure_openstack():
 				keyval = dict(re.findall(r'(\S+)=(".*?"|\S+)', line))
 				if len(keyval) > 0:
 					keyvals.update(keyval)
-			
 			
 			# set values from extracted lines above - needs SQL injection protection?
 			openstack.authurl = "%s" % dequote(keyvals['OS_AUTH_URL']) 

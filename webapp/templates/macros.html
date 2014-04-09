@@ -10,7 +10,7 @@
     <li {% if active=="appliance" %}class="active"{% endif %}>
       <a href="{{ url_for('configure.configure') }}">
         Appliance
-        {% if settings['appliance'] == False %}
+        {% if settings['token'] == False or settings['coinbase'] == False or settings['ngrok'] == False %}
           <span id="appliance-settings" class="glyphicon glyphicon-exclamation-sign"></span>
         {% endif %}
       </a>

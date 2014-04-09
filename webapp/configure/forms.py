@@ -3,7 +3,6 @@ from wtforms import TextField, PasswordField, IntegerField, DecimalField, Valida
 from wtforms.validators import Required
 
 from webapp import db
-from webapp.libs.blockchain import blockchain_validate
 
 class OpenStackForm(Form):
 	authurl = TextField("Authentication URL", validators=[Required()])

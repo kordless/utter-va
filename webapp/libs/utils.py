@@ -101,14 +101,17 @@ def generate_token(size=64, caselimit=False):
 	token = ''.join(random.choice(characters) for x in range(size))
 	return token
 
-# remote connection to pool operator
-def server_connect(method="version", apitoken=None):
-	url = app.config['APP_WEBSITE'] + '/api/%s?ver=' % method + app.config['VERSION'] + '&apitoken=' + apitoken
+# remote connection to pool operator's api
+def server_connect(method="authorization", apitoken=None):
+	url = app.config['APP_WEBSITE'] + '/api/v1/%s?ver=' % method + app.config['VERSION'] + '&apitoken=' + apitoken
 
 	response = {"response": "success", "result": ""}
 
 	try:
 		response = json.loads(urlopen(url, timeout=10).read())
+	except HTTPError, e:
+		response['response'] = "fail"
+		response['result'] = "Error code %s returned from server. Authorization failed." % str(e.code)
 	except IOError as ex:
 		response['response'] = "fail"
 		response['result'] = "Can't contact pool server.  Try again later."
@@ -166,10 +169,6 @@ def coinbase_generate_address(appliance=None, callback_url=None, label=None):
 
 	# call coinbase
 	try:
-		print url
-		print data
-		print appliance.cbapikey
-		print signature
 		result = json.loads(opener.open(Request(url, data)).read())
 
 		# check the returned data matches what we sent - adding "instance-" to the label check
@@ -187,3 +186,57 @@ def coinbase_generate_address(appliance=None, callback_url=None, label=None):
 	
 	return response
 
+# HMAC construction and Coinbase check
+def coinbase_check(appliance=None):
+	url = "https://coinbase.com/api/v1/authorization"
+	
+	# create urlib2 opener and a nonce for the session
+	opener = build_opener()
+	nonce = int(time.time() * 1e6)
+
+	# create and sign the message
+	message = str(nonce) + url
+	signature = hmac.new(str(appliance.cbapisecret), message, hashlib.sha256).hexdigest()
+
+	# pop parameters into the headers
+	opener.addheaders = [('ACCESS_KEY', appliance.cbapikey),
+					   ('ACCESS_SIGNATURE', signature),
+					   ('ACCESS_NONCE', nonce)]
+
+	# call coinbase
+	try:
+		result = json.loads(opener.open(Request(url)).read())
+		return True
+	except:
+		return False
+
+# check ngrok is up on port 4040
+def ngrok_check(appliance=None):
+	# use the local port 4040 to test if we're running in debug
+	if app.config['DEBUG'] == True:
+		url = "http://127.0.0.1:4040/"
+	else:
+		url = "https://%s.ngrok.com/" % appliance.subdomain
+
+	try:
+		response = urlopen(url, timeout=10).read()
+		return True
+	except Exception, e:
+		return False
+
+# template from http://stackoverflow.com/questions/666022/what-errors-exceptions-do-i-need-to-handle-with-urllib2-request-urlopen
+"""
+request = urllib2.Request('http://www.example.com', postBackData, { 'User-Agent' : 'My User Agent' })
+
+try: 
+    response = urllib2.urlopen(request)
+except urllib2.HTTPError, e:
+    checksLogger.error('HTTPError = ' + str(e.code))
+except urllib2.URLError, e:
+    checksLogger.error('URLError = ' + str(e.reason))
+except httplib.HTTPException, e:
+    checksLogger.error('HTTPException')
+except Exception:
+    import traceback
+    checksLogger.error('generic exception: ' + traceback.format_exc())
+"""

@@ -25,7 +25,7 @@
         <div class="col-md-12">
           <div class="section-header">
             <h2><small>Appliance Configuration</small></h2>
-            <p>Fill out the following form to configure your appliance. This appliance needs to have a regsitered API token and a valid <a href="https://coinbase.com/account/api" target="_blank">Coinbase API key and secret</a> created before it will function. If you don't have a Coinbase account, you can <a href="https://coinbase.com/?r=52a9c6bf937ab6453a00001e&utm_campaign=user-referral&src=referral-link" target="_blank">signup for Coinbase here</a>.</p>
+            <p>Fill out the following form to configure your appliance. This appliance needs to have a regsitered API token, a valid <a href="https://coinbase.com/settings/api" target="_blank">Coinbase API key and secret</a> and an Ngrok API token created before it will function. If you don't have a Coinbase account, you can <a href="https://coinbase.com/?r=52a9c6bf937ab6453a00001e&utm_campaign=user-referral&src=referral-link" target="_blank">signup for Coinbase here</a>.</p>
           </div>
         </div>
       </div>
@@ -49,7 +49,7 @@
                 </div>
               </div>
               <div class="col-md-2 field-register">
-                <button id="register-api-token" class="btn btn-{{ button.class }}" type="button"><span class="glyphicon glyphicon-{{ button.icon }}"></span> {{ button.text }}</button>
+                <button id="button-api-token" class="btn" type="button"><span id="button-api-token-icon" class="glyphicon"></span> <span id="button-api-token-text">Checking...</span></button>
               </div>
             </div>
             
@@ -70,7 +70,7 @@
             <div class="row form-group {% if form.cbapisecret.errors %}has-error{% endif %}" id="form-cb-api-secret">
               <div class="col-md-10">
                 {{ form.cbapisecret.label(class="control-label") }}
-                <div class="input-group {% if settings['appliance'] == False %}hide-input{% endif %}" id="hover-cb-api-secret">
+                <div class="input-group {% if settings['coinbase'] == True %}hide-input{% endif %}" id="hover-cb-api-secret">
                   {{ form.cbapisecret(value=appliance.cbapisecret, id="coinbase-api-secret", placeholder="mvGCqnSP1KWVFOULPGQTthxsFVQOKyP8", class="form-control") }}
                   <span class="input-group-btn">
                     <button id="toggle-cb-api-secret-again" class="btn btn-default" type="button">
@@ -147,17 +147,36 @@
           longitude.value = ll.lng;
       }
 
-      // click on things
-      $('#register-api-token').click(function() {
-        apitoken = $('#api-token').val();
-        window.open("{{ config['APP_WEBSITE'] }}"+"/appliances/new/?token="+apitoken,"_blank");
-      });
-      $('.btn-toggle').click(function() {
-        $(this).find('.btn').toggleClass('active');
-        if ($(this).find('.btn-primary').size()>0) {
-          $(this).find('.btn').toggleClass('btn-primary');
-        }
-      });
+      {% if settings['token'] %}
+        // register button green and disabled
+        $('#button-api-token').addClass('btn-success');
+        $('#button-api-token-icon').addClass('glyphicon-check');
+        $('#button-api-token-text').html('Registered');
+        $('#button-api-token').addClass('disabled');
+      {% else %}
+        // update button to warning and allow register
+        $('#button-api-token').addClass('btn-warning');
+        $('#button-api-token-icon').addClass('glyphicon-flash');
+        $('#button-api-token-text').html('Register API Token');
+
+        // register appliance button + recheck on click
+        var ajaxCall = function() {
+          $.ajax({
+            url: '{{ url_for("api.token_validate") }}',
+            success: (function() {
+              location.reload();
+            })
+          });
+        };
+        $('#button-api-token').click(function() {
+          apitoken = $('#api-token').val();
+          window.open("{{ config['APP_WEBSITE'] }}"+"/appliances/new/?token="+apitoken,"_blank");
+          // start polling for change in button state
+          setInterval(ajaxCall, 3000);
+        });
+      {% endif %}
+
+      // coinbase secret hiding
       if ($("#hover-cb-api-secret").hasClass("hide-input")) {
         $('#form-cb-api-secret').toggle();
       }
@@ -169,9 +188,13 @@
         $('#form-cb-api-secret').toggle();
         $("#hover-cb-api-key").popover('hide');
       });
+
+      // ngrok link
       $('#get-ngrok-token').click(function() {
         window.open("https://ngrok.com/dashboard","_blank");
-      });    
+      });
+
+      // refresh api token
       $('#refresh-api-token').click(function() {
         $.ajax({
           url: '{{ url_for("api.token_generate") }}',

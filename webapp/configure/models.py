@@ -96,14 +96,6 @@ class Appliance(CRUDMixin,  db.Model):
 	def token_refresh(self):
 		self.apitoken = generate_token(size=64)
 
-	def check(self):
-		appliance = db.session.query(Appliance).first()
-		if appliance.cbapikey and appliance.cbapisecret and appliance.ngroktoken:
-			return True
-		else:
-			print "oh noews"
-			return False
-
 	def build_tunnel_conf(self):
 		# move file to backup
 		tunnel_conf_file = '%s/%s' % (app.config['BASE_PATH'], app.config['POOL_TUNNEL_CONF'])
