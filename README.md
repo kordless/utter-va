@@ -10,12 +10,12 @@ If you don't have OpenStack installed yet, follow [StackGeek's](http://www.stack
 
 The script installs a project, user, and security group rules for the virtual appliance.  It also starts a new instance named **StackMonkey VA** and adds a SSH keypair called **stackmonkey** to the project.
 
-You can manually start the virtual appliance by entering the following two lines into the post creation field in the OpenStack Horizon UI:
+Optionally, you can manually start the virtual appliance by entering the following two lines into the post creation field in the OpenStack Horizon UI:
 
     #!/bin/bash
     wget http://goo.gl/KJH5Sa -O - | sh
 
-Once the instance has been started, you can access the appliance's UI by entering the following into your browser (substituting the IP address, of course):
+Either way you start it, once the instance has been started you can access the appliance's UI by entering the following into your browser (substituting the IP address, of course):
 
     http://10.0.47.2/
 
