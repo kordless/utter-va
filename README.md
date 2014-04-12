@@ -1,17 +1,26 @@
 ## xov.io Virtual Appliance
-This is the xov.io virtual appliance, used by providers to manage their OpenStack instances, allowing a provider to sell instances on a given comput pool exchange to end users for Bitcoin.
+This is the xov.io virtual appliance, used by providers to manage their OpenStack instances.  The appliance runs inside an OpenStack cluster and allows a provider to sell instances on a given compute pool exchange to end users for Bitcoin.  It can also be used to share compute resources between trusted entities.
 
-More information about the xov.io project is available at [http://xov.io](http://xov.io/) and the first xov.io pool, [StackMonkey](http://stackmonkey.com).
+More information about the xov.io project works can be seen on the first compute pool running at [StackMonkey.com](https://www.stackmonkey.com).
 
 ### Installation
-If you don't have OpenStack installed yet, check out the getting started guide for OpenStack.
+If you don't have OpenStack installed yet, begin by following the StackGeek [Install OpenStack in 10 Minutes](http://www.stackgeek.com/guides/gettingstarted.html) guide.
 
-Launch a new Ubuntu 12.04.02 instance.  Use the following for your post install script:
+Once you've gotten OpenStack running, you'll run the [openstack_stackmonkey_va.sh]() script located in the **Grizzly** directory.
+
+		./openstack_stackmonkey_va.sh
+
+The script installs a project, user, and security group rules for the virtual appliance.  It also starts a new instance named **StackMonkey VA** and adds a SSH keypair called **stackmonkey** to the project.
+
+You can manually start the virtual appliance by entering the following two lines into the post creation field in the OpenStack Horizon UI:
 
     #!/bin/bash
     wget http://goo.gl/KJH5Sa -O - | sh
 
-Login to the instance and run:
+Once the instance has been started, you can access the appliance's UI by entering the following into your browser (substituting the IP address, of course):
 
-    cd /var/www/stackmonkey/
-    ./resetdb.sh
+		http://10.0.47.2/
+
+### Video Guide
+The following video will step you through installing the virtual appliance on your OpenStack cluster.  If you have any questions about the install, you can head over the the [StackMonkey](https://www.stackmonkey.com/) site.
+
