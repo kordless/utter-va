@@ -103,7 +103,8 @@ def generate_token(size=64, caselimit=False):
 
 # remote connection to pool operator's api
 def server_connect(method="authorization", apitoken=None):
-	url = app.config['APP_WEBSITE'] + '/api/v1/%s?ver=' % method + app.config['VERSION'] + '&apitoken=' + apitoken
+	# url = app.config['APP_WEBSITE'] + '/api/v1/%s?ver=' % method + app.config['VERSION'] + '&apitoken=' + apitoken
+	url = app.config['POOL_APPSPOT_WEBSITE'] + '/api/v1/%s?ver=' % method + app.config['VERSION'] + '&apitoken=' + apitoken
 
 	response = {"response": "success", "result": ""}
 
@@ -224,19 +225,3 @@ def ngrok_check(appliance=None):
 	except Exception, e:
 		return False
 
-# template from http://stackoverflow.com/questions/666022/what-errors-exceptions-do-i-need-to-handle-with-urllib2-request-urlopen
-"""
-request = urllib2.Request('http://www.example.com', postBackData, { 'User-Agent' : 'My User Agent' })
-
-try: 
-    response = urllib2.urlopen(request)
-except urllib2.HTTPError, e:
-    checksLogger.error('HTTPError = ' + str(e.code))
-except urllib2.URLError, e:
-    checksLogger.error('URLError = ' + str(e.reason))
-except httplib.HTTPException, e:
-    checksLogger.error('HTTPException')
-except Exception:
-    import traceback
-    checksLogger.error('generic exception: ' + traceback.format_exc())
-"""

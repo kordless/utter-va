@@ -7,7 +7,8 @@ class BaseConfiguration(object):
 	# Pool Customization
 	POOL_NAME = "StackMonkey"
 	POOL_NAME_LOWER = ''.join(POOL_NAME.split()).lower()
-	POOL_WEBSITE = "http://www.stackmonkey.com/".strip("/")
+	POOL_WEBSITE = "https://www.stackmonkey.com/".strip("/")
+	POOL_APPSPOT_WEBSITE = "https://stackmonkeyapp.appspot.com/".strip("/") # temporary URL until VIP upgrade
 	POOL_SSL_PROXY_DOMAIN = "ngrok.com"
 	POOL_SSL_ADDRESS = "ngrokd.%s:443" % POOL_SSL_PROXY_DOMAIN
 	POOL_TWITTER_HANDLE = "stackape"
@@ -39,7 +40,8 @@ class BaseConfiguration(object):
 	THREADS_PER_PAGE = 8
 
 	BASE_PATH = os.path.dirname(os.path.abspath(__file__))
-	
+
+
 # currently not used - revise
 class TestConfiguration(BaseConfiguration):
 	TESTING = True
