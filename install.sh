@@ -5,6 +5,8 @@
 # author: info@xovio.com 
 # github: https://github.com/StackMonkey/xovio-va
 
+# overwrite the existing index.html file
+
 # pool operator domian
 export POOL_URL="stackmonkey.com"
 export POOL_SHORT_NAME="stackmonkey"
