@@ -4,9 +4,7 @@ This is the xov.io virtual appliance, used by providers to manage their OpenStac
 More information about the xov.io project works can be seen on the first compute pool running at [StackMonkey.com](https://www.stackmonkey.com).
 
 ### Installation
-If you don't have OpenStack installed yet, begin by following the StackGeek [Install OpenStack in 10 Minutes](http://www.stackgeek.com/guides/gettingstarted.html) guide.
-
-Once you've gotten OpenStack running, you'll run the [openstack_stackmonkey_va.sh]() script located in the **Grizzly** directory.
+If you don't have OpenStack installed yet, follow [StackGeek's](http://www.stackgeek.com/) [Install OpenStack in 10 Minutes](http://www.stackgeek.com/guides/gettingstarted.html) guide. Once you've gotten OpenStack running, you'll run the [openstack_stackmonkey_va.sh]() script located in the **Grizzly** directory.
 
     ./openstack_stackmonkey_va.sh
 
