@@ -1,7 +1,7 @@
 ## xov.io Virtual Appliance
 This is the xov.io virtual appliance, used by providers to manage their OpenStack instances.  The appliance runs inside an OpenStack cluster and allows a provider to sell instances on a given compute pool exchange to end users for Bitcoin.  It can also be used to share compute resources between trusted entities.
 
-More information about the xov.io project works can be seen on the first compute pool running at [StackMonkey.com](https://www.stackmonkey.com).
+More information about the xov.io project works can be seen on the first compute pool running at [https://www.stackmonkey.com](https://www.stackmonkey.com).
 
 ### Installation
 If you don't have OpenStack installed yet, follow [StackGeek's](http://www.stackgeek.com/) [Install OpenStack in 10 Minutes](http://www.stackgeek.com/guides/gettingstarted.html) guide. Once you've gotten OpenStack running, you'll run the [openstack_stackmonkey_va.sh](https://github.com/StackGeek/openstackgeek/blob/master/grizzly/openstack_stackmonkey_va.sh) script located in the [Grizzly](https://github.com/StackGeek/openstackgeek/tree/master/grizzly) directory.
