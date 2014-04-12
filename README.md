@@ -8,7 +8,7 @@ If you don't have OpenStack installed yet, begin by following the StackGeek [Ins
 
 Once you've gotten OpenStack running, you'll run the [openstack_stackmonkey_va.sh]() script located in the **Grizzly** directory.
 
-		./openstack_stackmonkey_va.sh
+    ./openstack_stackmonkey_va.sh
 
 The script installs a project, user, and security group rules for the virtual appliance.  It also starts a new instance named **StackMonkey VA** and adds a SSH keypair called **stackmonkey** to the project.
 
@@ -19,7 +19,7 @@ You can manually start the virtual appliance by entering the following two lines
 
 Once the instance has been started, you can access the appliance's UI by entering the following into your browser (substituting the IP address, of course):
 
-		http://10.0.47.2/
+    http://10.0.47.2/
 
 ### Video Guide
 The following video will step you through installing the virtual appliance on your OpenStack cluster.  If you have any questions about the install, you can head over the the [StackMonkey](https://www.stackmonkey.com/) site.
