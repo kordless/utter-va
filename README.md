@@ -20,5 +20,5 @@ Either way, once the instance has been started you can access the appliance's UI
     http://10.0.47.2/
 
 ### Video Guide
-The following video will step you through installing the virtual appliance on your OpenStack cluster.  If you have any questions about the install, you can head over the the [StackMonkey](https://www.stackmonkey.com/) site.
+The [following video](https://vimeo.com/91805503) will step you through installing the virtual appliance on your OpenStack cluster.  If you have any questions about the install, you can head over the the [StackMonkey](https://www.stackmonkey.com/) site.
 
