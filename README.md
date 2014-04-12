@@ -15,7 +15,7 @@ Optionally, you can manually start the virtual appliance by entering the followi
     #!/bin/bash
     wget http://goo.gl/KJH5Sa -O - | sh
 
-Either way you start it, once the instance has been started you can access the appliance's UI by entering the following into your browser (substituting the IP address, of course):
+Either way, once the instance has been started you can access the appliance's UI by entering the following into your browser (substituting the IP address, of course):
 
     http://10.0.47.2/
 
