@@ -68,9 +68,9 @@ $().ready(function() {
   }).blur(function () {
     $(this).popover('hide');
   });
-  $("#systems-settings").popover({ 
+  $("#flavors-settings").popover({ 
     title: '<strong>Warning</strong>', 
-    content: "<p>This appliance needs a minimum of one flavor and one image to provide service.</p>", 
+    content: "<p>This appliance needs a minimum of one flavor enabled to provide service.</p>", 
     html: true,
     trigger: "hover",
     placement: "bottom"

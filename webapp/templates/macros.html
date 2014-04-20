@@ -24,14 +24,21 @@
       </a>
     </li>
     <li {% if active=="systems" %}class="active"{% endif %}>
-      <a href="{{ url_for('configure.configure_systems') }}">
-        Flavors & Images
-        {% if settings['systems'] == False %}
-          <span id="systems-settings"class="glyphicon glyphicon-exclamation-sign"></span>
-        {% endif %}
+      <a href="{{ url_for('configure.configure_flavors') }}">
+        Flavors & Rates
+        <span id="flavors-settings"class="glyphicon glyphicon-exclamation-sign{% if settings['flavors'] == True %}hidden{% endif %}"></span>
       </a>
+    </li>
+    <li {% if active=="images" %}class="active"{% endif %}>
+      <a href="{{ url_for('configure.configure_images') }}">
+        System Images
+      </a>
+    </li>
     <li {% if active=="instances" %}class="active"{% endif %}>
-    <li><a href="{{ url_for('configure.configure_instances') }}">Instances</a></li>
+      <a href="{{ url_for('configure.configure_instances') }}">
+        Instance Addresses
+      </a>
+    </li>
   </ul>
 </div>
 <!-- end navpills -->

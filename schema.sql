@@ -23,11 +23,13 @@ CREATE TABLE appliance (
   apitoken VARCHAR(100) NOT NULL,
   ngroktoken VARCHAR(100),
   subdomain VARCHAR(100),
+  dynamicimages INTEGER NOT NULL,
   secret VARCHAR(100),
   cbapikey VARCHAR(100),
   cbapisecret VARCHAR(100),
   latitude VARCHAR(100) NOT NULL,
   longitude VARCHAR(100) NOT NULL,
+  local_ip VARCHAR(100) NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -35,7 +37,7 @@ DROP TABLE IF EXISTS images;
 CREATE TABLE images (
   id INTEGER NOT NULL,
   osid VARCHAR(100),
-  md5 VARCHAR(100) NOT NULL,
+  description VARCHAR(200) NOT NULL,
   name VARCHAR(100) NOT NULL,
   url VARCHAR(400) NOT NULL,
   diskformat VARCHAR(100) NOT NULL,
@@ -51,10 +53,14 @@ CREATE TABLE flavors (
   id INTEGER NOT NULL,
   osid VARCHAR(100),
   name VARCHAR(100) NOT NULL,
-  comment VARCHAR(200) NOT NULL,
-  vpu INTEGER NOT NULL,
-  mem INTEGER NOT NULL,
+  description VARCHAR(200) NOT NULL,
+  vpus INTEGER NOT NULL,
+  memory INTEGER NOT NULL,
   disk INTEGER NOT NULL,
+  network INTEGER NOT NULL,
+  rate INTEGER NOT NULL,
+  ask INTEGER NOT NULL,
+  launches INTEGER NOT NULL,
   active INTEGER NOT NULL,
   flags INTEGER NOT NULL,
   PRIMARY KEY (id)  
@@ -75,18 +81,7 @@ CREATE TABLE instances (
   name VARCHAR(100) NOT NULL,
   state INTEGER NOT NULL,
   token VARCHAR(100) NOT NULL,
-  paymentaddress VARCHAR NOT NULL,
+  address VARCHAR(100) NOT NULL,
   hourlyrate INTEGER NOT NULL,
-  PRIMARY KEY (id)
-);
-
-DROP TABLE IF EXISTS payments;
-CREATE TABLE payments (
-  id INTEGER NOT NULL,
-  created INTEGER NOT NULL,
-  instancetoken INTEGER NOT NULL,
-  destination VARCHAR NOT NULL,
-  inputaddress VARCHAR NOT NULL,
-  transactionhash VARCHAR NOT NULL,
   PRIMARY KEY (id)
 );

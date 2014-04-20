@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, redirect, session, url_for, request
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from webapp import app, db, bcrypt, login_manager
-from forms import LoginForm, RegisterForm
-from webapp.users.models import User
+from webapp.forms.forms import LoginForm, RegisterForm
+from webapp.models.models import User
 
 mod = Blueprint('users', __name__)
 

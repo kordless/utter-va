@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% import "macros.html" as macros %}
+
+{% block page_styles %}
+    <!-- Config Page -->
+    <link href="/css/configure.css" rel="stylesheet">
+{% endblock %}
+
+{% block navbar %}
+  {% include 'navbar.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container content">
+  <div class="row">
+    {{ macros.nav_pills("images", settings) }}
+    <!-- form on right side -->
+    <div class="col-md-10">
+      <!-- form header -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="section-header">
+            <h2><small>System Images</small></h2>
+            <p>Default pool images are synced every 15 minutes from the pool operator and are automatically installed on instance start.</p>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Size</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for image in images %}
+              <tr>
+                <td><a href="/configure/images/{{image.id}}">{{ image.name }}</a></td>
+                <td>{{ image.description }}</td>
+                <td>{{ image.size }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="section-header">
+            <h2><small>Dynamic Images</small></h2>
+            <p>The appliance is currently <span class="not"><strong>not</strong></span> serving dynamic images. <span class="not">This can affect the number of launches the appliance may receive.</span></p>
+          	<div class="toggle-modern">
+            	<div id="dynamic-images-toggle" class="toggle{% if appliance.dynamicimages %} enabled{% endif %}"></div>
+          	</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- end right side -->
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script type="text/javascript" src="/js/toggles.js"></script>
+<script type="text/javascript" src="/js/popovers.js"></script>
+<script type="text/javascript">
+  $().ready(function() {
+    var csrf_token = "{{ csrf_token() }}";
+
+    // dynamic images toggle
+    $('#dynamic-images-toggle').toggles({
+      text: {
+        on: 'ON',
+        off:'OFF',
+      },
+      on: $('#dynamic-images-toggle').hasClass('enabled')
+    });
+
+    // toggle the message
+    if ($('#dynamic-images-toggle').hasClass('enabled')) {
+    	$('.not').hide();
+    }
+
+    $('#dynamic-images-toggle').click(function() {
+      // handle slider state and do ajax put
+      state = $('#dynamic-images-toggle').children('.active').length;
+    	if (state == 1) {
+    		$('.not').hide();
+    		var state_out = "enabled";
+    	} else {
+    		$('.not').show();
+    		var state_out = "disabled";
+    	}
+    	$.ajax({
+        url: '/configure/images',
+        type: 'PUT',
+        data: {_csrf_token: csrf_token, dynamicimages: state},
+        success: function() {
+        	alertify.log("Dynamic images have been "+state_out+".", "success");
+        }
+      });
+    });
+
+  });
+</script>
+{% endblock %}
+
+{% block extras %}
+{% endblock %}

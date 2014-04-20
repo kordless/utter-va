@@ -44,6 +44,7 @@ sudo pip install flask-openid
 sudo pip install flask-sqlalchemy
 sudo pip install flask-actions
 sudo pip install flask-bcrypt
+sudo pip install flask-seasurf
 
 # install openstack libraries for python
 sudo pip install python-keystoneclient
@@ -162,8 +163,11 @@ sudo service monit restart
 sleep 2
 sudo monit monitor all
 
+# grab the IP address of the box
+MYIP=$(/sbin/ifconfig eth0| sed -n 's/.*inet *addr:\([0-9\.]*\).*/\1/p')
+
 # build the database and sync with pool operator
-sudo su -c "/var/www/xoviova/manage.py install" -s /bin/sh www-data
+sudo su -c "/var/www/xoviova/manage.py install $MYIP" -s /bin/sh www-data
 
 # install crontab for www-data to run every 15 minutes
 MICROS=`date +%N`
@@ -177,3 +181,6 @@ sudo cat <<EOF > /var/www/xoviova/crontab
 $FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py sync > /dev/null 2>&1
 EOF
 sudo crontab -u www-data /var/www/xoviova/crontab
+
+# finally, start downloading images
+sudo su -c "/var/www/xoviova/manage.py images" -s /bin/sh www-data

@@ -1,5 +1,6 @@
 import os
 from flask import Flask, request, Request, render_template, send_from_directory
+from flask.ext.seasurf import SeaSurf
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager, current_user
 from flask.ext.actions import Manager
@@ -16,6 +17,9 @@ class ProxiedRequest(Request):
 # app setup
 app = Flask(__name__)
 
+# csrf_token protect
+csrf = SeaSurf(app)
+
 # apply SSL termination handling
 app.request_class = ProxiedRequest
 
@@ -31,15 +35,15 @@ db = SQLAlchemy(app) # database connection
 bcrypt = Bcrypt(app) # hashing function
 
 # users module blueprint
-from webapp.users.views import mod as usersModule
+from webapp.handlers.userhandlers import mod as usersModule
 app.register_blueprint(usersModule)
 
 # configure module blueprint
-from webapp.configure.views import mod as configureModule
+from webapp.handlers.configurehandlers import mod as configureModule
 app.register_blueprint(configureModule)
 
 # api module blueprint
-from webapp.api.views import mod as APIModule
+from webapp.handlers.apihandlers import mod as APIModule
 app.register_blueprint(APIModule)
 
 #add our view as the login view

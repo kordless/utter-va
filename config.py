@@ -56,3 +56,4 @@ class TestConfiguration(BaseConfiguration):
 class DebugConfiguration(BaseConfiguration):
 	DEBUG = True
 	APP_WEBSITE = "http://0.0.0.0:8079/".strip("/")
+	POOL_APPSPOT_WEBSITE = APP_WEBSITE

@@ -2,15 +2,15 @@ import re
 import os
 from urllib2 import urlopen
 
-from flask import Blueprint, render_template, flash, redirect, session, url_for, request
+from flask import Blueprint, render_template, jsonify, flash, redirect, session, url_for, request
 from flask.ext.login import login_user, logout_user, current_user, login_required
 
 from webapp import app, db, bcrypt, login_manager
-from webapp.users.models import User
-from webapp.api.models import Images, Flavors, Instances
-from webapp.configure.models import OpenStack, Appliance
-from webapp.configure.forms import OpenStackForm, ApplianceForm, InstanceForm
+
+from webapp.models.models import User, Images, Flavors, Instances, OpenStack, Appliance
+from webapp.forms.forms import OpenStackForm, ApplianceForm, InstanceForm
 from webapp.libs.geoip import get_geodata
+from webapp.libs.utils import row2dict
 from webapp.libs.utils import generate_token, server_connect, ngrok_check
 from webapp.libs.utils import coinbase_generate_address, coinbase_get_quote, coinbase_check
 
@@ -36,20 +36,16 @@ def check_settings():
 
 	# token valid?
 	response = server_connect('authorization', appliance.apitoken)
-	print response
 	if response['response'] == "success":
 		check_token = True
 	else:
 		check_token = False
 	
 	# one image and one flavor installed?
-	if images.check() and flavors.check():
-		check_systems = True
-	else:
-		check_systems = False
+	check_flavors = flavors.check()
 
 	settings = {
-		"systems": check_systems, 
+		"flavors": check_flavors, 
 		"openstack": check_openstack,
 		"coinbase": check_coinbase,
 		"ngrok": check_ngrok,
@@ -68,20 +64,117 @@ ALLOWED_EXTENSIONS = set(['sh'])
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
-# configure flavors and images page
-@mod.route('/configure/systems', methods=['GET', 'POST'])
+# configure flavors page
+@mod.route('/configure/flavors', methods=['GET'])
 @login_required
-def configure_systems():
+def configure_flavors():
 	# check configuration
 	settings = check_settings()
 
-	# NOTE: POST handling is done via the API methods
-
-	# load flavors and images
+	# load flavors
 	flavors = db.session.query(Flavors).all()
-	images = db.session.query(Images).all()
 
-	return render_template('configure/systems.html', settings=settings, flavors=flavors, images=images)
+	# how much is BTC?
+	try:
+		quote = float(coinbase_get_quote(currency='btc_to_usd')['result']['btc_to_usd'])/100000
+	except:
+		quote = 0
+
+	return render_template(
+		'configure/flavors.html',
+		settings=settings,
+		quote=quote,
+		flavors=flavors
+	)
+
+@mod.route('/configure/flavors/<int:flavor_id>', methods=['GET', 'PUT'])
+@login_required
+def configure_flavors_handler(flavor_id):
+	# get the matching flavor
+	flavor = db.session.query(Flavors).filter_by(id=flavor_id).first()
+
+	# handle a GET
+	if request.method == 'GET':
+		# check configuration
+		settings = check_settings()
+
+		# how much is a micro BTC?
+		try:
+			quote = float(coinbase_get_quote(currency='btc_to_usd')['result']['btc_to_usd'])/1000000
+		except:
+			quote = 0
+
+		return render_template(
+			'/configure/flavor_detail.html',
+			settings=settings,
+			quote=quote,
+			flavor=flavor
+		)
+
+	# handle a PUT
+	elif request.method == 'PUT':
+		try:
+			state = request.form['enable']
+			flavor.active = state
+		except:
+			pass
+
+		try:
+			ask = request.form['ask']
+			flavor.ask = ask
+		except:
+			pass
+
+		# update entry
+		flavor.update()
+
+		return jsonify({"response": "success", "flavor": row2dict(flavor)})
+
+
+# configure images page and dynamic images handler
+@mod.route('/configure/images', methods=['GET', 'PUT'])
+@login_required
+def configure_images():
+	# handle a GET
+	if request.method == 'GET':
+		# check configuration
+		settings = check_settings()
+
+		# load images and appliance
+		images = db.session.query(Images).all()
+		appliance = Appliance().get()
+		print appliance.dynamicimages
+
+		return render_template(
+			'configure/images.html',
+			settings=settings,
+			appliance=appliance,
+			images=images
+		)
+
+	# handle a PUT
+	elif request.method == 'PUT':
+		# load appliance object
+		appliance = Appliance().get()
+
+		try:
+			state = request.form['dynamicimages']
+			appliance.dynamicimages = state
+			
+			# update entry
+			appliance.update()
+			
+			if state == 0:
+				state_out = "disabled"
+			else:
+				state_out = "enabled"
+
+			response = {"response": "success", "result": "dynamicimages %s" % state_out}
+		except:
+			response = {"response": "fail", "result": "no valid parameters supplied"}
+
+		return jsonify(response)
+
 
 # configuration pages
 @mod.route('/configure', methods=['GET', 'POST'])
@@ -155,7 +248,12 @@ def configure():
 		flash(response, "error")
 
 	# return the template
-	return render_template('configure/appliance.html', settings=settings, form=form, appliance=appliance)
+	return render_template(
+		'configure/appliance.html', 
+		settings=settings, 
+		form=form, 
+		appliance=appliance
+	)
 
 @mod.route('/configure/openstack', methods=['GET', 'POST'])
 @login_required
@@ -222,7 +320,12 @@ def configure_openstack():
 	# get existing form data
 	openstack = db.session.query(OpenStack).first()
 
-	return render_template('configure/openstack.html', settings=settings, form=form, openstack=openstack)	
+	return render_template(
+		'configure/openstack.html', 
+		settings=settings, 
+		form=form, 
+		openstack=openstack
+	)	
 
 
 # configure instances page
@@ -234,8 +337,7 @@ def configure_instances():
 	# check configuration
 	settings = check_settings()
 
-	flavors = db.session.query(Flavors.osid, Flavors.name, Flavors.active).filter(Flavors.active.in_([1,2])).all()
-	images = db.session.query(Images.osid, Images.name, Images.active).filter(Images.active.in_([1,2])).all()
+	addresses = db.session.query(Addresses).get_all();
 	appliance = db.session.query(Appliance).first()
 
 	if request.method == 'POST':
@@ -284,7 +386,6 @@ def configure_instances():
 	# get the current price of a satoshi in USD (divide by 1,000,000)
 	currency = "btc_to_usd"
 	price = float(coinbase_get_quote(appliance=appliance, currency=currency)['result'][currency])/1000000
-	print price
 
 	# load instances
 	instances = Instances()

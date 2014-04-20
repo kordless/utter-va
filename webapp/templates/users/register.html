@@ -17,6 +17,7 @@
             <div class="account-wall">
                 <img class="profile-img" src="/img/photo.png?sz=120" alt="">
                 <form action="{{ url_for("users.register") }}" method="post" class="form-signin">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
                     {{ form.csrf_token }}
                 	{{ form.username(class="form-control", placeholder="Username", autofocus=true, required=true) }}
                 	{{ form.password(class="form-control form-password-again", placeholder="Password", required=true) }}

@@ -102,7 +102,7 @@ def generate_token(size=64, caselimit=False):
 	return token
 
 # remote connection to pool operator's api
-def server_connect(method="authorization", apitoken=None):
+def server_connect(method="authorization", apitoken="unauthorized"):
 	# url = app.config['APP_WEBSITE'] + '/api/v1/%s?ver=' % method + app.config['VERSION'] + '&apitoken=' + apitoken
 	url = app.config['POOL_APPSPOT_WEBSITE'] + '/api/v1/%s?ver=' % method + app.config['VERSION'] + '&apitoken=' + apitoken
 
@@ -154,7 +154,7 @@ def coinbase_generate_address(appliance=None, callback_url=None, label=None):
 	nonce = int(time.time() * 1e6)
 
 	# massage data to fit coinbase's use of parameterized dicts
-	data = "address[callback_url]=%s&address[label]=instance-%s" % (quote(callback_url), label)
+	data = "address[callback_url]=%s&address[label]=%s" % (quote(callback_url), label)
 
 	# create and sign the message
 	message = str(nonce) + url + ('' if data is None else data)
@@ -177,6 +177,40 @@ def coinbase_generate_address(appliance=None, callback_url=None, label=None):
 			raise CoinBaseAddressBuild("Coinbase returned mismatched parameters for callback url or label.")
 		
 		response['result']['address'] = result['address']
+
+	except HTTPError as ex:
+		response['response'] = "fail"
+		response['result'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
+	except CoinBaseAddressBuild as ex:
+		response['response'] = "fail"
+		response['result'] = str(ex)
+	
+	return response
+
+# HMAC construction and Coinbase query for all account addresses
+def coinbase_get_addresses(appliance=None):
+	url = "https://coinbase.com/api/v1/addresses?limit=1000"
+	
+	# create urlib2 opener and a nonce for the session
+	opener = build_opener()
+	nonce = int(time.time() * 1e6)
+
+	# initialize response object
+	response = {"response": "success", "result": {}}
+
+	# create and sign the message
+	message = str(nonce) + url
+	signature = hmac.new(str(appliance.cbapisecret), message, hashlib.sha256).hexdigest()
+
+	# pop parameters into the headers
+	opener.addheaders = [('ACCESS_KEY', appliance.cbapikey),
+					   ('ACCESS_SIGNATURE', signature),
+					   ('ACCESS_NONCE', nonce)]
+
+	# call coinbase
+	try:
+		result = json.loads(opener.open(Request(url)).read())
+		response['result']['addresses'] = result['addresses']
 
 	except HTTPError as ex:
 		response['response'] = "fail"
