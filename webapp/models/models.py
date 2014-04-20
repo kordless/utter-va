@@ -272,7 +272,7 @@ class Images(CRUDMixin,  db.Model):
 	containerformat = db.Column(db.String(100))
 	size = db.Column(db.Integer)
 	flags = db.Column(db.Integer)
-	active = db.Column(db.Integer) # 0 - not active, 1 - installing, 2 - active
+	active = db.Column(db.Integer) # 0 - not installed, 1 - installing, 2 - installed
 
 	def __init__(
 		self, 
@@ -467,7 +467,7 @@ class Flavors(CRUDMixin,  db.Model):
 					# we have the flavor already, so update
 					flavor.name = remoteflavor['name']
 					flavor.description = remoteflavor['description']
-					flavor.vpu = remoteflavor['vpu']
+					flavor.vpus = remoteflavor['vpus']
 					flavor.memory = remoteflavor['memory']
 					flavor.disk = remoteflavor['disk']
 					flavor.network = remoteflavor['network']

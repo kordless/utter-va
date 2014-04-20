@@ -49,11 +49,11 @@ class TestConfiguration(BaseConfiguration):
 	DATABASE = 'test.db'
 	DATABASE_PATH = os.path.join(_basedir, DATABASE)
 	SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'  # + DATABASE_PATH
-
 	CSRF_ENABLED = False
 
 
 class DebugConfiguration(BaseConfiguration):
 	DEBUG = True
+	DEV_PORT = 5000
 	APP_WEBSITE = "http://0.0.0.0:8079/".strip("/")
 	POOL_APPSPOT_WEBSITE = APP_WEBSITE

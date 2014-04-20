@@ -43,8 +43,9 @@ def reset(app):
 			# double check they want to do this	
 			if query_yes_no("Are you sure you want to reset the appliance?"):
 
-				# initialize database (removes old tables)
-				os.system('sqlite3 xoviova.db < schema.sql')
+				# initialize database
+				path = os.path.dirname(os.path.abspath(__file__))
+				os.system('sqlite3 "%s/xoviova.db" < "%s/schema.sql"' % (path, path))
 
 				# initialize the appliance object
 				appliance = Appliance()
@@ -77,7 +78,7 @@ def install(app):
 		path = os.path.dirname(os.path.abspath(__file__))
 
 		# initialize database
-		os.system('sqlite3 xoviova.db < schema.sql')
+		os.system('sqlite3 "%s/xoviova.db" < "%s/schema.sql"' % (path, path))
 		
 		# initialize the appliance object
 		appliance = Appliance()
@@ -143,6 +144,9 @@ def flavors(app):
 # grab the pool server's images and download
 def images(app):
 	def action():
+		# get the appliance configuration
+		appliance = db.session.query(Appliance).first()
+
 		# sync up all the images
 		images = Images()
 		response = images.sync()
@@ -155,21 +159,67 @@ def images(app):
 		
 		# finally, download what we've grabbed
 		for image in images:
-			filename = image.url.split('/')[-1]
-			u = urllib2.urlopen(image.url)
-			f = open("%s/%s" % (image_path, filename), 'wb')
-			meta = u.info()
-			size = int(meta.getheaders("Content-Length")[0])
+			# backup the original url
+			original_url = image.url
 
-			dlsize = 0
-			while True:
-				buffer = u.read(8192)
-				if not buffer:
-					break
+			try:
+				# connect to remote URL's site and get size
+				site = urllib2.urlopen(image.url)
+				meta = site.info()
+				size = int(meta.getheaders("Content-Length")[0])
+				print "Content-Length: %s" % size
+		
+				# build filename and open file for writing
+				filename = image.url.split('/')[-1]
 
-				dlsize += len(buffer)
-				f.write(buffer)
-			f.close
+				# check if we have a file that size/name already (not ideal)
+				try:
+					on_disk_size = int(os.stat("%s/%s" % (image_path, filename)).st_size)
+				except:
+					on_disk_size = 0
+
+				if on_disk_size == int(size):
+					print "File %s exists...skipping." % filename
+				else:
+					print "Downloading %s." % image.name
+					
+					# mark image as installing
+					image.active = 1
+					image.update()
+
+					# open file
+					f = open("%s/%s" % (image_path, filename), 'wb')
+					
+					# write file to disk
+					f.write(site.read())
+					site.close()
+					f.close()
+					
+					# update the database saying we have the file
+					image.size = size
+					image.active = 2
+
+					# write the new URL for the image
+					if app.config['DEBUG'] == True:
+						image.url = "http://%s:%s/images/%s" % (
+							appliance.local_ip, 
+							app.config['DEV_PORT'],
+							filename
+						)
+					else:
+						image.url = "http://%s/images/%s" % (
+							appliance.local_ip,
+							filename
+						)
+					image.update()
+
+			except Exception, e:
+				# warn and reset the URL so OpenStack can download it directly
+				print "Something went wrong with downloading the image."
+				print e
+				image.url = original_url
+				image.active = 2
+				image.update()
 
 	return action
 

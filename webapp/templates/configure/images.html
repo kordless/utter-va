@@ -21,7 +21,7 @@
         <div class="col-md-12">
           <div class="section-header">
             <h2><small>System Images</small></h2>
-            <p>Default pool images are synced every 15 minutes from the pool operator and are automatically installed on instance start.</p>
+            <p>Default pool images are synced every 15 minutes from the pool operator and are automatically installed into the OpenStack cluster on instance start.</p>
           </div>
         </div>
       </div>
@@ -32,14 +32,16 @@
               <tr>
                 <th>Name</th>
                 <th>Description</th>
+                <th>State</th>
                 <th>Size</th>
               </tr>
             </thead>
             <tbody>
               {% for image in images %}
               <tr>
-                <td><a href="/configure/images/{{image.id}}">{{ image.name }}</a></td>
+                <td><a href="{{ image.url}}">{{ image.name }}</a></td>
                 <td>{{ image.description }}</td>
+                <td>{% if image.active == 0 %}<span title="Local copy not available." class="glyphicon glyphicon-floppy-remove"></span>{% elif image.active == 1 %}<span title="Local copy downloading." class="glyphicon glyphicon-floppy-save"></span>{% else %}<span title="Local copy installed." class="glyphicon glyphicon-floppy-saved"></span>{% endif %}</td>
                 <td>{{ image.size }}</td>
               </tr>
               {% endfor %}

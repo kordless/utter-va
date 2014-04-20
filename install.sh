@@ -177,8 +177,9 @@ THIRD=`expr $FIRST + 30`
 FOURTH=`expr $FIRST + 45`
 
 sudo cat <<EOF > /var/www/xoviova/crontab
-# run sync every 15 minutes with server
-$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py sync > /dev/null 2>&1
+# run image/flavor sync every 15 minutes with server
+$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py images > /dev/null 2>&1
+$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py flavors > /dev/null 2>&1
 EOF
 sudo crontab -u www-data /var/www/xoviova/crontab
 
