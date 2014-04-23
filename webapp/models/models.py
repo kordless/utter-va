@@ -223,7 +223,7 @@ class Instances(CRUDMixin, db.Model):
 		ssltunnel=None,
 		state=None,
 		sshkey=None,
-		callback_url,
+		callback_url=None,
 	):
 		self.created = created
 		self.updated = updated

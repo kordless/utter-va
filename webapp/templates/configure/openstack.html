@@ -24,8 +24,8 @@
         <div class="col-md-12">
           <div class="section-header">
             <h2><small>OpenStack Credentials</small></h2>
-            <p>The OpenStack credentials used by this virtual appliance can be imported by uploading your <a href="http://docs.openstack.org/user-guide/content/cli_openrc.html"><strong>OpenStack API RC file</strong></a>. Navigate and login to your OpenStack UI and then click on the <strong>Access and Security</strong> tab to the left under the <strong>Project</strong> tab.  Click on the <strong>API Access</strong> tab at the top and then click on the <strong>Download OpenStack RC File</strong> button at the top right.  Save this file locally, then click on the <strong>Select RC File</strong> button below to upload.</p>
-            <p><em>Please note you will need to manually set the password below once you have imported the RC file.</em></p>
+            <p>The OpenStack credentials used by this virtual appliance can be imported by uploading your <a href="http://docs.openstack.org/user-guide/content/cli_openrc.html"><strong>OpenStack API RC file</strong></a>. Navigate and login to your OpenStack UI and then click on the <strong>Access and Security</strong> tab to the left under the <strong>Project</strong> tab.  Click on the <strong>API Access</strong> tab at the top and then click on the <strong>Download OpenStack RC File</strong> button at the top right.  Save the file locally.</p>
+            <p>Once you have downloaded the RC file locally, import it by click on the button below or dragging and dropping the file onto the button to upload it to the appliance.  <strong>Please note you will need to manually set the password below once you have imported the RC file</strong>.</p>
           </div>
         </div>
       </div>
@@ -33,20 +33,10 @@
       <!-- form content -->
       <div class="row">
         <div class="col-md-8">
-          <form action="{{ url_for("configure.configure_openstack") }}" method=post enctype=multipart/form-data>                    
+          <form action="{{ url_for("configure.configure_openstack") }}" class="dropzone" id="DropzoneForm">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-            {{ form.csrf_token }}
-    
-            <div class="fileinput fileinput-new" data-provides="fileinput">
-              <span class="btn btn-info btn-file">
-                <span class="fileinput-new">Select RC File</span>
-                <span class="fileinput-exists">Change</span>
-                <input type="file" name="file">
-              </span>
-              <span class="fileinput-filename"></span>
-              <a href="#" class="close fileinput-exists" data-dismiss="fileinput" style="float: none">&times;</a>
-            </div>
-            <span class="configure-upload"><input class="btn btn-warning" type="submit" value="Upload"></span>
+            <div class="dz-default dz-message"><span class="btn">Click or drag to upload your RC file.</span></div>
+            <div class="dz-details" style="width: 0px; height: 0px;"></div>
           </form>
         </div>
       </div>
@@ -122,8 +112,16 @@
 {% block javascript %}
   <script type="text/javascript">
     $().ready(function() {
+      Dropzone.options.DropzoneForm = {
+        init: function() {
+          this.on("success", function(file) { 
+            location.reload(); 
+          });
+        }
+      };
+
       var error = "{{ settings['openstack'] }}";
-      console.log(error);
+
       if (error == "False") { 
         alertify.log("Could not establish a connection with the OpenStack cluster.  Check your settings!", "error");
       }
@@ -132,6 +130,6 @@
 {% endblock %}
 
 {% block extras %}
-    <script src='/js/fileinput.js'></script>
+    <script src="/js/dropzone.js"></script>
     <script src='/js/popovers.js'></script>
 {% endblock %}

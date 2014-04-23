@@ -93,5 +93,6 @@ CREATE TABLE instances (
   ssltunnel VARCHAR(400),
   state INTEGER NOT NULL,
   sshkey VARCHAR(2048),
+  callback_url VARCHAR(1024),
   PRIMARY KEY (id)
 );

@@ -305,7 +305,8 @@ def configure_openstack():
 
 			# update entry
 			openstack.update(openstack)
-		
+			
+
 		elif file:
 			# file type not allowed
 			flash("File type not allowed or empty.  Try again.", "file-error")
@@ -325,6 +326,7 @@ def configure_openstack():
 	# get existing form data
 	openstack = db.session.query(OpenStack).first()
 
+	# if notice, show message
 	return render_template(
 		'configure/openstack.html', 
 		settings=settings, 
