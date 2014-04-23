@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% import "macros.html" as macros %}
+
+{% block page_styles %}
+    <!-- Config Page -->
+    <link href="/css/configure.css" rel="stylesheet">
+{% endblock %}
+
+{% block navbar %}
+  {% include 'navbar.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container content">
+  <div class="row">
+    {{ macros.nav_pills("addresses", settings) }}
+    <!-- form on right side -->
+    <div class="col-md-10">
+      <!-- form header -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="section-header">
+            <h2><small>System Addresses</small></h2>
+            <p>The following Coinbase Bitcoin addresses are being used by this appliance. The Bitcoin address links may be used to <strong>view payment transactions</strong> or <strong>send payments via QR code</strong>. When instances are attached to a Bitcoin address, you may click on their id to view instance details.</p>
+            <p><em>Please note you cannot delete Bitcoin addresses.</em></p>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Bicoin Address</th>
+                <th>SSL Subdomain</th>
+                <th>Instance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for address in addresses %}
+              <tr>
+                <td><a href="https://blockchain.info/address/{{ address.address }}" target="_blank">{{ address.address }}</a></td>
+                <td>{{ address.subdomain }}</td>
+                {% if address.instanceid > 0 %}
+                <td><a href="/configure/instances/{{ address.instanceid }}">{{ instances[address.instanceid-1].name }}</a></td>
+                {% else %}
+                <td>None</td>
+                {% endif %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- end right side -->
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}>
+<script type="text/javascript">
+  $().ready(function() {
+    var csrf_token = "{{ csrf_token() }}";
+
+  });
+</script>
+{% endblock %}
+
+{% block extras %}
+{% endblock %}

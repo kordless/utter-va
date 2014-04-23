@@ -41,7 +41,7 @@
               <tr>
                 <td><a href="{{ image.url}}">{{ image.name }}</a></td>
                 <td>{{ image.description }}</td>
-                <td>{% if image.active == 0 %}<span title="Local copy not available." class="glyphicon glyphicon-floppy-remove"></span>{% elif image.active == 1 %}<span title="Local copy downloading." class="glyphicon glyphicon-floppy-save"></span>{% else %}<span title="Local copy installed." class="glyphicon glyphicon-floppy-saved"></span>{% endif %}</td>
+                <td>{% if image.active == 1 %}<span title="Local copy not available." class="glyphicon glyphicon-cloud"></span>{% elif image.active == 2 %}<span title="Local copy downloading." class="glyphicon glyphicon-floppy-save"></span>{% elif image.active == 3 %}<span title="Local copy installed." class="glyphicon glyphicon-floppy-saved"></span>{% else %}<span title="Scheduled for removal." class="glyphicon glyphicon-floppy-remove"></span>{% endif %}</td>
                 <td>{{ image.size }}</td>
               </tr>
               {% endfor %}
@@ -53,7 +53,7 @@
         <div class="col-md-12">
           <div class="section-header">
             <h2><small>Dynamic Images</small></h2>
-            <p>The appliance is currently <span class="not"><strong>not</strong></span> serving dynamic images. <span class="not">This can affect the number of launches the appliance may receive.</span></p>
+            <p>The appliance is currently <span class="not"><strong>not</strong></span> accepting dynamic images. <span class="not">This can affect the number of launches the appliance may receive.</span></p>
           	<div class="toggle-modern">
             	<div id="dynamic-images-toggle" class="toggle{% if appliance.dynamicimages %} enabled{% endif %}"></div>
           	</div>

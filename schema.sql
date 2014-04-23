@@ -66,22 +66,32 @@ CREATE TABLE flavors (
   PRIMARY KEY (id)  
 );
 
+DROP TABLE IF EXISTS addresses;
+CREATE TABLE addresses (
+  id INTEGER NOT NULL,
+  address VARCHAR(100) NOT NULL,
+  token VARCHAR(100) NOT NULL,
+  instanceid INTEGER,
+  subdomain VARCHAR(100) NOT NULL,
+  PRIMARY KEY (id)
+);
+
 DROP TABLE IF EXISTS instances;
 CREATE TABLE instances (
   id INTEGER NOT NULL,
   created INTEGER NOT NULL,
   updated INTEGER NOT NULL,
   expires INTEGER NOT NULL,
-  osflavorid INTEGER NOT NULL,
-  osimageid INTEGER NOT NULL,
-  publicipv4 VARCHAR(100) NOT NULL,
-  publicipv6 VARCHAR(100) NOT NULL,
-  ssltunnel VARCHAR(400) NOT NULL,
-  osinstanceid VARCHAR(100),
   name VARCHAR(100) NOT NULL,
+  osid VARCHAR(100),
+  poolid VARCHAR(100),
+  flavor INTEGER NOT NULL,
+  image INTEGER NOT NULL,
+  privateipv4 VARCHAR(100),
+  publicipv4 VARCHAR(100),
+  publicipv6 VARCHAR(100),
+  ssltunnel VARCHAR(400),
   state INTEGER NOT NULL,
-  token VARCHAR(100) NOT NULL,
-  address VARCHAR(100) NOT NULL,
-  hourlyrate INTEGER NOT NULL,
+  sshkey VARCHAR(2048),
   PRIMARY KEY (id)
 );

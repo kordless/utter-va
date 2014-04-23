@@ -7,7 +7,7 @@ from flask.ext.login import login_user, logout_user, current_user, login_require
 
 from webapp import app, db, bcrypt, login_manager
 
-from webapp.models.models import User, Images, Flavors, Instances, OpenStack, Appliance
+from webapp.models.models import User, Images, Flavors, Addresses, Instances, OpenStack, Appliance
 from webapp.forms.forms import OpenStackForm, ApplianceForm, InstanceForm
 from webapp.libs.geoip import get_geodata
 from webapp.libs.utils import row2dict
@@ -229,6 +229,7 @@ def configure():
 				appliance.latitude = 0
 				appliance.longitude = 0		
 	
+	# run for either POST or GET
 	# check configuration and show messages
 	settings = check_settings()
 	
@@ -241,6 +242,10 @@ def configure():
 		# show error	
 		response = "Please enter valid Coinbase credentials."
 		flash(response, "error")
+	else:
+		# sync up addresses
+		addresses = Addresses()
+		addresses.sync(appliance)
 
 	if settings['ngrok'] == False:
 		# show error
@@ -327,70 +332,44 @@ def configure_openstack():
 		openstack=openstack
 	)	
 
+# configure instances page
+@mod.route('/configure/addresses', methods=['GET', 'PUT'])
+@login_required
+def configure_addresses():
+	# check configuration
+	settings = check_settings()
+
+	# pull out the addresses
+	addresses = db.session.query(Addresses).all()
+
+	# grab instances
+	# TODO: do a join instead for instance.id + instance.name
+	instances = db.session.query(Instances).all()
+
+	# render template
+	return render_template(
+		'configure/addresses.html',
+		settings=settings,
+		addresses=addresses,
+		instances=instances
+	)
 
 # configure instances page
 @mod.route('/configure/instances', methods=['GET', 'POST'])
 @login_required
 def configure_instances():
-	form = InstanceForm(request.form)
-
 	# check configuration
 	settings = check_settings()
-
-	addresses = db.session.query(Addresses).get_all();
-	appliance = db.session.query(Appliance).first()
-
-	if request.method == 'POST':
-		if form.validate_on_submit():
-			instance = Instances()
-
-			# create a token and url for the callback
-			instance_token = generate_token(size=16, caselimit=True)
-			callback_url = "https://%s.%s/api/instances/%s/payment" % (appliance.subdomain, app.config['POOL_SSL_PROXY_DOMAIN'], instance_token)
-
-			# give coinbase a holler
-			appliance = db.session.query(Appliance).first()
-			
-			# call the coinbase method to create address
-			response = coinbase_generate_address(appliance=appliance, callback_url=callback_url, label=instance_token)
-			print response
-			
-			# test the response for validity
-			if response['response'] == "success":
-				# load form variables first
-				form.populate_obj(instance)
-
-				# update fields for loading into db
-				instance.created = 0
-				instance.updated = 0
-				instance.expires = 0
-				instance.publicipv4 = ""
-				instance.publicipv6 = ""
-				instance.ssltunnel = ""
-				instance.osinstanceid = ""
-				# 'name' is populated by form
-				instance.state = 1 # indicate we have a payment address ready
-				instance.token = instance_token
-				instance.callbackurl = callback_url
-				instance.paymentaddress = response['result']['address']
-
-				# write to db
-				instance.update(instance)
-
-			else:
-				flash("An error has occured with aquiring a payment address from Coinbase.", error)
-
-		else:
-			flash("A form validation error has occured.")
-
-	# get the current price of a satoshi in USD (divide by 1,000,000)
-	currency = "btc_to_usd"
-	price = float(coinbase_get_quote(appliance=appliance, currency=currency)['result'][currency])/1000000
 
 	# load instances
 	instances = Instances()
 	instances = instances.get_all()
 
+	# flavors and images
+	flavors = db.session.query(Flavors).all()
+	images = db.session.query(Images).all()
+
+	print flavors[1]
 	if instances:
 		show_instances = True
 	else:
@@ -401,12 +380,9 @@ def configure_instances():
 	return render_template(
 		'configure/instances.html', 
 		settings=settings, 
-		form=form, 
-		instances=instances, 
-		flavors=flavors, 
-		images=images, 
-		show_instances=show_instances, 
-		price=price
+		instances=instances,
+		images=images,
+		flavors=flavors
 	)
 
 

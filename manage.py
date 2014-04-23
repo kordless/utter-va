@@ -3,21 +3,16 @@
 # -*- encoding:utf-8 -*-
 import os
 import sys
-import json
-import yaml
-import urllib2
 
-from collections import namedtuple
-from subprocess import Popen
-from urllib2 import urlopen
 from flask import Flask
 from flaskext.actions import Manager
 
 from webapp import app, db
 
-from webapp.models.models import Appliance, OpenStack, Images, Flavors, Instances
+from webapp.models.models import Appliance, OpenStack, Images, Flavors, Instances, Addresses
 from webapp.libs.utils import configure_blurb, query_yes_no, pprinttable
-from webapp.libs.utils import coinbase_get_addresses
+from webapp.libs.utils import coinbase_get_addresses, coinbase_check
+from webapp.libs.utils import download_images
 from webapp.libs.openstack import instance_start, image_install
 
 # configuration file
@@ -53,10 +48,10 @@ def reset(app):
 
 				# sync with pool database
 				images = Images()
-				iresponse = images.sync()
+				iresponse = images.sync(appliance)
 
 				flavors = Flavors()
-				fresponse = flavors.sync()
+				fresponse = flavors.sync(appliance)
 
 				if iresponse['response'] != "success":
 					print iresponse['result']
@@ -73,7 +68,7 @@ def reset(app):
 
 # install
 def install(app):
-	def action(ip=('i', '0.0.0.0')):
+	def action(ip=('i', default_ip)):
 		# run database reset script - use current path to run file
 		path = os.path.dirname(os.path.abspath(__file__))
 
@@ -86,10 +81,10 @@ def install(app):
 		
 		# sync to remote database
 		images = Images()
-		response = images.sync()
+		response = images.sync(appliance)
 
 		flavors = Flavors()
-		response = flavors.sync()
+		response = flavors.sync(appliance)
 
 		# configure output
 		configure_blurb()
@@ -136,100 +131,56 @@ def tunnel(app):
 # grab the pool server's flavors and install
 def flavors(app):
 	def action():
+		# get the appliance for api token (not required, but sent if we have it)
+		appliance = db.session.query(Appliance).first()
+
+		# sync the flavors
 		flavors = Flavors()
-		response = flavors.sync()
+		response = flavors.sync(appliance)
 
 	return action
 
 # grab the pool server's images and download
 def images(app):
 	def action():
-		# get the appliance configuration
+		# get the appliance for api token (not required, but sent if we have it)
 		appliance = db.session.query(Appliance).first()
 
 		# sync up all the images
 		images = Images()
-		response = images.sync()
+		response = images.sync(appliance)
 
 		# now loop through and download if we don't have the files
 		images = db.session.query(Images).all()
-
-		# image path for this appliance
-		image_path = "%s/webapp/static/images" % os.path.dirname(os.path.abspath(__file__))
-		
-		# finally, download what we've grabbed
-		for image in images:
-			# backup the original url
-			original_url = image.url
-
-			try:
-				# connect to remote URL's site and get size
-				site = urllib2.urlopen(image.url)
-				meta = site.info()
-				size = int(meta.getheaders("Content-Length")[0])
-				print "Content-Length: %s" % size
-		
-				# build filename and open file for writing
-				filename = image.url.split('/')[-1]
-
-				# check if we have a file that size/name already (not ideal)
-				try:
-					on_disk_size = int(os.stat("%s/%s" % (image_path, filename)).st_size)
-				except:
-					on_disk_size = 0
-
-				if on_disk_size == int(size):
-					print "File %s exists...skipping." % filename
-				else:
-					print "Downloading %s." % image.name
-					
-					# mark image as installing
-					image.active = 1
-					image.update()
-
-					# open file
-					f = open("%s/%s" % (image_path, filename), 'wb')
-					
-					# write file to disk
-					f.write(site.read())
-					site.close()
-					f.close()
-					
-					# update the database saying we have the file
-					image.size = size
-					image.active = 2
-
-					# write the new URL for the image
-					if app.config['DEBUG'] == True:
-						image.url = "http://%s:%s/images/%s" % (
-							appliance.local_ip, 
-							app.config['DEV_PORT'],
-							filename
-						)
-					else:
-						image.url = "http://%s/images/%s" % (
-							appliance.local_ip,
-							filename
-						)
-					image.update()
-
-			except Exception, e:
-				# warn and reset the URL so OpenStack can download it directly
-				print "Something went wrong with downloading the image."
-				print e
-				image.url = original_url
-				image.active = 2
-				image.update()
+		download_images(appliance, images)
 
 	return action
 
 # grab the list of bitcoin addresses from coinbase
-def coinbase_sync(app):
+def addresses(app):
 	def action():
+		# get the appliance for coinbase tokens
 		appliance = db.session.query(Appliance).first()
-		stuff = coinbase_get_addresses(appliance)
-		for thing in stuff['result']['addresses']:
-			print thing['address']['callback_url'], thing['address']['label']
+
+		# sync up all the addresses
+		if coinbase_check(appliance):
+			addresses = Addresses()
+			response = addresses.sync(appliance)
+
+	return action
+
+# attach addresses to instance flavor preambles
+def instances(app):
+	def action():
+		# get the appliance settings
+		appliance = db.session.query(Appliance).first()
+
+		# sync the instances
+		instances = Instances()
+		response = instances.sync(appliance)
+
+		print response
+
 	return action
 
 # beacon
@@ -252,7 +203,8 @@ manager.add_action('clean', clean)
 manager.add_action('tunnel', tunnel)
 manager.add_action('flavors', flavors)
 manager.add_action('images', images)
-manager.add_action('coinbase', coinbase_sync)
+manager.add_action('addresses', addresses)
+manager.add_action('instances', instances)
 
 if __name__ == "__main__":
 	manager.run()

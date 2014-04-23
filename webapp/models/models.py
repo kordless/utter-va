@@ -2,6 +2,9 @@ import os
 import yaml
 import shutil
 import json
+import time
+
+from urlparse import urlparse
 
 from keystoneclient.v2_0 import client as keyclient
 from flask.ext.login import UserMixin
@@ -13,9 +16,10 @@ from webapp import db, bcrypt
 from webapp.models.mixins import CRUDMixin
 from webapp.libs.utils import server_connect, coinbase_generate_address, coinbase_get_addresses
 from webapp.libs.utils import generate_token, row2dict
+from webapp.libs.utils import uninstall_image
 from webapp.libs.geoip import get_geodata
 
-# user table
+# user model
 class User(UserMixin, CRUDMixin,  db.Model):
 	__tablename__ = 'users'
 	id = db.Column(db.Integer, primary_key=True)
@@ -30,57 +34,103 @@ class User(UserMixin, CRUDMixin,  db.Model):
 			return '<Username %r>' % (self.username)
 
 
-# address table
+# address model
 class Addresses(CRUDMixin, db.Model):
 	__tablename__ = 'addresses'
 	id = db.Column(db.Integer, primary_key=True)
-	created = db.Column(db.Integer)
-	updated = db.Column(db.Integer)
 	address = db.Column(db.String(100))
 	token = db.Column(db.String(100))
-	instance_id = db.Column(db.String(100))
+	instanceid = db.Column(db.Integer)
 	subdomain = db.Column(db.String(100))
 
-	def __init__(self, 
-		created=None,
-		updated=None,
+	def __init__(self,
 		address=None,
 		token=None,
-		instance_id=None,
+		instanceid=None,
 		subdomain=None
 	):
-		self.created = created
-		self.updated = updated
 		self.address = address
 		self.token = token
-		self.instance_id = instance_id
+		self.instanceid = instanceid
 		self.subdomain = subdomain
 
 	def __repr__(self):
 		return '<Address %r>' % (self.address)
-			
+	
+	def sync(self, appliance):
+		# grab image list from pool server
+		response = coinbase_get_addresses(appliance=appliance)
+
+		if response['response'] == "success":
+			remoteaddresses = response['result']['addresses']
+
+			# update database for with remote addresses
+			for remoteaddress_address in remoteaddresses:
+				# work around coinbase's strange address:address thing
+				remoteaddress = remoteaddress_address['address']
+
+				# see if we have a matching image
+				address = db.session.query(Addresses).filter_by(address=remoteaddress['address']).first()
+				
+				# we don't have the address at coinbase in database
+				if address is None:
+					# create a new image
+					address = Addresses()
+					address.address = remoteaddress['address']
+					address.token = remoteaddress['label']
+					address.instanceid = 0 # no instances yet
+					address.subdomain = urlparse(remoteaddress['callback_url']).hostname.split('.')[0]
+
+					# add and commit
+					address.update(address)
+
+				# we have the address already and need to update it
+				else:
+					# update address from remote images
+					address.address = remoteaddress['address']
+					address.token = remoteaddress['label']
+					address.subdomain = urlparse(remoteaddress['callback_url']).hostname.split('.')[0]
+
+					# add and commit
+					address.update(address)
+
+			# overload the results with the list of current addresses
+			response['result']['addresses'] = []
+			addresses = db.session.query(Addresses).all()
+
+			for address in addresses:
+				response['result']['addresses'].append(row2dict(address))
+
+			return response
+
+		# failure contacting server
+		else:
+			# lift respose from server call to view
+			return response
+
 	# assign a bitcoin address for use with an instance
-	def assign(self, appliance, instance_id):
+	def assign(self, appliance, instanceid):
 		# check if the instance id is already assigned to an address (just in case)
-		address = db.session.query(Addresses).filter_by(instance_id=instance_id).first()
+		address = db.session.query(Addresses).filter_by(instanceid=instanceid).first()
 		
 		# if we found an address, just return it
 		if address:
-			response = {"response": "success", "result": ""}
+			response = {"response": "success", "result": {}}
 			response['result']['address'] = row2dict(address)
 			return address
 		else:
 			# check if we have an empty address to assign
-			address = db.session.query(Addresses).filter_by(instance_id="None").first()		
+			address = db.session.query(Addresses).filter_by(instanceid=0).first()		
 			
-			# we found one, so assign instance_id, appliance subdomain
+			# we found one, so assign instanceid, appliance subdomain
 			if address:
 				# assign the instance id to the address
-				address.instance_id = instance_id
+				address.instanceid = instanceid
 				# leave the subdomain alone from the sync below
 				# address.subdomain
 				address.update(address)
-				response = {"response": "success", "result": ""}
+				
+				response = {"response": "success", "result": {}}
 				response['result']['address'] = row2dict(address)
 				return address
 			else:
@@ -100,9 +150,10 @@ class Addresses(CRUDMixin, db.Model):
 					address.address = response['result']['address']
 					address.token = response['result']['label']
 					address.subdomain = appliance.subdomain
+					address.update()
 
 					# return our version of the overloaded response
-					response = {"response": "success", "result": ""}
+					response = {"response": "success", "result": {}}
 					response['result']['address'] = row2dict(address)
 					return address
 				else:
@@ -111,156 +162,142 @@ class Addresses(CRUDMixin, db.Model):
 
 
 	# release a bitcoin address back into pool
-	def release(self, instance_id):
+	def release(self, instanceid):
 		# get the address assigned to the instance
-		address = db.session.query(Addresses).filter_by(instance_id=instance_id).first()
+		address = db.session.query(Addresses).filter_by(instanceid=instanceid).first()
 		
 		if address:
-			# now change the instance_id to indicate it's available
-			address.instance_id = "None"
+			# now change the instanceid to indicate it's available
+			address.instanceid = 0
 			address.update(address)
 			response = {"response": "success", "result": ""}
 			response['result']['address'] = row2dict(address)
 			return address
 		else:
 			# found nothing so return fail response
-			response = {"response": "fail", "result": "no address is managing instance %s" % instance_id}
+			response = {"response": "fail", "result": "no address is managing instance %s" % instanceid}
 			return response
 
-	# grab up all the addresses from coinbase and update table
-	def sync(self, appliance):
-		# grab image list from pool server
-		response = server_connect(method="images", apitoken=apitoken)
 
-		if response['response'] == "success":
-			remoteimages = response['result']
-
-			# update database for images
-			for remoteimage in remoteimages['images']:
-				image = db.session.query(Images).filter_by(name=remoteimage['name']).first()
-				
-				if image is None:
-					# we don't have the image coming in from the server
-					image = Images()
-
-					# create a new image
-					image.name = remoteimage['name']
-					image.description = remoteimage['description']
-					image.url = remoteimage['url']
-					image.size = remoteimage['size']
-					image.diskformat = remoteimage['diskformat']
-					image.containerformat = remoteimage['containerformat']
-					image.active = 0
-					image.flags = remoteimage['flags']
-
-					# add and commit
-					image.update(image)
-
-				else:        
-					# check if we need to delete image from local db
-					if remoteimage['flags'] == 9:
-						image.delete(image)
-
-					# update image from remote images
-					image.name = remoteimage['name']
-					image.description = remoteimage['description']
-					image.url = remoteimage['url']
-					image.size = remoteimage['size']
-					image.diskformat = remoteimage['diskformat']
-					image.containerformat = remoteimage['containerformat']
-					image.flags = remoteimage['flags']
-					
-					# udpate
-					image.update(image)
-
-			images = db.session.query(Images).all()
-
-			# overload the results with the list of current flavors
-			response['result']['images'] = []
-			images = db.session.query(Images).all()
-			for image in images:
-				response['result']['images'].append(row2dict(image))
-
-			return response
-
-		# failure contacting server
-		else:
-			# lift respose from server call to view
-			return response
-
-# instance table
+# instance model
 class Instances(CRUDMixin, db.Model):
 	__tablename__ = 'instances'
 	id = db.Column(db.Integer, primary_key=True)
 	created = db.Column(db.Integer)
 	updated = db.Column(db.Integer) 
 	expires = db.Column(db.Integer)
-	osflavorid = db.Column(db.String(100))
-	osimageid = db.Column(db.String(100))
+	name = db.Column(db.String(100))
+	osid = db.Column(db.String(100))
+	poolid = db.Column(db.String(100))
+	flavor = db.Column(db.Integer)
+	image = db.Column(db.Integer)
+	privateipv4 = db.Column(db.String(100))
 	publicipv4 = db.Column(db.String(100))
 	publicipv6 = db.Column(db.String(100))
 	ssltunnel = db.Column(db.String(400))
-	osinstanceid = db.Column(db.String(100))
-	name = db.Column(db.String(100))
-	instancepoolid = db.Column(db.String(100))
 
 	state = db.Column(db.Integer) 
 	# instance state is one of:
 	# 0 - inactive
-	# 1 - payment address available
-	# 2 - payment observed from callback
-	# 3 - instance running
-	# 4 - instance halted
-	# 5 - instance decommissioned
+	# 1 - payment address available (warm)
+	# 2 - payment observed from callback (start)
+	# 3 - instance running (hot)
+	# 4 - instance halted (cooldown)
+	# 5 - instance decommissioned (removed)
 	
-	sshkey = db.Column(db.String(1024))
-	token = db.Column(db.String(100))
-	
-	# hourly rate in micro BTC
-	hourlyrate = db.Column(db.Integer)
-	address = db.Column(db.String(100))
+	sshkey = db.Column(db.String(2048))
+	callback_url = db.Column(db.String(1024))
 
 	def __init__(self, 
 		created=None,
 		updated=None,
 		expires=None,
-		osflavorid=None,
-		osimageid=None,
+		name=None,
+		osid=None,
+		poolid=None,
+		flavor=None,
+		image=None,
+		privateipv4=None,
 		publicipv4=None,
 		publicipv6=None,
 		ssltunnel=None,
-		osinstanceid=None,
-		name=None,
 		state=None,
 		sshkey=None,
-		token=None,
-		address=None,
-		hourlyrate=None,
+		callback_url,
 	):
 		self.created = created
 		self.updated = updated
 		self.expires = expires
-		self.osflavorid = osflavorid
-		self.osimageid = osimageid
+		self.name = name
+		self.osid = osid
+		self.poolid = poolid
+		self.flavor = flavor
+		self.image = image
+		self.privateipv4 = privateipv4
 		self.publicipv4 = publicipv4
 		self.publicipv6 = publicipv6
 		self.ssltunnel = ssltunnel
-		self.osinstanceid = osinstanceid
-		self.name = name
 		self.state = state
 		self.sshkey = sshkey
-		self.token = token
-		self.address = address
-		self.hourlyrate = hourlyrate
+		self.callback_url = callback_url
 
 	def get_by_token(self, token):
 		instance = db.session.query(Instances).filter_by(token=token).first()
 		return instance
+	
+	def sync(self, appliance):
+		# create instances for flavors
+		# get a list of the current flavors appliance is serving
+		flavors = db.session.query(Flavors).filter_by(active=1).all()
+
+		# run through flavors and make sure we have an open instance for them
+		for flavor in flavors:
+			# the first instance which has this flavor assigned but is not running (active == 1)
+			instance = db.session.query(Instances).filter_by(flavor=flavor.id, state=1).first()
+
+			# startable instance NOT available for this flavor, so create a warm one
+			if not instance:
+				# create a new instance		
+				instance = Instances()
+				instance.name = "smi-%s" % generate_token(size=8, caselimit=True)
+				instance.flavor = flavor.id
+
+				# grab the first available image for a holder for the warm instance
+				image = db.session.query(Images).first()
+				instance.image = image.id
+
+				# timestamps
+				epoch_time = int(time.time())
+				instance.created = epoch_time
+				instance.updated = epoch_time
+				instance.expires = epoch_time # already expired
+
+				# set state
+				instance.state = 1 # has address, but no payments/not started (warm)
+
+				# update
+				instance.update()
+
+				# assign addresses
+				addresses = Addresses()
+				aresponse = addresses.assign(appliance, instance.id)
+				print aresponse
+
+		# overload the results with the list of current flavors
+		response = {"response": "success", "result": {}}
+		response['result']['instances'] = []
+		instances = db.session.query(Instances).all()
+
+		for instance in instances:
+			response['result']['instances'].append(row2dict(instance))
+
+		return response
 
 	def __repr__(self):
-		return '<Instance Name %r>' % (self.name)
+		return '<Instance %r>' % (self.name)
 
-# images table
+
+# images model
 class Images(CRUDMixin,  db.Model):
 	__tablename__ = 'images'
 	id = db.Column(db.Integer, primary_key=True)
@@ -271,8 +308,12 @@ class Images(CRUDMixin,  db.Model):
 	diskformat = db.Column(db.String(100))
 	containerformat = db.Column(db.String(100))
 	size = db.Column(db.Integer)
+
+	# 8 - uninstall
 	flags = db.Column(db.Integer)
-	active = db.Column(db.Integer) # 0 - not installed, 1 - installing, 2 - installed
+
+	# 0 - not installed, 1 - know about it, 2 - installing, 3 - installed
+	active = db.Column(db.Integer)
 
 	def __init__(
 		self, 
@@ -309,44 +350,55 @@ class Images(CRUDMixin,  db.Model):
 
 		return image_active
 
-	def sync(self):
+	def sync(self, appliance):
 		# grab image list from pool server
-		response = server_connect(method="images")
+		response = server_connect(method="images", apitoken=appliance.apitoken)
 
 		if response['response'] == "success":
 			remoteimages = response['result']
-
+					
 			# update database for images
 			for remoteimage in remoteimages['images']:
+				# see if we have a matching image
 				image = db.session.query(Images).filter_by(name=remoteimage['name']).first()
 				
-				if image is None:
-					# we don't have the image coming in from the server
-					image = Images()
+				# check if we need to delete image from local db
+				# b'001000' indicates delete image
+				# TODO: need to cleanup OpenStack images if we uninstall
+				if (remoteimage['flags'] & 8) == 8:
+					# only delete if we have it
+					if image is not None:
+						# try to delete the local copy
+						uninstall_image(image)
 
+						# remove the image from the database
+						image.delete(image)
+					else:
+						# we don't have it, so we do nothing
+						pass
+
+				# we don't have the image coming in from the server, so install
+				elif image is None:
 					# create a new image
+					image = Images()
 					image.name = remoteimage['name']
 					image.description = remoteimage['description']
 					image.url = remoteimage['url']
-					image.size = remoteimage['size']
+					image.size = remoteimage['size'] # used as a suggestion of size only
 					image.diskformat = remoteimage['diskformat']
 					image.containerformat = remoteimage['containerformat']
-					image.active = 0
+					image.active = 1 # indicates we know about it, but not downloaded
 					image.flags = remoteimage['flags']
 
 					# add and commit
 					image.update(image)
 
-				else:        
-					# check if we need to delete image from local db
-					if remoteimage['flags'] == 9:
-						image.delete(image)
-
+				# we have the image and need to update it
+				else:
 					# update image from remote images
 					image.name = remoteimage['name']
 					image.description = remoteimage['description']
 					image.url = remoteimage['url']
-					image.size = remoteimage['size']
 					image.diskformat = remoteimage['diskformat']
 					image.containerformat = remoteimage['containerformat']
 					image.flags = remoteimage['flags']
@@ -354,11 +406,13 @@ class Images(CRUDMixin,  db.Model):
 					# udpate
 					image.update(image)
 
+			# grab a new copy of the images in database
 			images = db.session.query(Images).all()
 
 			# overload the results with the list of current flavors
 			response['result']['images'] = []
 			images = db.session.query(Images).all()
+
 			for image in images:
 				response['result']['images'].append(row2dict(image))
 
@@ -370,7 +424,7 @@ class Images(CRUDMixin,  db.Model):
 			return response
 
 
-# flavors table
+# flavors model
 class Flavors(CRUDMixin,  db.Model):
 	__tablename__ = 'flavors'
 	id = db.Column(db.Integer, primary_key=True)
@@ -429,17 +483,31 @@ class Flavors(CRUDMixin,  db.Model):
 
 		return flavors_active
 
-	def sync(self):
+	def sync(self, appliance):
 		# grab image list from pool server
-		response = server_connect(method="flavors")
+		response = server_connect(method="flavors", apitoken=appliance.apitoken)
 
+		# remote sync
 		if response['response'] == "success":
 			remoteflavors = response['result']
 
 			# update the database with the flavors
 			for remoteflavor in remoteflavors['flavors']:
 				flavor = db.session.query(Flavors).filter_by(name=remoteflavor['name']).first()
-				if flavor is None:
+				
+				# check if we need to delete flavor from local db
+				# b'001000' indicates delete image
+				# TODO: need to cleanup OpenStack flavor if we uninstall
+				if (remoteflavor['flags'] & 8) == 8:
+					# only delete if we have it
+					if flavor is not None:
+						# remove the flavor from the database
+						flavor.delete(flavor)
+					else:
+						# we don't have it, so we do nothing
+						pass
+
+				elif flavor is None:
 					# we don't have the flavor coming in from the server
 					flavor = Flavors()
 
@@ -458,12 +526,9 @@ class Flavors(CRUDMixin,  db.Model):
 
 					# add and commit
 					flavor.update(flavor)
-				else:
-					# check if we need to delete image from local db
-					if remoteflavor['flags'] == 9:
-						flavor.delete(flavor)
-						continue
 
+				# we have the flavor and need to update it	
+				else:
 					# we have the flavor already, so update
 					flavor.name = remoteflavor['name']
 					flavor.description = remoteflavor['description']
@@ -479,7 +544,7 @@ class Flavors(CRUDMixin,  db.Model):
 					
 					# update
 					flavor.update(flavor)
-			
+
 			# overload the results with the list of current flavors
 			response['result']['flavors'] = []
 			flavors = db.session.query(Flavors).all()
@@ -493,7 +558,7 @@ class Flavors(CRUDMixin,  db.Model):
 			return response
 
 
-# openstack table
+# openstack model
 class OpenStack(CRUDMixin,  db.Model):
 	__tablename__ = 'openstack'
 	id = db.Column(db.Integer, primary_key=True)
@@ -541,7 +606,7 @@ class OpenStack(CRUDMixin,  db.Model):
 		return True
 
 
-# appliance table
+# appliance model
 class Appliance(CRUDMixin,  db.Model):
 	__tablename__ = 'appliance'
 	id = db.Column(db.Integer, primary_key=True)
@@ -601,7 +666,7 @@ class Appliance(CRUDMixin,  db.Model):
 
 		# set local IP address
 		self.local_ip = ip
-		
+
 		# create entry
 		self.update(self)
 
@@ -628,6 +693,7 @@ class Appliance(CRUDMixin,  db.Model):
 			else:
 				port = 80
 
+			# need to loop through subdomains we found from coinbase
 			# create data structure for yaml file
 			data = dict(
 				auth_token = self.ngroktoken.encode('ascii','ignore'),

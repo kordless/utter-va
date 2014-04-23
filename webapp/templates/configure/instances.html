@@ -1,10 +1,9 @@
 {% extends "base.html" %}
+{% import "macros.html" as macros %}
 
 {% block page_styles %}
     <!-- Config Page -->
     <link href="/css/configure.css" rel="stylesheet">
-    <link href="/css/font-awesome.css" rel="stylesheet">
-    <link href='//api.tiles.mapbox.com/mapbox.js/v1.6.0-beta0/mapbox.css' rel='stylesheet'>
 {% endblock %}
 
 {% block navbar %}
@@ -12,131 +11,10 @@
 {% endblock %}
 
 {% block content %}
-<!-- payment modal -->
-<div class="modal fade" id="show-instance-address-modal">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title">Make Payment</h4>
-      </div>
-      <div class="modal-body">
-        <div class="modal-instructions">
-          <p>Please make a payment to the following Bitcoin address to start your instance.</p>
-          <p><img id="qr-code-image-src" class="qr-code centered" src=""/></p>
-          <p><strong><span id="bitcoin-address"></span></strong></p>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-      </div>
-    </div>
-  </div>
-</div>
-<!-- end payment modal -->
-
-<!-- new instance address modal -->
-<div class="modal fade" id="create-instance-modal">
-  <form action="{{ url_for("configure.configure_instances") }}" method="post" class="form-horizontal" role="form">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h4 class="modal-title">Create Instance Address</h4>
-        </div>
-        <div class="modal-body">
-          <div class="modal-instructions">
-            <p>Use the form below to create a new instance payment address.  Name the instance and then choose the flavor and image type to use for starting after payment is received.  Set the hourly rate for the instance and click <strong>Create</strong> to create the instance address.</p>
-            <p><em>Note: Hourly rates are in <strong>μBTC</strong>. 1 μBTC is trading @ US${{ price }}.</em></p>
-          </div>
-          {{ form.csrf_token }}
-          <div class="form-group">
-            <label for="name" class="col-sm-3 control-label">Name</label>
-            <div class="col-sm-8">
-              {{ form.name(class="form-control", placeholder="Rick and Morty's Server", value="", required=true) }}
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="flavor" class="col-sm-3 control-label">Flavor</label>
-            <div class="col-sm-8">
-              <select name="osflavorid" class="form-control">
-                {% for flavor in flavors %}
-                  <option value="{{ flavor.osid }}">{{ flavor.name }}</option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="image" class="col-sm-3 control-label">Image</label>
-            <div class="col-sm-8">
-              <select name="osimageid" class="form-control">
-                {% for image in images %}
-                  <option id="{{ image.name }}" name="{{ image.name }}" value="{{ image.osid }}">{{ image.name }}</option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="image" class="col-sm-3 control-label">Rate/Hr</label>
-            <div class="col-sm-8">
-              <div class="input-group" id="form-hourly-rate">
-                {{ form.hourlyrate(class="form-control", placeholder="100", value="", required=true) }}
-                <span class="input-group-btn">
-                  <button id="toggle-cb-api-secret-again" class="btn btn-default" type="button">μ<span title="Hourly rate in Bitcoin." class="fa fa-bitcoin"></span>
-                  </button>
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-          <button id="instance-create" type="submit" class="btn btn-danger">Create Address</button>
-        </div>
-      </div>
-    </div>
-  </form>
-</div>
-<!-- end modal -->
-
 <div class="container content">
   <div class="row">
 
-    <!-- nav pills -->
-    <div class="col-md-2">
-      <ul class="nav nav-pills nav-stacked">
-        <li>
-          <a href="#">
-            Status
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for("configure.configure") }}">
-            Appliance
-            {% if settings['appliance'] == False %}
-              <span id="appliance-settings" class="glyphicon glyphicon-exclamation-sign"></span>
-            {% endif %}
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('configure.configure_openstack') }}">
-            OpenStack
-            {% if settings['openstack'] == False %}
-              <span id="openstack-settings"class="glyphicon glyphicon-exclamation-sign"></span>
-            {% endif %}
-          </a>
-        </li>
-        <li>
-          <a href="{{ url_for('configure.configure_systems') }}">
-            Flavors & Images
-            {% if settings['systems'] == False %}
-              <span id="systems-settings"class="glyphicon glyphicon-exclamation-sign"></span>
-            {% endif %}
-          </a>
-        </li>
-        <li class="active"><a href="{{ url_for('configure.configure_instances') }}">Instances</a></li>
-      </ul>
-    </div>
+    {{ macros.nav_pills("instances", settings) }}
 
     <!-- form on right side -->
     <div class="col-md-10">
@@ -145,55 +23,39 @@
       <div class="row">
         <div class="col-md-12">
           <div class="section-header">
-            <h2><small>Instance Addresses</small></h2>
-            <p>An instance address creates a payment destination address for starting predefined OpenStack instances on this appliance. Instance addresses are automatically created on this appliance via callbacks initiated by the the <a href="{{ config['POOL_WEBSITE'] }}">{{ config['POOL_NAME'] }}</a>.</p>
+            <h2><small>Appliance Instances</small></h2>
+            <p>Instances for this appliance are listed below. Instances with the <span title="Waiting on payment." class="glyphicon glyphicon-time"></span> icon are automatically created by this appliance and assigned Bitcoin addresses from Coinbase. Instances are started, and are kept running, via Bitcoin drip payments from the pool controller. These payments trigger callbacks to the appliance from Coinbase.</p>
+            <p>You may manually start an instance using the <span class="glyphicon glyphicon-play"></span> button. Unless a payment is recieved within <strong>15 minutes</strong> to the instance's payment address, the instance will be automatically shutdown and then deprovisioned.</p>
           </div>
         </div>
       </div>
 
-      {% if show_instances %}
       <div class="row">
         <div class="col-md-12">
-
-          <div class="section-header">
-            <h2><small>Active Addresses</small></h2>
-          </div>
-          
           <table class="table table-hover">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Token</th>
-                <th>Name</th>
-                <th>Input Address</th>
-                <th class="text-center">State</th>
-                <th class="text-center">Action</th>
+                <th>State</th>
+                <th>Instance</th>
+                <th>Flavor</th>
+                <th>Image</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for instance in instances %}
-                <td>{{ instance.id }}</td>
-                <td>{{ instance.token }}</td>
-                <td>{{ instance.name }}</td>
-                <td>{{ instance.paymentaddress }}</td>
-                <td class="text-center">{{ instance.state }}</td>
-                <td class="text-center"><button id="instance-detail-{{ instance.token }}" class="btn btn-sm btn-danger"><span class="glyphicon glyphicon-qrcode"></span> Detail</button></td>
+                <td>{% if instance.state == 0 %}<span class="glyphicon glyphicon-remove-sign"></span>{% elif instance.state == 1 %}<span title="Waiting on payment." class="glyphicon glyphicon-time"></span>{% elif instance.state == 2 %}<span class="glyphicon glyphicon-off"></span>{% elif instance.state == 3 %}<span class="glyphicon glyphicon-play"></span>{% elif instance.state == 4 %}<span class="glyphicon glyphicon-pause"></span>{% elif instance.state == 5 %}<span class="glyphicon glyphicon-fire"></span>{% endif %}</td>
+                <td><a href="/configure/instances/{{ instance.id }}">{{ instance.name }}</a></td>
+                <td><a href="/configure/flavors/{{ instance.flavor }}">{{ flavors[instance.flavor-1].name }}</a></td>                
+                <td>{{ images[instance.image-1].name }}</td>
+                <td><button id="instance-detail-{{ instance.token }}" title="Start instance {{ instance.name }}." class="btn btn-xs btn-success"><span class="glyphicon glyphicon-play"></span> Start</button> <button id="instance-detail-{{ instance.token }}" title="Make a payment." class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-qrcode"></span> Payment</button></td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
       </div>
-      {% endif %}
-
-      <div class="row">
-        <div class="col-md-5">
-          <button class="btn btn-success" id="create-instance-button">Create Instance Address</button>
-        </div>
-      </div>
-
     </div>
-  
   </div>
 </div>
 {% endblock %}
@@ -202,25 +64,6 @@
   <script type="text/javascript">
     $().ready(function() {
       var csrf_token = "{{ csrf_token }}";
-      // error modal settings link
-      $('#create-instance-button').click(function() {
-        $('#create-instance-modal').modal('toggle')
-      });
-      // refresh memcache of article buttons
-      $('button[id^="instance-detail-"]').each(function(index){
-        $('#'+this.id).click(function() {
-          instance_token = this.id.split("-").pop();
-          $.ajax({
-            url: '/api/instances/'+instance_token+'/detail',
-            type: 'GET',
-          }).done(function(data) {
-            $('#bitcoin-address').html(data.result.paymentaddress);
-            $('#qr-code-image-src').attr("src","https://chart.googleapis.com/chart?chs=240x240&cht=qr&chl="+data.result.paymentaddress);
-            $('#show-instance-address-modal').modal('toggle');
-            console.log(data.result.paymentaddress);
-          });
-        })
-      });
     });
   </script>
 

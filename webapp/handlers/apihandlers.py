@@ -12,7 +12,7 @@ from webapp.libs.openstack import image_install, image_remove, flavor_install, f
 
 mod = Blueprint('api', __name__)
 
-# TOKEN METHODS
+# METHODS USING FULL AUTHENTICATION
 # issue new api token to be used with pool operator
 @mod.route('/api/token/generate', methods=('GET', 'POST'))
 @login_required
@@ -39,9 +39,22 @@ def token_validate():
 	else:
 		return jsonify(response), 401
 
-# INSTANCE ADDRESS METHODS
+# METHODS USING TOKEN AUTH
+# respond to a pool operator knock
+@mod.route('/api/knock/', methods=('GET'))
+def operator_knock():
+	# get the appliance info
+	appliance = db.session.query(Appliance).first()
+	
+	# check with pool operator
+	response = server_connect(method="authorization", apitoken=appliance.apitoken)
+
+	if response['response'] == "success":
+		return jsonify(response)
+	else:
+		return jsonify(response), 401
+
 # deal with adding/removing/viewing instance addresses for deposit
-# login credentials are not required for these methods
 @mod.route('/api/instances/<string:instance_token>/<string:instance_method>', methods=['GET', 'POST'])
 def instance_handler(instance_token, instance_method):
 	response = {"response": "success", "result": {"payments": "xxxxxxxxxx"}}
@@ -53,29 +66,5 @@ def instance_handler(instance_token, instance_method):
 		instance = Instances().get_by_token(instance_token)
 		result = {"token": instance.token, "paymentaddress": instance.paymentaddress}
 		response['result'] = result
-
-	return jsonify(response)
-
-# SYNC METHODS
-# fetches data from pool operator and populates local tables
-@mod.route('/api/images/sync', methods=['GET'])
-@login_required
-def images_sync():
-	appliance = db.session.query(Appliance).first()
-
-	# update images from server
-	images = Images()
-	response = images.sync(appliance.apitoken)
-
-	return jsonify(response)	
-
-@mod.route('/api/flavors/sync', methods=['GET'])
-@login_required
-def flavors_sync():
-	appliance = db.session.query(Appliance).first()
-
-	# update flavors from server
-	flavors = Flavors()
-	response = flavors.sync(appliance.apitoken)
 
 	return jsonify(response)

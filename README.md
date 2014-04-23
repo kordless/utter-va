@@ -22,3 +22,12 @@ Either way, once the instance has been started you can access the appliance's UI
 ### Video Guide
 The [following video](https://vimeo.com/91805503) will step you through installing the virtual appliance on your OpenStack cluster.  If you have any questions about the install, you can head over the the [StackMonkey](https://www.stackmonkey.com/) site.
 
+### Development
+If you are doing development on this project, drop a file named **DEV** in the root directory to turn on the development debug configuration.
+
+You'll also do manual starts of the service and Ngrok tunnel during devlopment:
+
+    ./manage.py serve
+    ngrok -config tunnel.conf start xoviova
+
+Happy coding!

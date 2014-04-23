@@ -34,9 +34,14 @@
         System Images
       </a>
     </li>
+    <li {% if active=="addresses" %}class="active"{% endif %}>
+      <a href="{{ url_for('configure.configure_addresses') }}">
+        Bitcoin Addresses
+      </a>
+    </li>
     <li {% if active=="instances" %}class="active"{% endif %}>
       <a href="{{ url_for('configure.configure_instances') }}">
-        Instance Addresses
+        Instances
       </a>
     </li>
   </ul>
