@@ -45,6 +45,7 @@ sudo pip install flask-sqlalchemy
 sudo pip install flask-actions
 sudo pip install flask-bcrypt
 sudo pip install flask-seasurf
+sudo pip install flask-socketio
 
 # install openstack libraries for python
 sudo pip install python-keystoneclient

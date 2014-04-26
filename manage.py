@@ -6,8 +6,9 @@ import sys
 
 from flask import Flask
 from flaskext.actions import Manager
+from flask.ext.socketio import emit
 
-from webapp import app, db
+from webapp import app, db, socketio
 
 from webapp.models.models import Appliance, OpenStack, Images, Flavors, Instances, Addresses
 from webapp.libs.utils import configure_blurb, query_yes_no, pprinttable
@@ -109,7 +110,8 @@ def serve(app):
 			app.wsgi_app, 
 			{'/': os.path.join(os.path.dirname(__file__), './webapp/static') }
 		)
-		app.run(debug=True, host="0.0.0.0")
+		# app.run(debug=True, host="0.0.0.0")
+		socketio.run(app, host="0.0.0.0", port=5000)
 		sys.exit()
 	
 	return action
@@ -137,6 +139,9 @@ def flavors(app):
 		# sync the flavors
 		flavors = Flavors()
 		response = flavors.sync(appliance)
+
+		if "fail" in response['response']:
+			print response['result']
 
 	return action
 
@@ -177,9 +182,7 @@ def instances(app):
 
 		# sync the instances
 		instances = Instances()
-		response = instances.sync(appliance)
-
-		print response
+		response = instances.warmup(appliance)
 
 	return action
 
@@ -187,7 +190,7 @@ def instances(app):
 # reports all sorts of stuff, like images installed, flavors known, etc.
 def beacon(app):
 	def action():
-		pass
+		emit('response', {'data': 'connected'}, broadcast=True)
 	return action
 
 
@@ -205,6 +208,9 @@ manager.add_action('flavors', flavors)
 manager.add_action('images', images)
 manager.add_action('addresses', addresses)
 manager.add_action('instances', instances)
+
+# socket actions
+manager.add_action('beacon', beacon)
 
 if __name__ == "__main__":
 	manager.run()

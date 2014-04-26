@@ -25,7 +25,7 @@
           <div class="section-header">
             <h2><small>OpenStack Credentials</small></h2>
             <p>The OpenStack credentials used by this virtual appliance can be imported by uploading your <a href="http://docs.openstack.org/user-guide/content/cli_openrc.html"><strong>OpenStack API RC file</strong></a>. Navigate and login to your OpenStack UI and then click on the <strong>Access and Security</strong> tab to the left under the <strong>Project</strong> tab.  Click on the <strong>API Access</strong> tab at the top and then click on the <strong>Download OpenStack RC File</strong> button at the top right.  Save the file locally.</p>
-            <p>Once you have downloaded the RC file locally, import it by click on the button below or dragging and dropping the file onto the button to upload it to the appliance.  <strong>Please note you will need to manually set the password below once you have imported the RC file</strong>.</p>
+            <p>Once you have downloaded the RC file locally, import it into the appliance by clicking on the button below or dragging and dropping the file onto the button.  <strong>Please note you will need to manually set the password below once you have imported the RC file</strong>.</p>
           </div>
         </div>
       </div>
@@ -35,7 +35,7 @@
         <div class="col-md-8">
           <form action="{{ url_for("configure.configure_openstack") }}" class="dropzone" id="DropzoneForm">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-            <div class="dz-default dz-message"><span class="btn">Click or drag to upload your RC file.</span></div>
+            <div class="dz-default dz-message"><span class="btn btn-warning">Click or drag here to upload your RC file.</span></div>
             <div class="dz-details" style="width: 0px; height: 0px;"></div>
           </form>
         </div>

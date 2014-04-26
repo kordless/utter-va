@@ -63,7 +63,7 @@ CREATE TABLE flavors (
   launches INTEGER NOT NULL,
   active INTEGER NOT NULL,
   flags INTEGER NOT NULL,
-  PRIMARY KEY (id)  
+  PRIMARY KEY (id)
 );
 
 DROP TABLE IF EXISTS addresses;
@@ -71,9 +71,10 @@ CREATE TABLE addresses (
   id INTEGER NOT NULL,
   address VARCHAR(100) NOT NULL,
   token VARCHAR(100) NOT NULL,
-  instanceid INTEGER,
   subdomain VARCHAR(100) NOT NULL,
-  PRIMARY KEY (id)
+  instance_id INTEGER,
+  PRIMARY KEY (id),
+  FOREIGN KEY(instance_id) REFERENCES instances(id)
 );
 
 DROP TABLE IF EXISTS instances;
@@ -85,8 +86,6 @@ CREATE TABLE instances (
   name VARCHAR(100) NOT NULL,
   osid VARCHAR(100),
   poolid VARCHAR(100),
-  flavor INTEGER NOT NULL,
-  image INTEGER NOT NULL,
   privateipv4 VARCHAR(100),
   publicipv4 VARCHAR(100),
   publicipv6 VARCHAR(100),
@@ -94,5 +93,11 @@ CREATE TABLE instances (
   state INTEGER NOT NULL,
   sshkey VARCHAR(2048),
   callback_url VARCHAR(1024),
-  PRIMARY KEY (id)
+  flavor_id INTEGER NOT NULL,
+  image_id INTEGER NOT NULL,
+  address_id VARCHAR(100),
+  PRIMARY KEY (id),
+  FOREIGN KEY(flavor_id) REFERENCES flavors(id),
+  FOREIGN KEY(image_id) REFERENCES images(id),
+  FOREIGN KEY(address_id) REFERENCES addresses(id)
 );

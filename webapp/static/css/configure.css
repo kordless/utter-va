@@ -42,6 +42,10 @@ h2 small {
 .qr-code {
   border: 1px solid #444;
 }
+.qrcode-address {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
 
 /* appliance form styles */
 #button-api-token {

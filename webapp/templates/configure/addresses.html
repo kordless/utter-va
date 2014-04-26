@@ -22,7 +22,6 @@
           <div class="section-header">
             <h2><small>System Addresses</small></h2>
             <p>The following Coinbase Bitcoin addresses are being used by this appliance. The Bitcoin address links may be used to <strong>view payment transactions</strong> or <strong>send payments via QR code</strong>. When instances are attached to a Bitcoin address, you may click on their id to view instance details.</p>
-            <p><em>Please note you cannot delete Bitcoin addresses.</em></p>
           </div>
         </div>
       </div>
@@ -31,6 +30,7 @@
           <table class="table table-hover">
             <thead>
               <tr>
+                <th>State</th>
                 <th>Bicoin Address</th>
                 <th>SSL Subdomain</th>
                 <th>Instance</th>
@@ -39,12 +39,13 @@
             <tbody>
               {% for address in addresses %}
               <tr>
+                <td>{% if address.instance %}<span title="Bitcoin address linked to instance." class="glyphicon glyphicon-transfer"></span>{% else %}<span title="Bitcoin address is idle." class="glyphicon glyphicon-pause"></span>{% endif %}</td>
                 <td><a href="https://blockchain.info/address/{{ address.address }}" target="_blank">{{ address.address }}</a></td>
                 <td>{{ address.subdomain }}</td>
-                {% if address.instanceid > 0 %}
-                <td><a href="/configure/instances/{{ address.instanceid }}">{{ instances[address.instanceid-1].name }}</a></td>
+                {% if address.instance > 0 %}
+                <td><a href="/configure/instances/{{ address.instance }}">{{ address.instance.name }}</a></td>
                 {% else %}
-                <td>None</td>
+                <td><span title="Bitcoin address is idle." class="glyphicon glyphicon glyphicon-ban-circle"></span></td>
                 {% endif %}
               </tr>
               {% endfor %}
@@ -58,7 +59,7 @@
 </div>
 {% endblock %}
 
-{% block javascript %}>
+{% block javascript %}
 <script type="text/javascript">
   $().ready(function() {
     var csrf_token = "{{ csrf_token() }}";

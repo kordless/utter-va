@@ -1,6 +1,7 @@
 import os
 from flask import Flask, request, Request, render_template, send_from_directory
 from flask.ext.seasurf import SeaSurf
+from flask.ext.socketio import SocketIO, emit
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager, current_user
 from flask.ext.actions import Manager
@@ -20,6 +21,9 @@ app = Flask(__name__)
 # csrf_token protect
 csrf = SeaSurf(app)
 
+# sockets
+socketio = SocketIO(app)
+
 # apply SSL termination handling
 app.request_class = ProxiedRequest
 
@@ -37,6 +41,10 @@ bcrypt = Bcrypt(app) # hashing function
 # users module blueprint
 from webapp.handlers.userhandlers import mod as usersModule
 app.register_blueprint(usersModule)
+
+# socket module blueprint
+from webapp.handlers.sockethandlers import mod as socketModule
+app.register_blueprint(socketModule)
 
 # configure module blueprint
 from webapp.handlers.configurehandlers import mod as configureModule

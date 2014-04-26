@@ -18,7 +18,6 @@ mod = Blueprint('configure', __name__)
 
 # check settings for setup warning indicators
 # this feels pretty rough given split between model and util.py calls
-# needs cleanup - TODO
 def check_settings():
 	# objects
 	appliance = Appliance().get()
@@ -182,7 +181,7 @@ def configure_images():
 def configure():
 	# get the form for the page
 	form = ApplianceForm(request.form)
-	
+
 	# page is POST'ing data
 	if request.method == 'POST':
 		# try to select one and only record
@@ -197,8 +196,27 @@ def configure():
 			# our form validates, so update the database
 			appliance.update(appliance)
 
-			# build ngrok config file
-			appliance.build_tunnel_conf()
+			# at this point we know the user has entered an Ngrok token (valid form)
+			# and we test if the coinbase tokens are working.  if they are, we update
+			# the address list and parse it for subdomain information.
+			settings = check_settings()
+			if settings['coinbase']:
+				# sync up addresses with coinbase
+				addresses = Addresses()
+				addresses.sync(appliance)
+
+				# grab the first address we got from coinbase and use the callback url
+				address = db.session.query(Addresses).first()
+				if address:
+					# overload the appliance's existing subdomain with coinbase address one
+					appliance.subdomain = address.subdomain
+					appliance.update()
+				else:
+					# there exists no address with a subdomain, so we keep what we have
+					pass
+
+				# build the tunnel config file - ngrok will start after it's built
+				appliance.build_tunnel_conf()
 
 			# form was valid, so say thanks	
 			response = "Setting have been saved."
@@ -215,7 +233,8 @@ def configure():
 	else:
 		# get existing database entries
 		appliance = db.session.query(Appliance).first()
-
+		settings = check_settings()
+		
 		# populate the new form with seed location
 		try:
 			lat = float(appliance.latitude)
@@ -231,8 +250,6 @@ def configure():
 	
 	# run for either POST or GET
 	# check configuration and show messages
-	settings = check_settings()
-	
 	if settings['token'] == False:
 		# show error	
 		response = "Please register the API token."
@@ -242,10 +259,6 @@ def configure():
 		# show error	
 		response = "Please enter valid Coinbase credentials."
 		flash(response, "error")
-	else:
-		# sync up addresses
-		addresses = Addresses()
-		addresses.sync(appliance)
 
 	if settings['ngrok'] == False:
 		# show error
@@ -305,7 +318,7 @@ def configure_openstack():
 
 			# update entry
 			openstack.update(openstack)
-			
+
 
 		elif file:
 			# file type not allowed
@@ -342,18 +355,18 @@ def configure_addresses():
 	settings = check_settings()
 
 	# pull out the addresses
-	addresses = db.session.query(Addresses).all()
+	# addresses = db.session.query(Addresses).all()
 
 	# grab instances
 	# TODO: do a join instead for instance.id + instance.name
-	instances = db.session.query(Instances).all()
+	# instances = db.session.query(Instances).all()
+	addresses = db.session.query(Addresses).all()
 
 	# render template
 	return render_template(
 		'configure/addresses.html',
 		settings=settings,
-		addresses=addresses,
-		instances=instances
+		addresses=addresses
 	)
 
 # configure instances page
@@ -367,24 +380,15 @@ def configure_instances():
 	instances = Instances()
 	instances = instances.get_all()
 
-	# flavors and images
-	flavors = db.session.query(Flavors).all()
-	images = db.session.query(Images).all()
-
-	print flavors[1]
-	if instances:
-		show_instances = True
-	else:
-		print "no instances"
-		instances = []
-		show_instances = False
+	# images
+	images = Images()
+	images = images.get_all()
 
 	return render_template(
 		'configure/instances.html', 
 		settings=settings, 
 		instances=instances,
-		images=images,
-		flavors=flavors
+		images=images
 	)
 
 

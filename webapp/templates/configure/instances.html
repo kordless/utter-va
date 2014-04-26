@@ -11,6 +11,60 @@
 {% endblock %}
 
 {% block content %}
+<!-- hidden qrcode payment modal -->
+<div id="qrcode-modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Manual Instance Payment</h4>
+      </div>
+      <div class="modal-body">
+        <p>The following Bitcoin address can be used to make a payment on this instance. The appliance has the current rate of this instance set to <code><span id="#rate">XX</span> μBTC/Hour</code>.</p>
+        <div class="qrcode-address">
+          <div class="text-center" id="qrcode"></div>
+          <div class="text-center" id="address"></div>
+        </div>
+        <p>The instance will be started once the payment is observed on the Bitcoin blockchain.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="qrcode-close-button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- end modal -->
+<!-- hidden start instance modal -->
+<div id="instance-start-modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Manual Instance Start</h4>
+      </div>
+      <div class="modal-body">
+        <p>You are starting a <strong><span id="flavor-description"></span></strong> instance.  Select the system image to use and then click the <strong>Start Instance</strong> button.</p>
+        <div class="row form-group">
+          <div class="col-md-8">
+            <label class="control-label" for="osimageid">Image</label>
+            <select name="osimageid" class="form-control">
+            {% for image in images %}
+              <option value="{{ image.id }}">{{ image.name }}</option>
+            {% endfor %}
+            </select>
+          </div>
+        </div>
+         <p><strong>Note:</strong> Unless a Bitcoin payment is made to this instance, it will be automatically suspended after <strong>15 minutes</strong>.  Deprovisioning will occur <strong>2 hours</strong> later.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="instance-close-button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" id="instance-start-button" class="btn btn-danger">Start Instance</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- end modal -->
+
 <div class="container content">
   <div class="row">
 
@@ -24,8 +78,8 @@
         <div class="col-md-12">
           <div class="section-header">
             <h2><small>Appliance Instances</small></h2>
-            <p>Instances for this appliance are listed below. Instances with the <span title="Waiting on payment." class="glyphicon glyphicon-time"></span> icon are automatically created by this appliance and assigned Bitcoin addresses from Coinbase. Instances are started, and are kept running, via Bitcoin drip payments from the pool controller. These payments trigger callbacks to the appliance from Coinbase.</p>
-            <p>You may manually start an instance using the <span class="glyphicon glyphicon-play"></span> button. Unless a payment is recieved within <strong>15 minutes</strong> to the instance's payment address, the instance will be automatically shutdown and then deprovisioned.</p>
+            <p>Instances are automatically created by this appliance, assigned Bitcoin addresses from Coinbase, and registered with the <a href="{{ config['POOL_WEBSITE'] }}">{{ config['POOL_NAME'] }}</a> website for sale. Warm instances can be manually started by using the <strong>Start</strong> or <strong>Payment</strong> buttons.</p>
+            <p><span class="glyphicon glyphicon-remove-sign"></span> is inactive, <span class="glyphicon glyphicon-time"></span> is waiting on payment, <span class="glyphicon glyphicon-off"></span> is starting, <span class="glyphicon glyphicon-play"></span> is running, <span class="glyphicon glyphicon-pause"></span> is suspended, <span class="glyphicon glyphicon-fire"></span> is decommissioned.</p>
           </div>
         </div>
       </div>
@@ -46,13 +100,17 @@
               {% for instance in instances %}
                 <td>{% if instance.state == 0 %}<span class="glyphicon glyphicon-remove-sign"></span>{% elif instance.state == 1 %}<span title="Waiting on payment." class="glyphicon glyphicon-time"></span>{% elif instance.state == 2 %}<span class="glyphicon glyphicon-off"></span>{% elif instance.state == 3 %}<span class="glyphicon glyphicon-play"></span>{% elif instance.state == 4 %}<span class="glyphicon glyphicon-pause"></span>{% elif instance.state == 5 %}<span class="glyphicon glyphicon-fire"></span>{% endif %}</td>
                 <td><a href="/configure/instances/{{ instance.id }}">{{ instance.name }}</a></td>
-                <td><a href="/configure/flavors/{{ instance.flavor }}">{{ flavors[instance.flavor-1].name }}</a></td>                
-                <td>{{ images[instance.image-1].name }}</td>
-                <td><button id="instance-detail-{{ instance.token }}" title="Start instance {{ instance.name }}." class="btn btn-xs btn-success"><span class="glyphicon glyphicon-play"></span> Start</button> <button id="instance-detail-{{ instance.token }}" title="Make a payment." class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-qrcode"></span> Payment</button></td>
+                <td><a href="/configure/flavors/{{ instance.flavor.id }}">{{ instance.flavor.name }}</a></td>                
+                <td>{{ instance.image.name }}</td>
+                <td>
+                  <button id="instance-start-{{ instance.id }}" title="Start instance {{ instance.name }}." data-instance="{{ instance.id }}" data-flavor="{{ instance.flavor.id }}" data-image="{{ instance.image.id }}" data-description="{{ instance.flavor.description }}" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-play"></span> Start</button> 
+                  <button id="instance-payment-{{ instance.address.address }}" title="Make a payment." class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-qrcode"></span> Payment</button>
+                </td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
+          <button id="reload-page" class="btn btn-info"><span class="glyphicon glyphicon-refresh"></span> Reload Page</button>
         </div>
       </div>
     </div>
@@ -61,12 +119,81 @@
 {% endblock %}
 
 {% block javascript %}
-  <script type="text/javascript">
-    $().ready(function() {
-      var csrf_token = "{{ csrf_token }}";
-    });
-  </script>
+<script type="text/javascript" src="/js/jquery.qrcode.js"></script>
+<script type="text/javascript" src="/js/qrcode.js"></script>
+<script type="text/javascript" src="/js/socket.io.min.js"></script>
+<script type="text/javascript">
+  $().ready(function() {
+    var csrf_token = "{{ csrf_token }}";
 
+    // sockets
+    var socket = io.connect('http://' + document.domain + ':' + location.port + '/xovio');
+    socket.on('connect', function(msg) {
+      alertify.log("Server sent socket saying "+msg+".", "success");
+    });
+    
+    socket.emit('my event', {'data': "hi there"});
+    
+    // start instance buttons
+    $('button[id^="instance-start-"]').each(function(index){
+      $('#'+this.id).click(function() {
+        // show the description in the modal
+        description = $('#'+this.id).attr('data-description');
+        $('#flavor-description').html(description);
+        $('#instance-start-modal').modal();
+
+        // load the instance_id, flavor_id, and image_id into the button
+        instance_id = $('#'+this.id).attr('data-instance');
+        flavor_id = $('#'+this.id).attr('data-flavor');
+        image_id = $('#'+this.id).attr('data-image');
+        $('#instance-start-button').attr('data-flavor', flavor_id);
+        $('#instance-start-button').attr('data-image', image_id);
+        $('#instance-start-button').attr('data-instance', instance_id);
+      })
+    });
+
+    // handle the start button click
+    $('#instance-start-button').click(function() {
+      // reload our variables
+      instance_id = $('#instance-start-button').attr('data-instance');
+      flavor_id = $('#instance-start-button').attr('data-flavor');
+      image_id = $('#instance-start-button').attr('data-image');
+      console.log(instance_id);
+      
+      // fire the call to start
+      $.ajax({
+        url: '/configure/instances/'+instance_id,
+        type: 'PUT',
+        data: {_csrf_token: csrf_token, action: 'start', flavor: flavor_id, image: image_id},
+        success: function() {
+          alertify.log("The instance is starting.", "success");
+        },
+        error: function() {
+          alertify.log("The instance failed to start.", "error");
+        }
+      });
+
+      // hide the modal
+      $('#instance-start-modal').modal('hide');
+    });
+
+    // payment buttons to show qrcodes
+    $('button[id^="instance-payment-"]').each(function(index){
+      $('#'+this.id).click(function() {
+        address = this.id.split("-").pop();
+        $('#qrcode-modal').modal();
+        $('#qrcode').html('');
+        $('#qrcode').qrcode({text: address});
+        $('#address').html(address);
+      })
+    });
+
+    // reload page
+    $('#reload-page').click(function() {
+      location.reload();
+    });
+  });
+</script>
 {% endblock %}
 
 {% block extras %}

@@ -264,7 +264,7 @@ def coinbase_generate_address(appliance=None, callback_url=None, label=None):
 		result = json.loads(opener.open(Request(url, data)).read())
 
 		# check the returned data matches what we sent - adding "instance-" to the label check
-		if result['callback_url'] != callback_url or result['label'] != "instance-%s" % label:
+		if result['callback_url'] != callback_url or result['label'] != label:
 			raise CoinBaseAddressBuild("Coinbase returned mismatched parameters for callback url or label.")
 		
 		response['result']['address'] = result['address']
