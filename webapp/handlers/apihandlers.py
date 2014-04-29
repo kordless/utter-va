@@ -6,8 +6,8 @@ from flask import Blueprint, render_template, jsonify, flash, redirect, session,
 from flask.ext.login import login_user, logout_user, current_user, login_required
 
 from webapp import app, db, csrf, bcrypt, login_manager
-from webapp.models.models import User, Images, Flavors, Instances, OpenStack, Addresses, Appliance
-from webapp.libs.utils import row2dict, server_connect
+from webapp.models.models import User, Images, Flavors, Instances, OpenStack, Addresses, Appliance, Messages
+from webapp.libs.utils import row2dict, pool_api_connect
 from webapp.libs.openstack import image_install, image_remove, flavor_install, flavor_remove, instance_start
 
 mod = Blueprint('api', __name__)
@@ -32,7 +32,7 @@ def token_validate():
 	appliance = db.session.query(Appliance).first()
 	
 	# check with pool operator
-	response = server_connect(method="authorization", apitoken=appliance.apitoken)
+	response = pool_api_connect(method="authorization", apitoken=appliance.apitoken)
 
 	if response['response'] == "success":
 		return jsonify(response)
@@ -56,8 +56,56 @@ def pool_ping():
 		return jsonify(response)
 	else:
 		response['response'] = "fail"
-		response['result'] = "authorization failed"
+		response['result'] = "apitoken is invalid"
 		return jsonify(response), 401
+
+# poor excuse for a socket handler to broadcast messages
+# TODO: figure out how to deploy socket enabled webserver
+@csrf.exempt
+@mod.route('/api/messages', methods=('GET', 'POST', 'DELETE'))
+def api_messages():
+	# appliance info
+	appliance = Appliance()
+	key = app.config['SECRET_KEY']
+
+	# build the response
+	response = {"response": "success", "result": {}}
+	
+	# check key matches
+	if request.args.get('key') != key:
+		response['response'] = "fail"
+		response['result'] = "message key is invalid"
+		return jsonify(response), 401
+
+	# add a message to the queue
+	if request.method == 'POST':
+			message = Messages()
+			result = message.push(request.args.get('message', ''), request.args.get('status', 'success'))
+
+			# pack into the response
+			response['result']['message'] = message.text
+			response['result']['status'] = message.status
+			return jsonify(response)
+		
+	elif request.method == 'GET':
+		# attach to messages db
+		message = Messages()
+		result = message.pop()
+	
+		# return the message
+		if result:
+			response['result'] = result
+			return jsonify(response)
+		else:
+			# nothing in the db, so say as much
+			response['response'] = "fail"
+			response['result'] = {"message": ""}
+			return jsonify(response)
+
+	else: # DELETE REQUEST
+		messages = Messages()
+		result = messages.flush()
+		return ""
 
 # METHODS USING ADDRESS TOKEN AUTH
 # handle callback from coinbase on address payment
@@ -67,28 +115,39 @@ def address_handler(address_token):
 	# look up address
 	address = Addresses().get_by_token(address_token)
 
+	# build the response
+	response = {"response": "success", "result": {}}
+
 	# check if we found an address that matches
 	if address:
-		# find out how much we were paid
-		amount = float(request.json['amount'])
-		print amount
+		# pull the instance out by id
+		instance = Instances().get_by_id(address.instance_id)
 
-		# look up how much the flavor for this instance is per hour
+		try:
+			# find out how much we were paid
+			amount = float(request.json['amount'])
+		except:
+			# bad stuff happens
+			response['response'] = "fail"
+			response['result'] = "payment amount required"		
+			return jsonify(response), 401
 
-		# set the expire time to what has been paid
+		# update the instance's state to starting (state == 2)
+		instance.state = 2
+		instance.update()
 
-		# query the instance's desired outcome from the pool
+		# indicate we were paid and reload the page
+		message = Messages()
+		message.push("Instance %s received a payment of %s." % (amount, instance.name), 'reload')
 
-		# take action on the outcome (start/stop)
+		# everything else related to starting the instance is handled by a cron job
 
-		print address.address, address.instance_id
-
-		# build the response
-		response = {"response": "success", "result": "acknowledged"}
+		# load response
+		response['result'] = "acknowledged"
 		return jsonify(response)
-	
+		
 	else:
+		app.logger.info("A payment was recieved on an unused bitcoin address.")
 		response['response'] = "fail"
-		response['result'] = "bitcoin address not found"
+		response['result'] = "bitcoin address token not found"		
 		return jsonify(response), 401
-

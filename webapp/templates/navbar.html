@@ -25,10 +25,12 @@
                     <li class="divider"></li>
                     <li class="dropdown-header">OpenStack</li>
                     <li><a href="{{ url_for("configure.configure_openstack") }}">Settings</a></li>
-                    <li><a href="{{ url_for("configure.configure_openstack") }}">Flavors & Images</a></li>
+                    <li><a href="{{ url_for("configure.configure_flavors") }}">Flavors</a></li>
+                    <li><a href="{{ url_for("configure.configure_images") }}">Images</a></li>
                     <li class="divider"></li>
-                    <li class="dropdown-header">Instances</li>
-                    <li><a href="{{ url_for("configure.configure_instances") }}">Active Addresses</a></li>
+                    <li class="dropdown-header">Manage</li>
+                    <li><a href="{{ url_for("configure.configure_instances") }}">Instances</a></li>
+                    <li><a href="{{ url_for("configure.configure_addresses") }}">Addresses</a></li>
                     <li class="divider"></li>
                     <li><a href="{{ url_for("users.logout") }}">Logout</a></li>
                   </ul>

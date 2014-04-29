@@ -101,3 +101,12 @@ CREATE TABLE instances (
   FOREIGN KEY(image_id) REFERENCES images(id),
   FOREIGN KEY(address_id) REFERENCES addresses(id)
 );
+
+DROP TABLE IF EXISTS messages;
+CREATE TABLE messages (
+  id INTEGER NOT NULL,
+  text VARCHAR(1024),
+  status VARCHAR(100),
+  created INTEGER NOT NULL,
+  PRIMARY KEY (id)
+);

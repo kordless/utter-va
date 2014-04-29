@@ -42,7 +42,7 @@ def image_install(image):
 			location = image.url
 		)
 
-		image.active = 1
+		image.osid = gimage.id
 		image.update(image)
 	
 		# set the response	
@@ -106,12 +106,11 @@ def flavor_install(flavor):
 		nova = novaclient.Client(openstack.osusername, openstack.ospassword, openstack.tenantname, openstack.authurl, service_type="compute")
 		
 		# create the new flavor
-		osflavor = nova.flavors.create(flavor.name, flavor.mem, flavor.vpu, flavor.disk, None, 0, 0, 1.0, True)
+		osflavor = nova.flavors.create(flavor.name, flavor.memory, flavor.vpus, flavor.disk, None, 0, 0, 1.0, True)
 		osflavor.set_keys({"provider": app.config["POOL_NAME"]})
 
-		# update the appliance database with id
+		# update the flavor database with id
 		flavor.osid = osflavor.id
-		flavor.active = 1
 		flavor.update(flavor)
 		response = "success"
 
@@ -159,8 +158,7 @@ def instance_start(instance):
 	# default response
 	response = {"response": "success", "result": {}}
 
-	# check if we have flavor and image, then start
-	# if we don't have image installed locally, use remote Image url
+	print instance.image.osid, instance.flavor.osid
 
 	# if we can't talk to OpenStack
 	if not openstack:
@@ -171,12 +169,12 @@ def instance_start(instance):
 		response['result'] = "Can't communicate with OpenStack cluster."
 	else:
 		nova = novaclient.Client(openstack.osusername, openstack.ospassword, openstack.tenantname, openstack.authurl, service_type="compute")
-		detail = nova.servers.create(name=instance.name, image=instance.osimageid, flavor=instance.osflavorid, key_name="id-kord")
+		detail = nova.servers.create(name=instance.name, image=instance.image.osid, flavor=instance.flavor.osid, key_name="id-kord")
 
 	return response
 
-def terminate_instance():
+def instance_suspend():
 	pass
 
-def check_instance():
+def instance_decomission():
 	pass

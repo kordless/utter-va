@@ -11,7 +11,7 @@ from webapp.models.models import User, Images, Flavors, Addresses, Instances, Op
 from webapp.forms.forms import OpenStackForm, ApplianceForm, InstanceForm
 from webapp.libs.geoip import get_geodata
 from webapp.libs.utils import row2dict
-from webapp.libs.utils import generate_token, server_connect, ngrok_check
+from webapp.libs.utils import generate_token, pool_api_connect, ngrok_check
 from webapp.libs.utils import coinbase_generate_address, coinbase_get_quote, coinbase_check
 
 mod = Blueprint('configure', __name__)
@@ -34,7 +34,7 @@ def check_settings():
 	check_coinbase = coinbase_check(appliance)
 
 	# token valid?
-	response = server_connect('authorization', appliance.apitoken)
+	response = pool_api_connect('authorization', appliance.apitoken)
 	if response['response'] == "success":
 		check_token = True
 	else:
@@ -88,7 +88,7 @@ def configure_flavors():
 
 @mod.route('/configure/flavors/<int:flavor_id>', methods=['GET', 'PUT'])
 @login_required
-def configure_flavors_handler(flavor_id):
+def configure_flavors_detail(flavor_id):
 	# get the matching flavor
 	flavor = db.session.query(Flavors).filter_by(id=flavor_id).first()
 
@@ -113,8 +113,13 @@ def configure_flavors_handler(flavor_id):
 	# handle a PUT
 	elif request.method == 'PUT':
 		try:
-			state = request.form['enable']
+			state = int(request.form['enable'])
 			flavor.active = state
+
+			# set instances with this flavor to the state
+			instances = Instances()
+			instances.toggle(flavor.id, state)
+
 		except:
 			pass
 
@@ -319,7 +324,6 @@ def configure_openstack():
 			# update entry
 			openstack.update(openstack)
 
-
 		elif file:
 			# file type not allowed
 			flash("File type not allowed or empty.  Try again.", "file-error")
@@ -347,7 +351,7 @@ def configure_openstack():
 		openstack=openstack
 	)	
 
-# configure instances page
+# configure addresses page
 @mod.route('/configure/addresses', methods=['GET', 'PUT'])
 @login_required
 def configure_addresses():
@@ -355,11 +359,6 @@ def configure_addresses():
 	settings = check_settings()
 
 	# pull out the addresses
-	# addresses = db.session.query(Addresses).all()
-
-	# grab instances
-	# TODO: do a join instead for instance.id + instance.name
-	# instances = db.session.query(Instances).all()
 	addresses = db.session.query(Addresses).all()
 
 	# render template
@@ -376,9 +375,8 @@ def configure_instances():
 	# check configuration
 	settings = check_settings()
 
-	# load instances
-	instances = Instances()
-	instances = instances.get_all()
+	# load instances ordering by state
+	instances = db.session.query(Instances).order_by("state desc").all()
 
 	# images
 	images = Images()
@@ -390,5 +388,3 @@ def configure_instances():
 		instances=instances,
 		images=images
 	)
-
-

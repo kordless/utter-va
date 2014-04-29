@@ -6,11 +6,10 @@ import sys
 
 from flask import Flask
 from flaskext.actions import Manager
-from flask.ext.socketio import emit
 
-from webapp import app, db, socketio
+from webapp import app, db
 
-from webapp.models.models import Appliance, OpenStack, Images, Flavors, Instances, Addresses
+from webapp.models.models import Appliance, OpenStack, Images, Flavors, Instances, Addresses, Messages
 from webapp.libs.utils import configure_blurb, query_yes_no, pprinttable
 from webapp.libs.utils import coinbase_get_addresses, coinbase_check
 from webapp.libs.utils import download_images
@@ -110,8 +109,7 @@ def serve(app):
 			app.wsgi_app, 
 			{'/': os.path.join(os.path.dirname(__file__), './webapp/static') }
 		)
-		# app.run(debug=True, host="0.0.0.0")
-		socketio.run(app, host="0.0.0.0", port=5000)
+		app.run(debug=True, host="0.0.0.0")
 		sys.exit()
 	
 	return action
@@ -131,6 +129,7 @@ def tunnel(app):
 	return action
 
 # grab the pool server's flavors and install
+# runs every 15 minutes via cron
 def flavors(app):
 	def action():
 		# get the appliance for api token (not required, but sent if we have it)
@@ -140,12 +139,10 @@ def flavors(app):
 		flavors = Flavors()
 		response = flavors.sync(appliance)
 
-		if "fail" in response['response']:
-			print response['result']
-
 	return action
 
 # grab the pool server's images and download
+# runs every 15 minutes via cron
 def images(app):
 	def action():
 		# get the appliance for api token (not required, but sent if we have it)
@@ -162,6 +159,7 @@ def images(app):
 	return action
 
 # grab the list of bitcoin addresses from coinbase
+# runs every 15 minutes via cron
 def addresses(app):
 	def action():
 		# get the appliance for coinbase tokens
@@ -174,23 +172,43 @@ def addresses(app):
 
 	return action
 
-# attach addresses to instance flavor preambles
+# attach addresses to instance warmups
+# runs every minute via cron
 def instances(app):
 	def action():
 		# get the appliance settings
 		appliance = db.session.query(Appliance).first()
 
-		# sync the instances
+		# check appliance is ready to go
+		# TODO
+
+		# grab instances
 		instances = Instances()
+
+		# warmup instances for flavors with none
 		response = instances.warmup(appliance)
+
+		# start instances in starting state (set from /api/address/ handler)
+		response = instances.start(appliance)
+
+		# suspend instances which are payment expired
+		response = instances.suspend(appliance)
+
+		# decomission non-paid instances
+		response = instances.decomission(appliance)
 
 	return action
 
-# beacon
-# reports all sorts of stuff, like images installed, flavors known, etc.
-def beacon(app):
-	def action():
-		emit('response', {'data': 'connected'}, broadcast=True)
+# message client
+def messenger(app):
+	def action(
+		text=('m', 'Hello from the administration console!'),
+		status=('s', 'success')
+	):
+		# stuff message in db
+		message = Messages()
+		message.push(text, status)
+		
 	return action
 
 
@@ -209,8 +227,8 @@ manager.add_action('images', images)
 manager.add_action('addresses', addresses)
 manager.add_action('instances', instances)
 
-# socket actions
-manager.add_action('beacon', beacon)
+# message actions
+manager.add_action('message', messenger)
 
 if __name__ == "__main__":
 	manager.run()

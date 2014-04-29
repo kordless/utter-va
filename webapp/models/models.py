@@ -17,7 +17,8 @@ from webapp import db
 from webapp import bcrypt
 
 from webapp.models.mixins import CRUDMixin
-from webapp.libs.utils import server_connect, coinbase_generate_address, coinbase_get_addresses
+from webapp.libs.utils import coinbase_generate_address, coinbase_get_addresses
+from webapp.libs.utils import pool_api_instances, pool_api_connect
 from webapp.libs.utils import generate_token, row2dict
 from webapp.libs.utils import uninstall_image
 from webapp.libs.geoip import get_geodata
@@ -249,7 +250,7 @@ class Flavors(CRUDMixin,  db.Model):
 
 	def sync(self, appliance):
 		# grab image list from pool server
-		response = server_connect(method="flavors", apitoken=appliance.apitoken)
+		response = pool_api_connect(method="flavors", apitoken=appliance.apitoken)
 
 		# remote sync
 		if response['response'] == "success":
@@ -320,6 +321,80 @@ class Flavors(CRUDMixin,  db.Model):
 		else:
 			# lift the response from server to view
 			return response
+
+
+# messages model
+class Messages(CRUDMixin, db.Model):
+	__tablename__ = 'messages'
+	id = db.Column(db.Integer, primary_key=True)
+	text = db.Column(db.String(1024))
+	status = db.Column(db.String(100))
+	created = db.Column(db.Integer)
+
+	# push messages into db
+	def push(self, text=None, status=None):
+		# timestamps
+		epoch_time = int(time.time())
+
+		# delete messages older than a minute
+		messages = db.session.query(Messages).filter(epoch_time-60 > Messages.created).all()	
+		for message in messages:
+			message.delete()
+			
+		db.session.commit()
+
+		# store a new message
+		message = Messages()
+		message.text = text
+		message.status = status
+		message.created = epoch_time
+		message.update()
+
+		# build response
+		result = { "message": {
+				"text": message.text, 
+				"status": message.status, 
+				"created": message.created
+			}
+		}
+
+		return result
+
+	# pops messages out of db
+	def pop(self):
+		# timestamps 
+		epoch_time = int(time.time())
+
+		# delete messages older than a minute
+		messages = db.session.query(Messages).filter(epoch_time-60 > Messages.created).all()	
+		for message in messages:
+			message.delete()
+		
+		db.session.commit()
+
+		# pull out oldest message, pop in response, delete it and return
+		message = db.session.query(Messages).order_by("created asc").first()
+
+		if message:
+			result = { "message": {
+					"text": message.text, 
+					"status": message.status, 
+					"created": message.created
+				}
+			}
+			message.delete()
+			db.session.commit()
+		else:
+			result = False
+
+		return result
+
+	# delete all messages
+	def flush(self):
+		messages = db.session.query(Messages).all()	
+		for message in messages:
+			message.delete()
+		db.session.commit()
 
 
 # instance model
@@ -393,7 +468,20 @@ class Instances(CRUDMixin, db.Model):
 		self.flavor_id = flavor_id
 		self.image_id = image_id
 		self.address_id = address_id
-	 
+
+	def toggle(self, flavor_id, active):
+		# set active/inactive state for instances with a given flavor_id
+		# we only set instances that are in state 0 - inactive, or 1 - waiting on payment
+		state = 0 if int(active) == 1 else 1
+		instances = db.session.query(Instances).filter_by(flavor_id=flavor_id, state=state).all()
+
+		# set to active/inactive
+		for instance in instances:
+			instance.state = int(active)
+			instance.update()
+
+		return True
+
 	def warmup(self, appliance):
 		# create warm instances (state == 1) for flavors
 		# get a list of the current flavors appliance is serving
@@ -441,6 +529,65 @@ class Instances(CRUDMixin, db.Model):
 			response['result']['instances'].append(row2dict(instance))
 
 		return response
+
+	def start(self, appliance):
+		from webapp.libs.openstack import flavor_install, image_install, instance_start
+		
+		# only interested in instances which have been paid and need to start
+		instances = db.session.query(Instances).filter_by(state=2).all()
+
+		# message bus
+		message = Messages()
+		
+		# loop through all instances needing to start
+		for instance in instances:
+			# set the flag to running
+			instance.state = 3
+			instance.update()
+
+			# make a call to the pool for each instance
+			response = pool_api_instances( 
+				{
+					"name": instance.name,
+					"address": instance.address.address,
+					"flavor": instance.flavor.name,
+					"image": instance.image.name,
+					"ask": instance.flavor.ask
+				},
+				apitoken=appliance.apitoken
+			)
+		
+			# pull the image/flavor objects in and make sure they are installed
+			image = Images().get_by_id(instance.image.id)
+			osimage = image_install(image)
+
+			flavor = Flavors().get_by_id(instance.flavor.id)
+			osflavor = flavor_install(flavor)
+
+			# start the instance
+			instance_start(instance)
+
+			# send a message to reload
+			message.push("Instance %s launched." % instance.name, 'reload')
+
+		# set expire time
+
+		# query the instance's callback_url from the current callback_url
+
+		# if new callback url set, call it now and do previous step again
+
+		# start instances
+		pass
+
+	def suspend(self, appliance):
+		from webapp.libs.openstack import instance_suspend
+		# check the expire time for the instance
+		pass
+
+	def decomission(self, appliance):
+		from webapp.libs.openstack import instance_decomission
+		# check the decomission time for the instance
+		pass
 
 	def __repr__(self):
 		return '<Instance %r>' % (self.name)
@@ -501,7 +648,7 @@ class Images(CRUDMixin, db.Model):
 
 	def sync(self, appliance):
 		# grab image list from pool server
-		response = server_connect(method="images", apitoken=appliance.apitoken)
+		response = pool_api_connect(method="images", apitoken=appliance.apitoken)
 
 		if response['response'] == "success":
 			remoteimages = response['result']
@@ -611,7 +758,8 @@ class OpenStack(CRUDMixin, db.Model):
 					username = openstack.osusername,
 					password = openstack.ospassword,
 					tenant_id = openstack.tenantid,
-					auth_url = openstack.authurl
+					auth_url = openstack.authurl,
+					timeout = 5
 				)
 			except:
 				return False

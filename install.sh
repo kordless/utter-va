@@ -45,7 +45,6 @@ sudo pip install flask-sqlalchemy
 sudo pip install flask-actions
 sudo pip install flask-bcrypt
 sudo pip install flask-seasurf
-sudo pip install flask-socketio
 
 # install openstack libraries for python
 sudo pip install python-keystoneclient
@@ -182,7 +181,7 @@ sudo cat <<EOF > /var/www/xoviova/crontab
 $FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py images > /dev/null 2>&1
 $FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py flavors > /dev/null 2>&1
 $FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py addresses > /dev/null 2>&1
-$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py instances > /dev/null 2>&1
+* * * * * /var/www/xoviova/manage.py instances > /dev/null 2>&1
 EOF
 sudo crontab -u www-data /var/www/xoviova/crontab
 

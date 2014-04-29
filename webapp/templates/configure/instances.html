@@ -20,12 +20,11 @@
         <h4 class="modal-title">Manual Instance Payment</h4>
       </div>
       <div class="modal-body">
-        <p>The following Bitcoin address can be used to make a payment on this instance. The appliance has the current rate of this instance set to <code><span id="#rate">XX</span> μBTC/Hour</code>.</p>
+        <p>The following Bitcoin address can be used to make a payment on this instance. The current rate of this instance set to <code><span id="#rate">XX</span> μBTC/Hour</code>.</p>
         <div class="qrcode-address">
           <div class="text-center" id="qrcode"></div>
           <div class="text-center" id="address"></div>
         </div>
-        <p>The instance will be started once the payment is observed on the Bitcoin blockchain.</p>
       </div>
       <div class="modal-footer">
         <button type="button" id="qrcode-close-button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -78,7 +77,7 @@
         <div class="col-md-12">
           <div class="section-header">
             <h2><small>Appliance Instances</small></h2>
-            <p>Instances are automatically created by this appliance, assigned Bitcoin addresses from Coinbase, and registered with the <a href="{{ config['POOL_WEBSITE'] }}">{{ config['POOL_NAME'] }}</a> website for sale. Warm instances can be manually started by using the <strong>Start</strong> or <strong>Payment</strong> buttons.</p>
+            <p>Instances are automatically created by this appliance, assigned Bitcoin addresses from Coinbase, and registered with the <a href="{{ config['POOL_WEBSITE'] }}">{{ config['POOL_NAME'] }}</a> website for sale. Instances can be manually started by using the <strong>Start</strong> or <strong>Payment</strong> buttons.</p>
             <p><span class="glyphicon glyphicon-remove-sign"></span> is inactive, <span class="glyphicon glyphicon-time"></span> is waiting on payment, <span class="glyphicon glyphicon-off"></span> is starting, <span class="glyphicon glyphicon-play"></span> is running, <span class="glyphicon glyphicon-pause"></span> is suspended, <span class="glyphicon glyphicon-fire"></span> is decommissioned.</p>
           </div>
         </div>
@@ -92,18 +91,18 @@
                 <th>State</th>
                 <th>Instance</th>
                 <th>Flavor</th>
-                <th>Image</th>
+                <th>Default Image</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for instance in instances %}
-                <td>{% if instance.state == 0 %}<span class="glyphicon glyphicon-remove-sign"></span>{% elif instance.state == 1 %}<span title="Waiting on payment." class="glyphicon glyphicon-time"></span>{% elif instance.state == 2 %}<span class="glyphicon glyphicon-off"></span>{% elif instance.state == 3 %}<span class="glyphicon glyphicon-play"></span>{% elif instance.state == 4 %}<span class="glyphicon glyphicon-pause"></span>{% elif instance.state == 5 %}<span class="glyphicon glyphicon-fire"></span>{% endif %}</td>
+                <td>{% if instance.state == 0 %}<span title="Inactive" class="glyphicon glyphicon-remove-sign"></span>{% elif instance.state == 1 %}<span title="Waiting on payment." class="glyphicon glyphicon-time"></span>{% elif instance.state == 2 %}<span title="Starting" class="glyphicon glyphicon-off"></span>{% elif instance.state == 3 %}<span title="Running" class="glyphicon glyphicon-play"></span>{% elif instance.state == 4 %}<span title="Suspended" class="glyphicon glyphicon-pause"></span>{% elif instance.state == 5 %}<span title="Decomissioned" class="glyphicon glyphicon-fire"></span>{% endif %}</td>
                 <td><a href="/configure/instances/{{ instance.id }}">{{ instance.name }}</a></td>
                 <td><a href="/configure/flavors/{{ instance.flavor.id }}">{{ instance.flavor.name }}</a></td>                
                 <td>{{ instance.image.name }}</td>
                 <td>
-                  <button id="instance-start-{{ instance.id }}" title="Start instance {{ instance.name }}." data-instance="{{ instance.id }}" data-flavor="{{ instance.flavor.id }}" data-image="{{ instance.image.id }}" data-description="{{ instance.flavor.description }}" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-play"></span> Start</button> 
+                  <button id="instance-start-{{ instance.id }}" title="Start instance {{ instance.name }}." data-instance="{{ instance.id }}" data-flavor="{{ instance.flavor.id }}" data-image="{{ instance.image.id }}" data-description="{{ instance.flavor.description }}" class="btn btn-xs btn-success {% if instance.state > 1 %}disabled{% endif %}"><span class="glyphicon glyphicon-play"></span> Start</button>
                   <button id="instance-payment-{{ instance.address.address }}" title="Make a payment." class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-qrcode"></span> Payment</button>
                 </td>
               </tr>
@@ -121,19 +120,36 @@
 {% block javascript %}
 <script type="text/javascript" src="/js/jquery.qrcode.js"></script>
 <script type="text/javascript" src="/js/qrcode.js"></script>
-<script type="text/javascript" src="/js/socket.io.min.js"></script>
 <script type="text/javascript">
   $().ready(function() {
     var csrf_token = "{{ csrf_token }}";
 
-    // sockets
-    var socket = io.connect('http://' + document.domain + ':' + location.port + '/xovio');
-    socket.on('connect', function(msg) {
-      alertify.log("Server sent socket saying "+msg+".", "success");
+    // tell the server to clear any existing messages
+    $.ajax({
+      url: '/api/messages?key={{ config['SECRET_KEY'] }}',
+      type: 'DELETE'
     });
-    
-    socket.emit('my event', {'data': "hi there"});
-    
+
+    // grab current message from system every 3 seconds
+    setInterval(function() {
+      $.ajax({
+        url: '/api/messages?key={{ config['SECRET_KEY'] }}',
+        type: 'GET',
+        success: function(data) {
+          if (data.response == 'success'){
+            if (data.result.message.status == 'reload') {
+              alertify.log(data.result.message.text, 'success');
+              setTimeout(function() {
+                location.reload();
+              }, 2000);
+            } else {
+              alertify.log(data.result.message.text, data.result.message.status);
+            }
+          }
+        }
+      })
+    }, 3000);
+
     // start instance buttons
     $('button[id^="instance-start-"]').each(function(index){
       $('#'+this.id).click(function() {
