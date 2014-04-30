@@ -17,10 +17,10 @@ from webapp import db
 from webapp import bcrypt
 
 from webapp.models.mixins import CRUDMixin
-from webapp.libs.utils import coinbase_generate_address, coinbase_get_addresses
-from webapp.libs.utils import pool_api_instances, pool_api_connect
+from webapp.libs.coinbase import coinbase_generate_address, coinbase_get_addresses
+from webapp.libs.pool import pool_api_instances, pool_api_connect
 from webapp.libs.utils import generate_token, row2dict
-from webapp.libs.utils import uninstall_image
+from webapp.libs.images import uninstall_image
 from webapp.libs.geoip import get_geodata
 
 # user model

@@ -9,10 +9,14 @@ from flaskext.actions import Manager
 
 from webapp import app, db
 
-from webapp.models.models import Appliance, OpenStack, Images, Flavors, Instances, Addresses, Messages
+from webapp.models.models import Appliance
+from webapp.models.models import OpenStack, Images, Flavors
+from webapp.models.models import Instances, Addresses
+from webapp.models.models import Messages
+
 from webapp.libs.utils import configure_blurb, query_yes_no, pprinttable
-from webapp.libs.utils import coinbase_get_addresses, coinbase_check
-from webapp.libs.utils import download_images
+from webapp.libs.coinbase import coinbase_get_addresses, coinbase_check
+from webapp.libs.images import download_images
 from webapp.libs.openstack import instance_start, image_install
 
 # configuration file
@@ -109,7 +113,7 @@ def serve(app):
 			app.wsgi_app, 
 			{'/': os.path.join(os.path.dirname(__file__), './webapp/static') }
 		)
-		app.run(debug=True, host="0.0.0.0")
+		app.run(debug=True, host=default_ip)
 		sys.exit()
 	
 	return action

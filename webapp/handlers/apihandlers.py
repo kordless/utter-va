@@ -6,9 +6,18 @@ from flask import Blueprint, render_template, jsonify, flash, redirect, session,
 from flask.ext.login import login_user, logout_user, current_user, login_required
 
 from webapp import app, db, csrf, bcrypt, login_manager
-from webapp.models.models import User, Images, Flavors, Instances, OpenStack, Addresses, Appliance, Messages
-from webapp.libs.utils import row2dict, pool_api_connect
-from webapp.libs.openstack import image_install, image_remove, flavor_install, flavor_remove, instance_start
+
+from webapp.models.models import Messages
+from webapp.models.models import User, Appliance
+from webapp.models.models import Images, Flavors, OpenStack
+from webapp.models.models import Instances, Addresses
+
+from webapp.libs.utils import row2dict
+from webapp.libs.pool import pool_api_connect
+
+from webapp.libs.openstack import image_install, image_remove 
+from webapp.libs.openstack import flavor_install, flavor_remove
+from webapp.libs.openstack import instance_start
 
 mod = Blueprint('api', __name__)
 

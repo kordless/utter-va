@@ -7,12 +7,17 @@ from flask.ext.login import login_user, logout_user, current_user, login_require
 
 from webapp import app, db, bcrypt, login_manager
 
-from webapp.models.models import User, Images, Flavors, Addresses, Instances, OpenStack, Appliance
+from webapp.models.models import Messages
+from webapp.models.models import User, Appliance
+from webapp.models.models import Images, Flavors, OpenStack
+from webapp.models.models import Instances, Addresses
+
 from webapp.forms.forms import OpenStackForm, ApplianceForm, InstanceForm
+
 from webapp.libs.geoip import get_geodata
-from webapp.libs.utils import row2dict
-from webapp.libs.utils import generate_token, pool_api_connect, ngrok_check
-from webapp.libs.utils import coinbase_generate_address, coinbase_get_quote, coinbase_check
+from webapp.libs.utils import row2dict, generate_token, ngrok_check
+from webapp.libs.pool import pool_api_connect
+from webapp.libs.coinbase import coinbase_generate_address, coinbase_get_quote, coinbase_check
 
 mod = Blueprint('configure', __name__)
 
