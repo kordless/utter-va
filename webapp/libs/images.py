@@ -1,6 +1,7 @@
 import os
 
-from urllib2 import urlopen, urlretrieve
+from urllib2 import urlopen 
+from urllib import urlretrieve
 
 # download images, store locally in static/images & update images db
 # NOTE: this is a blocking call, and for use from ./manage.py only
@@ -38,7 +39,7 @@ def download_images(appliance, images):
 
 				# pull down file and write to disk
 				urlretrieve(image.url, "%s/%s" % (image_path, filename))
-				
+
 				# update the database saying we have the file
 				image.size = size
 				image.active = 3

@@ -18,11 +18,12 @@ sudo apt-get update -y
 sudo apt-get install git -y
 sudo apt-get install sqlite3 -y
 sudo apt-get install python-pip -y
-sudo apt-get install libapache2-mod-wsgi -y
+# sudo apt-get install libapache2-mod-wsgi -y
 sudo apt-get install build-essential -y
 sudo apt-get install python-dev -y
 sudo apt-get install unzip -y
 sudo apt-get install monit -y
+sudo apt-get install python-gevent -y
 
 # install pyopenssl
 sudo pip install --upgrade pyopenssl
@@ -45,6 +46,7 @@ sudo pip install flask-sqlalchemy
 sudo pip install flask-actions
 sudo pip install flask-bcrypt
 sudo pip install flask-seasurf
+sudo pip install flask-socketio
 
 # install openstack libraries for python
 sudo pip install python-keystoneclient
@@ -52,98 +54,13 @@ sudo pip install python-glanceclient
 sudo pip install python-cinderclient
 sudo pip install python-novaclient
 
-# configure apache
+# check out xovio-va repo
 sudo mkdir /var/log/xoviova/
-sudo chown -R www-data:www-data /var/log/xoviova/
-sudo cat <<EOF > /etc/apache2/sites-available/default
-WSGIDaemonProcess xoviova user=www-data group=www-data threads=5
-<VirtualHost *:80>
-    ServerName controller.xov.io
-
-    Alias /img/ "/var/www/xoviova/webapp/static/img/"
-    Alias /css/ "/var/www/xoviova/webapp/static/css/"
-    Alias /js/ "/var/www/xoviova/webapp/static/js/"
-    Alias /fonts/ "/var/www/xoviova/webapp/static/fonts/"
-
-    <Directory /var/www/xoviova/webapp/static>
-        Order deny,allow
-        Allow from all
-    </Directory>
-
-    WSGIScriptAlias / /var/www/xoviova/wsgi.py
-
-    <Directory /var/www/xoviova>
-        WSGIProcessGroup xoviova
-        WSGIApplicationGroup %{GLOBAL}
-        WSGIScriptReloading On
-        Order deny,allow
-        Allow from all
-    </Directory>
-
-    LogLevel warn
-    ErrorLog /var/log/xoviova/error.log
-    CustomLog /var/log/xoviova/access.log combined
-</VirtualHost>
-EOF
-
-# ssl for apache
-sudo cat <<EOF > /etc/apache2/sites-available/default-ssl
-<IfModule mod_ssl.c>
-<VirtualHost _default_:443>
-    ServerName controller.xoviova.com
-
-    Alias /img/ "/var/www/xoviova/webapp/static/img/"
-    Alias /css/ "/var/www/xoviova/webapp/static/css/"
-    Alias /js/ "/var/www/xoviova/webapp/static/js/"
-    Alias /fonts/ "/var/www/xoviova/webapp/static/fonts/"
-
-    <Directory /var/www/xoviova/webapp/static>
-        Order deny,allow
-        Allow from all
-    </Directory>
-
-    WSGIScriptAlias / /var/www/xoviova/wsgi.py
-
-    <Directory /var/www/xoviova>
-        WSGIProcessGroup xoviova
-        WSGIApplicationGroup %{GLOBAL}
-        WSGIScriptReloading On
-        SSLOptions +StdEnvVars
-        Order deny,allow
-        Allow from all
-    </Directory>
-
-    LogLevel warn
-    ErrorLog /var/log/xoviova/error.log
-    CustomLog /var/log/xoviova/ssl_access.log combined
-
-    SSLEngine on
-    SSLCertificateFile    /etc/ssl/certs/ssl-cert-snakeoil.pem
-    SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
-
-    BrowserMatch "MSIE [2-6]" nokeepalive ssl-unclean-shutdown downgrade-1.0 force-response-1.0
-    BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
-
-</VirtualHost>
-</IfModule>
-EOF
-
-# check out stackgeek-vm repo
 sudo git clone https://github.com/StackMonkey/xovio-va.git /var/www/xoviova
 
 # configure www directory
-sudo chown -R www-data:www-data /var/www/
+sudo chown -R ubuntu:ubuntu /var/www/
 sudo chmod -R g+w /var/www/
-
-# enable ubuntu user to run web stuff
-usermod -a -G www-data ubuntu
-
-# install ssl
-sudo a2enmod ssl
-sudo a2ensite default-ssl
-
-# restart apache
-sudo service apache2 restart
 
 # configure monit
 sudo cat <<EOF > /etc/monit/conf.d/xoviova
@@ -153,9 +70,14 @@ set httpd port 5150 and
 
 set daemon 120
 with start delay 10
+
 check process ngrok matching "/usr/local/bin/ngrok -config /var/www/xoviova/tunnel.conf start xoviova"
     start program = "/var/www/xoviova/tunnel.sh"
     stop program = "/usr/bin/killall screen"
+
+check process gunicorn matching "gunicorn -c gunicorn.conf.py webapp:app"
+    start program = "gunicorn -c /var/www/xoviova/gunicorn.conf.py webapp:app"
+    stop program = "pkill -f gunicorn"
 EOF
 
 # restart monit service
@@ -167,9 +89,9 @@ sudo monit monitor all
 MYIP=$(/sbin/ifconfig eth0| sed -n 's/.*inet *addr:\([0-9\.]*\).*/\1/p')
 
 # build the database and sync with pool operator
-sudo su -c "/var/www/xoviova/manage.py install $MYIP" -s /bin/sh www-data
+sudo su -c "/var/www/xoviova/manage.py install $MYIP" -s /bin/sh ubuntu
 
-# install crontab for www-data to run every 15 minutes
+# install crontab for ubuntu user to run every 15 minutes
 MICROS=`date +%N`
 FIRST=`expr $MICROS % 15`
 SECOND=`expr $FIRST + 15`
@@ -183,7 +105,7 @@ $FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py flavors > /dev/
 $FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py addresses > /dev/null 2>&1
 * * * * * /var/www/xoviova/manage.py instances > /dev/null 2>&1
 EOF
-sudo crontab -u www-data /var/www/xoviova/crontab
+sudo crontab -u ubuntu /var/www/xoviova/crontab
 
 # finally, start downloading images
-sudo su -c "/var/www/xoviova/manage.py images" -s /bin/sh www-data
+sudo su -c "/var/www/xoviova/manage.py images" -s /bin/sh ubuntu
