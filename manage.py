@@ -14,7 +14,7 @@ from webapp.models.models import OpenStack, Images, Flavors
 from webapp.models.models import Instances, Addresses
 
 from webapp.libs.utils import configure_blurb, query_yes_no, pprinttable
-from webapp.libs.coinbase import coinbase_get_addresses, coinbase_check
+from webapp.libs.coinbase import coinbase_get_addresses, coinbase_checker
 from webapp.libs.images import download_images
 from webapp.libs.openstack import instance_start, image_install
 
@@ -169,7 +169,7 @@ def addresses(app):
 		appliance = db.session.query(Appliance).first()
 
 		# sync up all the addresses
-		if coinbase_check(appliance):
+		if coinbase_checker(appliance):
 			addresses = Addresses()
 			response = addresses.sync(appliance)
 

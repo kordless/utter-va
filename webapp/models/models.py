@@ -17,9 +17,9 @@ from webapp import db
 from webapp import bcrypt
 
 from webapp.models.mixins import CRUDMixin
-from webapp.libs.coinbase import coinbase_generate_address, coinbase_get_addresses
+from webapp.libs.coinbase import coinbase_generate_address, coinbase_get_addresses, coinbase_checker
 from webapp.libs.pool import pool_api_instances, pool_api_connect
-from webapp.libs.utils import generate_token, row2dict
+from webapp.libs.utils import generate_token, row2dict, ngrok_checker
 from webapp.libs.images import uninstall_image
 from webapp.libs.geoip import get_geodata
 
@@ -798,3 +798,89 @@ class Appliance(CRUDMixin, db.Model):
 			# write the yaml file out
 			with open(tunnel_conf_file, 'w') as yaml_file:
 				yaml_file.write( yaml.dump(data, default_flow_style=False))
+
+# settings check model
+class Status(CRUDMixin, db.Model):
+	__tablename__ = 'status'
+	id = db.Column(db.Integer, primary_key=True)
+	updated = db.Column(db.Integer)
+	openstack_check = db.Column(db.Integer)
+	coinbase_check = db.Column(db.Integer)
+	ngrok_check = db.Column(db.Integer)
+	flavors_check = db.Column(db.Integer)
+	images_check = db.Column(db.Integer)
+	token_check = db.Column(db.Integer)
+
+	# check settings for setup warning indicators
+	def check_settings(self):
+		status = db.session.query(Status).first()
+		
+		# calculate cache timeout (120 seconds)
+		epoch_time = int(time.time())
+		try:
+			if (status.updated + 120) < epoch_time:
+				# it's been 2 minutes so we are hot
+				check = True
+			else:
+				check = False
+		except:
+			# need to create a new entry
+			check = True
+			status = Status()
+
+		# if the cache time has been a while, or we are on
+		# the configuration page, check settings and cache
+		if check:
+			# objects
+			appliance = Appliance().get()
+			openstack = OpenStack()
+			# images = Images() - not used for the time being
+			flavors = Flavors()
+
+			# openstack connected?
+			openstack_check = openstack.check()
+		
+			# externals working?
+			# check_ngrok = ngrok_check(appliance)
+			ngrok_check = ngrok_checker(appliance)
+			coinbase_check = coinbase_checker(appliance)
+
+			# token valid?
+			response = pool_api_connect('authorization', appliance.apitoken)
+			if response['response'] == "success":
+				token_check = True
+			else:
+				token_check = False
+			
+			# one flavor installed?
+			flavors_check = flavors.check()
+
+			# update database
+			status.updated = epoch_time
+			status.openstack_check = openstack_check
+			status.coinbase_check = coinbase_check
+			status.ngrok_check = ngrok_check
+			status.flavors_check = flavors_check
+			status.images_check = True
+			status.token_check = token_check
+			status.update()
+		else:
+			pass
+
+		# build the response object
+		settings = {
+			"flavors": status.flavors_check,
+			"images": True, 
+			"openstack": status.openstack_check,
+			"coinbase": status.coinbase_check,
+			"ngrok": status.ngrok_check,
+			"token": status.token_check,
+		}
+			
+		return settings
+
+	# delete all settings
+	def flush(self):
+		status = db.session.query(Status).first()	
+		status.delete()
+		db.session.commit()

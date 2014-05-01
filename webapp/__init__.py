@@ -5,6 +5,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager, current_user
 from flask.ext.actions import Manager
 from flask.ext.bcrypt import Bcrypt
+from flask.ext.socketio import SocketIO
 
 # handle SSL termination through ngrok
 class ProxiedRequest(Request):
@@ -33,6 +34,7 @@ login_manager = LoginManager(app) # login manager
 manager = Manager(app) # shell actions manager
 db = SQLAlchemy(app) # database connection
 bcrypt = Bcrypt(app) # hashing function
+socketio = SocketIO(app)
 
 # users module blueprint
 from webapp.handlers.userhandlers import mod as usersModule
@@ -45,6 +47,10 @@ app.register_blueprint(configureModule)
 # api module blueprint
 from webapp.handlers.apihandlers import mod as APIModule
 app.register_blueprint(APIModule)
+
+# socket module blueprint
+from webapp.handlers.sockethandlers import mod as socketModule
+app.register_blueprint(socketModule)
 
 #add our view as the login view
 login_manager.login_view = "users.login"

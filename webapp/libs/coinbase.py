@@ -111,7 +111,7 @@ def coinbase_get_addresses(appliance=None):
 	return response
 
 # HMAC construction and Coinbase check
-def coinbase_check(appliance=None):
+def coinbase_checker(appliance=None):
 	url = "https://coinbase.com/api/v1/authorization"
 	
 	# create urlib2 opener and a nonce for the session

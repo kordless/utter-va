@@ -85,7 +85,7 @@ def generate_token(size=64, caselimit=False):
 	return token
 
 # check ngrok is up on port 4040
-def ngrok_check(appliance=None):
+def ngrok_checker(appliance=None):
 	# use the local port 4040 to test if we're running in debug
 	if app.config['DEBUG'] == True:
 		url = "http://127.0.0.1:4040/"

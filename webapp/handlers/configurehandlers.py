@@ -7,55 +7,18 @@ from flask.ext.login import login_user, logout_user, current_user, login_require
 
 from webapp import app, db, bcrypt, login_manager
 
-from webapp.models.models import User, Appliance
+from webapp.models.models import User, Appliance, Status
 from webapp.models.models import Images, Flavors, OpenStack
 from webapp.models.models import Instances, Addresses
 
 from webapp.forms.forms import OpenStackForm, ApplianceForm, InstanceForm
 
 from webapp.libs.geoip import get_geodata
-from webapp.libs.utils import row2dict, generate_token, ngrok_check
+from webapp.libs.utils import row2dict, generate_token
 from webapp.libs.pool import pool_api_connect
-from webapp.libs.coinbase import coinbase_generate_address, coinbase_get_quote, coinbase_check
+from webapp.libs.coinbase import coinbase_generate_address, coinbase_get_quote
 
 mod = Blueprint('configure', __name__)
-
-# check settings for setup warning indicators
-# this feels pretty rough given split between model and util.py calls
-def check_settings():
-	# objects
-	appliance = Appliance().get()
-	openstack = OpenStack()
-	images = Images()
-	flavors = Flavors()
-
-	# openstack connected?
-	check_openstack = openstack.check()
-	
-	# externals working?
-	# check_ngrok = ngrok_check(appliance)
-	check_ngrok = ngrok_check(appliance)
-	check_coinbase = coinbase_check(appliance)
-
-	# token valid?
-	response = pool_api_connect('authorization', appliance.apitoken)
-	if response['response'] == "success":
-		check_token = True
-	else:
-		check_token = False
-	
-	# one image and one flavor installed?
-	check_flavors = flavors.check()
-
-	settings = {
-		"flavors": check_flavors, 
-		"openstack": check_openstack,
-		"coinbase": check_coinbase,
-		"ngrok": check_ngrok,
-		"token": check_token,
-	}
-	
-	return settings
 
 # user login callback
 @login_manager.user_loader
@@ -72,7 +35,7 @@ def allowed_file(filename):
 @login_required
 def configure_flavors():
 	# check configuration
-	settings = check_settings()
+	settings = Status().check_settings()
 
 	# load flavors
 	flavors = db.session.query(Flavors).all()
@@ -99,7 +62,7 @@ def configure_flavors_detail(flavor_id):
 	# handle a GET
 	if request.method == 'GET':
 		# check configuration
-		settings = check_settings()
+		settings = Status().check_settings()
 
 		# how much is a micro BTC?
 		try:
@@ -116,6 +79,9 @@ def configure_flavors_detail(flavor_id):
 
 	# handle a PUT
 	elif request.method == 'PUT':
+		# clear settings cache
+		Status().flush()
+
 		try:
 			state = int(request.form['enable'])
 			flavor.active = state
@@ -146,7 +112,7 @@ def configure_images():
 	# handle a GET
 	if request.method == 'GET':
 		# check configuration
-		settings = check_settings()
+		settings = Status().check_settings()
 
 		# load images and appliance
 		images = db.session.query(Images).all()
@@ -162,6 +128,9 @@ def configure_images():
 
 	# handle a PUT
 	elif request.method == 'PUT':
+		# clear settings cache
+		Status().flush()
+		
 		# load appliance object
 		appliance = Appliance().get()
 
@@ -193,6 +162,9 @@ def configure():
 
 	# page is POST'ing data
 	if request.method == 'POST':
+		# clear settings cache
+		Status().flush()
+
 		# try to select one and only record
 		appliance = db.session.query(Appliance).first()
 		
@@ -208,7 +180,7 @@ def configure():
 			# at this point we know the user has entered an Ngrok token (valid form)
 			# and we test if the coinbase tokens are working.  if they are, we update
 			# the address list and parse it for subdomain information.
-			settings = check_settings()
+			settings = Status().check_settings()
 			if settings['coinbase']:
 				# sync up addresses with coinbase
 				addresses = Addresses()
@@ -242,8 +214,7 @@ def configure():
 	else:
 		# get existing database entries
 		appliance = db.session.query(Appliance).first()
-		settings = check_settings()
-		
+
 		# populate the new form with seed location
 		try:
 			lat = float(appliance.latitude)
@@ -259,6 +230,8 @@ def configure():
 	
 	# run for either POST or GET
 	# check configuration and show messages
+	settings = Status().check_settings()
+
 	if settings['token'] == False:
 		# show error	
 		response = "Please register the API token."
@@ -292,7 +265,7 @@ def configure_openstack():
 		return string
 
 	# check configuration
-	settings = check_settings()
+	settings = Status().check_settings()
 
 	# get the form
 	form = OpenStackForm(request.form)
@@ -305,7 +278,10 @@ def configure_openstack():
 		openstack = OpenStack()
 
 	if request.method == 'POST':
-		# handle a file upload
+		# clear settings cache
+		Status().flush()
+		
+		# handle a file upload		
 		try:
 			file = request.files['file']
 		except:
@@ -360,7 +336,7 @@ def configure_openstack():
 @login_required
 def configure_addresses():
 	# check configuration
-	settings = check_settings()
+	settings = Status().check_settings()
 
 	# pull out the addresses
 	addresses = db.session.query(Addresses).all()
@@ -377,7 +353,7 @@ def configure_addresses():
 @login_required
 def configure_instances():
 	# check configuration
-	settings = check_settings()
+	settings = Status().check_settings()
 
 	# load instances ordering by state
 	instances = db.session.query(Instances).order_by("state desc").all()

@@ -102,11 +102,15 @@ CREATE TABLE instances (
   FOREIGN KEY(address_id) REFERENCES addresses(id)
 );
 
-DROP TABLE IF EXISTS messages;
-CREATE TABLE messages (
+DROP TABLE IF EXISTS status;
+CREATE TABLE status (
   id INTEGER NOT NULL,
-  text VARCHAR(1024),
-  status VARCHAR(100),
-  created INTEGER NOT NULL,
+  updated INTEGER NOT NULL,
+  openstack_check INTEGER NOT NULL,
+  coinbase_check INTEGER NOT NULL,
+  ngrok_check INTEGER NOT NULL,
+  flavors_check INTEGER NOT NULL,
+  images_check INTEGER NOT NULL,
+  token_check INTEGER NOT NULL,
   PRIMARY KEY (id)
 );
