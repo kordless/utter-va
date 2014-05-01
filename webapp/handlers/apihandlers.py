@@ -67,54 +67,6 @@ def pool_ping():
 		response['result'] = "apitoken is invalid"
 		return jsonify(response), 401
 
-# poor excuse for a socket handler to broadcast messages
-# TODO: figure out how to deploy socket enabled webserver
-@csrf.exempt
-@mod.route('/api/messages', methods=('GET', 'POST', 'DELETE'))
-def api_messages():
-	# appliance info
-	appliance = Appliance()
-	key = app.config['SECRET_KEY']
-
-	# build the response
-	response = {"response": "success", "result": {}}
-	
-	# check key matches
-	if request.args.get('key') != key:
-		response['response'] = "fail"
-		response['result'] = "message key is invalid"
-		return jsonify(response), 401
-
-	# add a message to the queue
-	if request.method == 'POST':
-			message = Messages()
-			result = message.push(request.args.get('message', ''), request.args.get('status', 'success'))
-
-			# pack into the response
-			response['result']['message'] = message.text
-			response['result']['status'] = message.status
-			return jsonify(response)
-		
-	elif request.method == 'GET':
-		# attach to messages db
-		message = Messages()
-		result = message.pop()
-	
-		# return the message
-		if result:
-			response['result'] = result
-			return jsonify(response)
-		else:
-			# nothing in the db, so say as much
-			response['response'] = "fail"
-			response['result'] = {"message": ""}
-			return jsonify(response)
-
-	else: # DELETE REQUEST
-		messages = Messages()
-		result = messages.flush()
-		return ""
-
 # METHODS USING ADDRESS TOKEN AUTH
 # handle callback from coinbase on address payment
 @csrf.exempt

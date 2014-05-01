@@ -12,7 +12,6 @@ from webapp import app, db
 from webapp.models.models import Appliance
 from webapp.models.models import OpenStack, Images, Flavors
 from webapp.models.models import Instances, Addresses
-from webapp.models.models import Messages
 
 from webapp.libs.utils import configure_blurb, query_yes_no, pprinttable
 from webapp.libs.coinbase import coinbase_get_addresses, coinbase_check
@@ -210,9 +209,7 @@ def messenger(app):
 		status=('s', 'success')
 	):
 		# stuff message in db
-		message = Messages()
-		message.push(text, status)
-		
+		pass
 	return action
 
 

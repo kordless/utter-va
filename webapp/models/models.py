@@ -462,9 +462,6 @@ class Instances(CRUDMixin, db.Model):
 		# only interested in instances which have been paid and need to start
 		instances = db.session.query(Instances).filter_by(state=2).all()
 
-		# message bus
-		message = Messages()
-		
 		# loop through all instances needing to start
 		for instance in instances:
 			# set the flag to running
@@ -494,7 +491,7 @@ class Instances(CRUDMixin, db.Model):
 			instance_start(instance)
 
 			# send a message to reload
-			message.push("Instance %s launched." % instance.name, 'reload')
+			#message.push("Instance %s launched." % instance.name, 'reload')
 
 		# set expire time
 
