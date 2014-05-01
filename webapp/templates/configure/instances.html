@@ -120,35 +120,17 @@
 {% block javascript %}
 <script type="text/javascript" src="/js/jquery.qrcode.js"></script>
 <script type="text/javascript" src="/js/qrcode.js"></script>
+<script type="text/javascript" src="/js/socket.io.min.js"></script>
 <script type="text/javascript">
   $().ready(function() {
     var csrf_token = "{{ csrf_token }}";
 
-    // tell the server to clear any existing messages
-    $.ajax({
-      url: '/api/messages?key={{ config['SECRET_KEY'] }}',
-      type: 'DELETE'
+    // socket notifications
+    var socket = io.connect('http://'+document.domain+':'+location.port+'/messages');
+    socket.on('events', function (data) {
+      console.log(data);
+      socket.emit('my event', { data: 'stuff' });
     });
-
-    // grab current message from system every 3 seconds
-    setInterval(function() {
-      $.ajax({
-        url: '/api/messages?key={{ config['SECRET_KEY'] }}',
-        type: 'GET',
-        success: function(data) {
-          if (data.response == 'success'){
-            if (data.result.message.status == 'reload') {
-              alertify.log(data.result.message.text, 'success');
-              setTimeout(function() {
-                location.reload();
-              }, 2000);
-            } else {
-              alertify.log(data.result.message.text, data.result.message.status);
-            }
-          }
-        }
-      })
-    }, 3000);
 
     // start instance buttons
     $('button[id^="instance-start-"]').each(function(index){

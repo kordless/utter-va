@@ -7,7 +7,7 @@ import sys
 from flask import Flask
 from flaskext.actions import Manager
 
-from webapp import app, db
+from webapp import app, socketio, db
 
 from webapp.models.models import Appliance
 from webapp.models.models import OpenStack, Images, Flavors
@@ -105,6 +105,7 @@ def clean(app):
 # serve application
 def serve(app):
 	def action():
+		'''
 		from werkzeug import SharedDataMiddleware
 
 		# add static directory to be served by development server
@@ -112,7 +113,10 @@ def serve(app):
 			app.wsgi_app, 
 			{'/': os.path.join(os.path.dirname(__file__), './webapp/static') }
 		)
-		app.run(debug=True, host=default_ip)
+		#app.run(debug=True, host=default_ip)
+		'''
+		socketio.run(app, host=default_ip)
+		
 		sys.exit()
 	
 	return action

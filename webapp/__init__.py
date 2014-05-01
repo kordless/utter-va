@@ -15,7 +15,7 @@ class ProxiedRequest(Request):
         if self.headers.get('X-Forwarded-Proto') == 'https':
         	environ['wsgi.url_scheme'] = 'https'
             
-# app setup
+# app setup + static files
 app = Flask(__name__, static_url_path='', static_folder='static')
 
 # csrf_token protect
@@ -30,6 +30,7 @@ if os.path.isfile('./DEV'):
 else:
 	app.config.from_object('config.BaseConfiguration')
 
+# other app'ish things
 login_manager = LoginManager(app) # login manager
 manager = Manager(app) # shell actions manager
 db = SQLAlchemy(app) # database connection
