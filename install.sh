@@ -7,10 +7,6 @@
 
 # overwrite the existing index.html file
 
-# pool operator domian
-export POOL_URL="stackmonkey.com"
-export POOL_SHORT_NAME="stackmonkey"
-
 # update repos
 sudo apt-get update -y
 
@@ -18,20 +14,19 @@ sudo apt-get update -y
 sudo apt-get install git -y
 sudo apt-get install sqlite3 -y
 sudo apt-get install python-pip -y
-# sudo apt-get install libapache2-mod-wsgi -y
 sudo apt-get install build-essential -y
 sudo apt-get install python-dev -y
+sudo apt-get install python-gevent -y
 sudo apt-get install unzip -y
 sudo apt-get install monit -y
-sudo apt-get install python-gevent -y
-
-# install pyopenssl
-sudo pip install --upgrade pyopenssl
 
 # install ngrok
 sudo wget -qO /tmp/ngrok.zip https://dl.ngrok.com/linux_386/ngrok.zip
 sudo unzip /tmp/ngrok.zip
 sudo mv ngrok /usr/local/bin/ngrok
+
+# install webserver
+sudo pip install gunicorn
 
 # install werkzeug
 sudo pip install Werkzeug
