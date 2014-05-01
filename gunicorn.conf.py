@@ -12,8 +12,8 @@ else:
   bind = '0.0.0.0:80'
   daemon = True
   loglevel = 'info'
-  errorlog = './log/error.log'
-  accesslog = './log/access.log'
+  errorlog = './logs/error.log'
+  accesslog = './logs/access.log'
 
 # other settings
 backlog = 1024 
