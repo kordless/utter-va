@@ -10,3 +10,4 @@ def connect():
 	# response = {"response": "success", "result": {"message": "Sockets online.", "reload": False}}
   # emit response
 	# emit('message', {"data": response})
+	pass
