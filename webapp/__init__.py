@@ -21,6 +21,7 @@ class ProxiedRequest(Request):
             
 # app setup + static files
 app = Flask(__name__, static_url_path='', static_folder='static')
+socketio = SocketIO(app)
 
 # csrf_token protect
 csrf = SeaSurf(app)
@@ -39,7 +40,6 @@ login_manager = LoginManager(app) # login manager
 manager = Manager(app) # shell actions manager
 db = SQLAlchemy(app) # database connection
 bcrypt = Bcrypt(app) # hashing function
-socketio = SocketIO(app)
 
 # users module blueprint
 from webapp.handlers.userhandlers import mod as usersModule

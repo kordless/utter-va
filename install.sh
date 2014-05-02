@@ -58,21 +58,30 @@ sudo chown -R ubuntu:ubuntu /var/www/
 sudo chmod -R g+w /var/www/
 
 # configure monit
-sudo cat <<EOF > /etc/monit/conf.d/xoviova
+sudo cat <<EOF > /etc/monit/conf.d/ngrok
 set httpd port 5150 and
     use address localhost
     allow localhost
 
-set daemon 120
-with start delay 10
+set daemon 30
+with start delay 5
 
 check process ngrok matching "/usr/local/bin/ngrok -config /var/www/xoviova/tunnel.conf start xoviova"
     start program = "/var/www/xoviova/tunnel.sh"
     stop program = "/usr/bin/killall screen"
+EOF
 
-check process gunicorn matching "gunicorn -c gunicorn.conf.py webapp:app"
-    start program = "gunicorn -c /var/www/xoviova/gunicorn.conf.py webapp:app"
-    stop program = "pkill -f gunicorn"
+sudo cat <<EOF > /etc/monit/conf.d/gunicorn
+set httpd port 5150 and
+    use address localhost
+    allow localhost
+
+set daemon 30
+with start delay 5
+
+check process gunicorn with pidfile /tmp/gunicorn.pid
+    start program = "/var/www/xoviova/gunicorn.sh"
+    stop program = "/var/www/xoviova/gunistop.sh"
 EOF
 
 # restart monit service
