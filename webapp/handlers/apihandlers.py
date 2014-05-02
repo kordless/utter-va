@@ -119,7 +119,7 @@ def address_handler(address_token):
 		instance.update()
 
 		# indicate we were paid and reload the page
-		message("Instance %s received a payment of %s." % (amount, instance.name), status="success", reloader=True)
+		message("Instance %s received a payment of %s." % (amount, instance.name), "success", True)
 
 		# everything else related to starting the instance is handled by a cron job
 
