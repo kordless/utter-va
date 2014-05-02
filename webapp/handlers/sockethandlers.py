@@ -7,7 +7,6 @@ mod = Blueprint('sockets', __name__)
 @socketio.on('connect', namespace='/xovio')
 def connect():
 	# build the response
-	response = {"response": "success", "result": {"message": "Sockets online.", "reload": False}}
-  
-	# emit response
-	emit('message', {"data": response})
+	# response = {"response": "success", "result": {"message": "Sockets online.", "reload": False}}
+  # emit response
+	# emit('message', {"data": response})

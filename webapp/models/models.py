@@ -19,7 +19,7 @@ from webapp import bcrypt
 from webapp.models.mixins import CRUDMixin
 from webapp.libs.coinbase import coinbase_generate_address, coinbase_get_addresses, coinbase_checker
 from webapp.libs.pool import pool_api_instances, pool_api_connect
-from webapp.libs.utils import generate_token, row2dict, ngrok_checker
+from webapp.libs.utils import generate_token, row2dict, ngrok_checker, message
 from webapp.libs.images import uninstall_image
 from webapp.libs.geoip import get_geodata
 
@@ -495,8 +495,8 @@ class Instances(CRUDMixin, db.Model):
 			# start the instance
 			instance_start(instance)
 
-			# send a message to reload
-			#message.push("Instance %s launched." % instance.name, 'reload')
+			# send a message and reload
+			message("Instance %s launched." % instance.name, "success", False)
 
 		# set expire time
 
