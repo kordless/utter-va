@@ -445,6 +445,11 @@ class Instances(CRUDMixin, db.Model):
 				addresses = Addresses()
 				instance.address = addresses.assign(appliance, instance.id)	
 				instance.update()
+			else:
+				# found an instance - make sure we have an address assigned to it
+				if not instance.address:
+					instance.address = Addresses().assign(appliance, instance.id)
+					instance.update()
 
 		# overload the results with the list of current flavors
 		response = {"response": "success", "result": {}}
