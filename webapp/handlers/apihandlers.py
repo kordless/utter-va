@@ -52,17 +52,11 @@ def token_validate():
 	else:
 		return jsonify(response), 401
 
-@csrf.exempt
-@mod.route('/api/oof', methods=('GET', 'POST'))
-def message2():
-	print "testing"
-	return ""
-
 # METHODS USING APITOKEN AUTH
 # api for sending messages into the socketio context
 @csrf.exempt
 @mod.route('/api/message', methods=('GET', 'POST'))
-def message():
+def api_message():
 	# get the appliance info
 	appliance = db.session.query(Appliance).first()
 
