@@ -126,10 +126,14 @@
     var csrf_token = "{{ csrf_token }}";
 
     // socket notifications
-    var socket = io.connect('http://'+document.domain+':'+location.port+'/messages');
-    socket.on('events', function (data) {
-      console.log(data);
-      socket.emit('my event', { data: 'stuff' });
+    var socket = io.connect('http://' + document.domain + ':' + location.port + '/xovio');
+    socket.on('message', function(msg) {
+      alertify.log(msg.data.result.message, msg.data.response);
+      if (msg.data.result.reload) {
+        setTimeout(function() {
+          location.reload();
+        }, 2000);
+      }
     });
 
     // start instance buttons

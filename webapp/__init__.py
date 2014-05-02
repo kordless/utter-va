@@ -1,4 +1,8 @@
 import os
+
+# stackmonkey approved monkey patch
+import gevent.monkey; gevent.monkey.patch_thread()
+
 from flask import Flask, request, Request, render_template, send_from_directory
 from flask.ext.seasurf import SeaSurf
 from flask.ext.sqlalchemy import SQLAlchemy

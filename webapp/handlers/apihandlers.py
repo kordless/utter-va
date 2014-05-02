@@ -5,13 +5,13 @@ from urllib2 import urlopen
 from flask import Blueprint, render_template, jsonify, flash, redirect, session, url_for, request
 from flask.ext.login import login_user, logout_user, current_user, login_required
 
-from webapp import app, db, csrf, bcrypt, login_manager
+from webapp import app, db, csrf, bcrypt, socketio, login_manager
 
-from webapp.models.models import User, Appliance
+from webapp.models.models import User, Appliance, Status
 from webapp.models.models import Images, Flavors, OpenStack
 from webapp.models.models import Instances, Addresses
 
-from webapp.libs.utils import row2dict
+from webapp.libs.utils import row2dict, message
 from webapp.libs.pool import pool_api_connect
 
 from webapp.libs.openstack import image_install, image_remove 
@@ -29,6 +29,9 @@ def token_generate():
 	appliance = db.session.query(Appliance).first()
 	appliance.token_refresh()
 	appliance.update(appliance)
+	
+	# flush the cached status
+	Status().flush()
 
 	return render_template('response.json', response="success")
 
@@ -43,24 +46,43 @@ def token_validate():
 	response = pool_api_connect(method="authorization", apitoken=appliance.apitoken)
 
 	if response['response'] == "success":
+		# flush the cached status
+		Status().flush()
 		return jsonify(response)
 	else:
 		return jsonify(response), 401
 
-# METHODS USING APITOKEN AUTH
-# pool wants us to ping the pool API for something
 @csrf.exempt
-@mod.route('/api/ping', methods=('GET', 'POST'))
-def pool_ping():
+@mod.route('/api/oof', methods=('GET', 'POST'))
+def message2():
+	print "testing"
+	return ""
+
+# METHODS USING APITOKEN AUTH
+# api for sending messages into the socketio context
+@csrf.exempt
+@mod.route('/api/message', methods=('GET', 'POST'))
+def message():
 	# get the appliance info
 	appliance = db.session.query(Appliance).first()
 
 	# build the response
-	response = {"response": "success", "result": "ping acknowledged"}
+	response = {"response": "", "result": {}}
 
-	# check inbound apitoken
+	# check apitoken matches
 	apitoken = request.args.get('apitoken', '')
 	if apitoken == appliance.apitoken:
+		message = request.args.get('text', 'no message')
+		status = request.args.get('status', 'success')
+		reloader = request.args.get('reload', 'false')
+		if reloader == 'true' or reloader == '1':
+			reloader = True
+		else:
+			reloader = False
+		
+		response['response'] = status
+		response['result'] = {"message": message, "reload": reloader}
+		socketio.emit('message', {"data": response}, namespace='/xovio')
 		return jsonify(response)
 	else:
 		response['response'] = "fail"
@@ -97,8 +119,7 @@ def address_handler(address_token):
 		instance.update()
 
 		# indicate we were paid and reload the page
-		message = Messages()
-		message.push("Instance %s received a payment of %s." % (amount, instance.name), 'reload')
+		message("Instance %s received a payment of %s." % (amount, instance.name), status="success", reloader=True)
 
 		# everything else related to starting the instance is handled by a cron job
 

@@ -3,6 +3,7 @@
 # -*- encoding:utf-8 -*-
 import os
 import sys
+import gevent.monkey; gevent.monkey.patch_thread()
 
 from flask import Flask
 from flaskext.actions import Manager
@@ -13,7 +14,7 @@ from webapp.models.models import Appliance
 from webapp.models.models import OpenStack, Images, Flavors
 from webapp.models.models import Instances, Addresses
 
-from webapp.libs.utils import configure_blurb, query_yes_no, pprinttable
+from webapp.libs.utils import configure_blurb, query_yes_no, pprinttable, message
 from webapp.libs.coinbase import coinbase_get_addresses, coinbase_checker
 from webapp.libs.images import download_images
 from webapp.libs.openstack import instance_start, image_install
@@ -102,22 +103,15 @@ def clean(app):
 	return action
 
 # DEVELOPMENT METHODS
-# serve application
+# serve application via dev server or gunicorn)
 def serve(app):
-	def action():
-		'''
-		from werkzeug import SharedDataMiddleware
-
-		# add static directory to be served by development server
-		app.wsgi_app = SharedDataMiddleware(
-			app.wsgi_app, 
-			{'/': os.path.join(os.path.dirname(__file__), './webapp/static') }
-		)
-		#app.run(debug=True, host=default_ip)
-		'''
-		socketio.run(app, host=default_ip)
-		
-		sys.exit()
+	def action(dev=('d', 'false')):
+		if dev == 'true':
+			socketio.run(app, host=default_ip)
+		else:
+			path = os.path.dirname(os.path.abspath(__file__))
+			os.system('gunicorn -c gunicorn.conf.py webapp:app')
+			sys.exit()
 	
 	return action
 
@@ -210,10 +204,17 @@ def instances(app):
 def messenger(app):
 	def action(
 		text=('m', 'Hello from the administration console!'),
-		status=('s', 'success')
+		status=('s', 'success'),
+		reloader=('r', '0')
 	):
-		# stuff message in db
-		pass
+		# muck the reload flags around
+		if reloader == '1' or reloader == 'true':
+			reloader = True
+		else:
+			reloader = False
+
+		# send out the message
+		message(text, status, reloader)
 	return action
 
 

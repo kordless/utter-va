@@ -4,6 +4,7 @@ import random
 import socket
 
 from urllib2 import urlopen
+from urllib import quote_plus
 from webapp import app
 
 def row2dict(row):
@@ -98,3 +99,32 @@ def ngrok_checker(appliance=None):
 	except Exception, e:
 		return False
 
+# message bus - sending messages to ourselves
+def message(text=None, status="Success", reloader=False):
+	from webapp.models.models import Appliance
+	apitoken = Appliance().get().apitoken
+
+	# muck reloader string
+	reloader = "true" if reloader else "false"
+
+	if app.config['DEBUG'] == True:
+		url = "http://0.0.0.0:%s/api/message?text=%s&status=%s&reload=%s&apitoken=%s" % (
+			app.config['DEV_PORT'],
+			quote_plus(text),
+			status,
+			reloader,
+			apitoken
+		)
+	else:
+		url = "http://0.0.0.0:80/api/message?text=%s&status=%s&reload=%s&apitoken=%s" % (
+			quote_plus(text),
+			status,
+			reloader,
+			apitoken
+		)
+
+	try:
+		response = urlopen(url, data="", timeout=10).read()
+		return True
+	except Exception, e:
+		return False
