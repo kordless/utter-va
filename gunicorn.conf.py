@@ -17,7 +17,7 @@ else:
   errorlog = './logs/error.log'
   accesslog = './logs/access.log'
   debug = False
-  workers = multiprocessing.cpu_count() * 2 + 1
+  workers = 1
 
 # other settings
 worker_class = 'socketio.sgunicorn.GeventSocketIOWorker'
