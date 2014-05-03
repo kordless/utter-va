@@ -492,11 +492,12 @@ class Instances(CRUDMixin, db.Model):
 			flavor = Flavors().get_by_id(instance.flavor.id)
 			osflavor = flavor_install(flavor)
 
+			message("Getting ready to start.")
 			# start the instance
 			instance_start(instance)
 
 			# send a message and reload
-			message("Instance %s launched." % instance.name, "success", False)
+			message("Instance %s launched." % instance.name, "success", True)
 
 		# set expire time
 
