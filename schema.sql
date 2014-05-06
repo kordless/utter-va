@@ -36,10 +36,13 @@ CREATE TABLE appliance (
 DROP TABLE IF EXISTS images;
 CREATE TABLE images (
   id INTEGER NOT NULL,
+  created INTEGER NOT NULL,
+  updated INTEGER NOT NULL,
   osid VARCHAR(100),
   description VARCHAR(200) NOT NULL,
   name VARCHAR(100) NOT NULL,
-  url VARCHAR(400) NOT NULL,
+  url VARCHAR(1024) NOT NULL,
+  local_url VARCHAR(1024),
   diskformat VARCHAR(100) NOT NULL,
   containerformat VARCHAR(100) NOT NULL,
   size INTEGER NOT NULL,

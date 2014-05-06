@@ -5,6 +5,7 @@ import json
 import time
 import md5
 
+from datetime import datetime
 from urlparse import urlparse
 
 from keystoneclient.v2_0 import client as keyclient
@@ -189,6 +190,364 @@ class Addresses(CRUDMixin, db.Model):
 			return None
 
 
+# instance model
+class Instances(CRUDMixin, db.Model):
+	__tablename__ = 'instances'
+	id = db.Column(db.Integer, primary_key=True)
+	created = db.Column(db.Integer)
+	updated = db.Column(db.Integer) 
+	expires = db.Column(db.Integer)
+	name = db.Column(db.String(100))
+	osid = db.Column(db.String(100))
+	poolid = db.Column(db.String(100))
+	privateipv4 = db.Column(db.String(100))
+	publicipv4 = db.Column(db.String(100))
+	publicipv6 = db.Column(db.String(100))
+	ssltunnel = db.Column(db.String(400))
+
+	state = db.Column(db.Integer) 
+	# instance state is one of:
+	# 0 - inactive
+	# 1 - payment address available (warm)
+	# 2 - payment observed from callback (start)
+	# 3 - instance running (hot)
+	# 4 - instance halted (cooldown)
+	# 5 - instance decommissioned (removed)
+	
+	sshkey = db.Column(db.String(2048))
+	callback_url = db.Column(db.String(1024))
+
+	# foreign keys
+	flavor_id = db.Column(db.Integer, db.ForeignKey('flavors.id'))
+	image_id = db.Column(db.Integer, db.ForeignKey('images.id'))
+	address_id = db.Column(db.Integer, db.ForeignKey('addresses.id'))
+
+	# relationships
+	flavor = db.relationship('Flavors', foreign_keys='Instances.flavor_id')
+	image = db.relationship('Images', foreign_keys='Instances.image_id')
+	address = db.relationship('Addresses', foreign_keys='Instances.address_id')
+
+	def __init__(self, 
+		created=None,
+		updated=None,
+		expires=None,
+		name=None,
+		osid=None,
+		poolid=None,
+		privateipv4=None,
+		publicipv4=None,
+		publicipv6=None,
+		ssltunnel=None,
+		state=None,
+		sshkey=None,
+		callback_url=None,
+		flavor_id=None,
+		image_id=None,
+		address_id=None
+	):
+		self.created = created
+		self.updated = updated
+		self.expires = expires
+		self.name = name
+		self.osid = osid
+		self.poolid = poolid
+		self.privateipv4 = privateipv4
+		self.publicipv4 = publicipv4
+		self.publicipv6 = publicipv6
+		self.ssltunnel = ssltunnel
+		self.state = state
+		self.sshkey = sshkey
+		self.callback_url = callback_url
+		self.flavor_id = flavor_id
+		self.image_id = image_id
+		self.address_id = address_id
+
+	def toggle(self, flavor_id, active):
+		# set active/inactive state for instances with a given flavor_id
+		# we only set instances that are in state 0 - inactive, or 1 - waiting on payment
+		state = 0 if int(active) == 1 else 1
+		instances = db.session.query(Instances).filter_by(flavor_id=flavor_id, state=state).all()
+
+		# set to active/inactive
+		for instance in instances:
+			instance.state = int(active)
+			instance.update()
+
+		return True
+
+	def warmup(self, appliance):
+		# create warm instances (state == 1) for flavors
+		# get a list of the current flavors appliance is serving
+		flavors = db.session.query(Flavors).filter_by(active=1).all()
+
+		# run through flavors and make sure we have an open instance for them
+		for flavor in flavors:
+			# the first instance which has this flavor assigned but is not running (active == 1)
+			instance = db.session.query(Instances).filter_by(flavor_id=flavor.id, state=1).first()
+
+			# startable instance NOT available for this flavor, so create a warm one
+			if not instance:
+				# create a new instance		
+				instance = Instances()
+				instance.name = "smi-%s" % generate_token(size=8, caselimit=True)
+				instance.flavor_id = flavor.id
+
+				# grab the first available image for a holder for the warm instance
+				image = db.session.query(Images).first()
+				instance.image_id = image.id
+
+				# timestamps
+				epoch_time = int(datetime.utcnow().strftime('%s'))
+				instance.created = epoch_time
+				instance.updated = epoch_time
+				instance.expires = epoch_time # already expired
+
+				# set state
+				instance.state = 1 # has address, but no payments/not started (warm)
+
+				# update - provides instance.id to us
+				instance.update()
+
+				# finally, assign a bitcoin address
+				addresses = Addresses()
+				instance.address = addresses.assign(appliance, instance.id)	
+				instance.update()
+			else:
+				# found an instance - make sure we have an address assigned to it
+				if not instance.address:
+					instance.address = Addresses().assign(appliance, instance.id)
+					instance.update()
+
+		# overload the results with the list of current flavors
+		response = {"response": "success", "result": {}}
+		response['result']['instances'] = []
+		instances = db.session.query(Instances).all()
+
+		for instance in instances:
+			response['result']['instances'].append(row2dict(instance))
+
+		return response
+
+	def start(self, appliance):
+		from webapp.libs.openstack import flavor_verify_install
+		from webapp.libs.openstack import image_verify_install
+		from webapp.libs.openstack import instance_start
+		
+		# only interested in instances which have been paid and need to start
+		instances = db.session.query(Instances).filter_by(state=2).all()
+
+		# loop through all instances needing to start
+		for instance in instances:
+			# make a call to the pool for each instance
+			response = pool_api_instances( 
+				{
+					"name": instance.name,
+					"address": instance.address.address,
+					"flavor": instance.flavor.name,
+					"image": instance.image.name,
+					"ask": instance.flavor.ask
+				},
+				apitoken=appliance.apitoken
+			)
+		
+			# overload the response from the server into the instance settings
+			# do something with response - TODO
+			# how do we do a dynamic image?
+
+			# take the image and verify install
+			image = Images().get_by_id(instance.image.id)
+			osimage = image_verify_install(image)
+
+			# take the flavor and verify install
+			flavor = Flavors().get_by_id(instance.flavor.id)
+			osflavor = flavor_verify_install(flavor)
+
+			# handle failures of either flavor or image
+			if osimage['response'] == 'fail' or osflavor['response'] == 'fail':
+				# do some fail thing
+				message("Something failed with creating image or flavor.", "error")
+
+			message("Getting ready to start %s." % instance.name) 
+
+			# start the instance
+			instance_start(instance)
+
+			# send a message and reload
+			message("Instance %s launched." % instance.name, "success", True)
+
+			# finally, update instance to running
+			instance.state = 3
+			instance.update()
+
+		# set expire time
+
+		# query the instance's callback_url from the current callback_url
+
+		# if new callback url set, call it now and do previous step again
+
+		# start instances
+		pass
+
+	def suspend(self, appliance):
+		from webapp.libs.openstack import instance_suspend
+		# check the expire time for the instance
+		pass
+
+	def decomission(self, appliance):
+		from webapp.libs.openstack import instance_decomission
+		# check the decomission time for the instance
+		pass
+
+	def __repr__(self):
+		return '<Instance %r>' % (self.name)
+
+
+# images model
+class Images(CRUDMixin, db.Model):
+	__tablename__ = 'images'
+	id = db.Column(db.Integer, primary_key=True)
+	osid = db.Column(db.String(100))
+	created = db.Column(db.Integer)
+	updated = db.Column(db.Integer)
+	name = db.Column(db.String(100), unique=True)
+	description = db.Column(db.String(200))
+	url = db.Column(db.String(1024), unique=True)
+	local_url = db.Column(db.String(1024), unique=True)
+	diskformat = db.Column(db.String(100))
+	containerformat = db.Column(db.String(100))
+	size = db.Column(db.Integer)
+
+	# 8 - uninstall
+	flags = db.Column(db.Integer)
+
+	# 0 - not installed/error, 1 - know about it, 2 - installing, 3 - installed
+	active = db.Column(db.Integer)
+
+	def __init__(
+		self, 
+		osid=None,
+		created=None,
+		updated=None,
+		name=None, 
+		description=None, 
+		url=None,
+		local_url=None,
+		size=None, 
+		diskformat=None, 
+		containerformat=None, 
+		flags=None
+	):
+		self.osid = osid
+		self.created = created
+		self.updated = updated
+		self.name = name
+		self.description = description
+		self.url = url
+		self.local_url = local_url
+		self.size = size
+		self.diskformat = diskformat
+		self.containerformat = containerformat
+		self.flags = flags
+	
+	def __repr__(self):
+		return '<Image %r>' % (self.name)
+
+	def check(self):
+		images = db.session.query(Images).all()
+
+		# minimum one image installed?
+		image_active = False
+
+		for image in images:
+			if image.active:
+				image_active = True
+
+		return image_active
+
+	def sync(self, appliance):
+		# grab image list from pool server
+		response = pool_api_connect(method="images", apitoken=appliance.apitoken)
+
+		if response['response'] == "success":
+			remoteimages = response['result']
+					
+			# update database for images
+			for remoteimage in remoteimages['images']:
+				# see if we have a matching image
+				image = db.session.query(Images).filter_by(name=remoteimage['name']).first()
+				
+				# check if we need to delete image from local db
+				# b'001000' indicates delete image
+				# TODO: need to cleanup OpenStack images if we uninstall
+				if (remoteimage['flags'] & 8) == 8:
+					# only delete if we have it
+					if image is not None:
+						# try to delete the local copy
+						uninstall_image(image)
+
+						# remove the image from the database
+						image.delete(image)
+					else:
+						# we don't have it, so we do nothing
+						pass
+
+				# we don't have the image coming in from the server, so install
+				elif image is None:
+					# create a new image
+					image = Images()
+					epoch_time = int(datetime.utcnow().strftime('%s'))
+					image.created = epoch_time
+					image.updated = epoch_time
+					image.name = remoteimage['name']
+					image.description = remoteimage['description']
+					image.url = remoteimage['url']
+					image.size = remoteimage['size'] # used as a suggestion of size only
+					image.diskformat = remoteimage['diskformat']
+					image.containerformat = remoteimage['containerformat']
+					image.active = 1 # indicates we know about it, but not downloaded
+					image.flags = remoteimage['flags']
+
+					# add and commit
+					image.update(image)
+
+				else:
+					# update image from remote images (local lookup was by name)
+					epoch_time = int(datetime.utcnow().strftime('%s'))
+					image.description = remoteimage['description']
+					if image.url != remoteimage['url']:
+						image.url = remoteimage['url']
+						image.updated = epoch_time
+					if image.diskformat != remoteimage['diskformat']:
+						image.diskformat = remoteimage['diskformat']
+						image.updated = epoch_time
+					if image.containerformat != remoteimage['containerformat']:
+						image.containerformat = remoteimage['containerformat']
+						image.updated = epoch_time
+					if image.flags != remoteimage['flags']:
+						image.flags = remoteimage['flags']
+						image.updated = epoch_time
+
+					# update
+					image.update(image)
+
+			# grab a new copy of the images in database
+			images = db.session.query(Images).all()
+
+			# overload the results with the list of current flavors
+			response['result']['images'] = []
+			images = db.session.query(Images).all()
+
+			for image in images:
+				response['result']['images'].append(row2dict(image))
+
+			return response
+
+		# failure contacting server
+		else:
+			# lift respose from server call to view
+			return response
+
+
 # flavors model
 class Flavors(CRUDMixin,  db.Model):
 	__tablename__ = 'flavors'
@@ -320,332 +679,6 @@ class Flavors(CRUDMixin,  db.Model):
 		# failure contacting server
 		else:
 			# lift the response from server to view
-			return response
-
-
-# instance model
-class Instances(CRUDMixin, db.Model):
-	__tablename__ = 'instances'
-	id = db.Column(db.Integer, primary_key=True)
-	created = db.Column(db.Integer)
-	updated = db.Column(db.Integer) 
-	expires = db.Column(db.Integer)
-	name = db.Column(db.String(100))
-	osid = db.Column(db.String(100))
-	poolid = db.Column(db.String(100))
-	privateipv4 = db.Column(db.String(100))
-	publicipv4 = db.Column(db.String(100))
-	publicipv6 = db.Column(db.String(100))
-	ssltunnel = db.Column(db.String(400))
-
-	state = db.Column(db.Integer) 
-	# instance state is one of:
-	# 0 - inactive
-	# 1 - payment address available (warm)
-	# 2 - payment observed from callback (start)
-	# 3 - instance running (hot)
-	# 4 - instance halted (cooldown)
-	# 5 - instance decommissioned (removed)
-	
-	sshkey = db.Column(db.String(2048))
-	callback_url = db.Column(db.String(1024))
-
-	# foreign keys
-	flavor_id = db.Column(db.Integer, db.ForeignKey('flavors.id'))
-	image_id = db.Column(db.Integer, db.ForeignKey('images.id'))
-	address_id = db.Column(db.Integer, db.ForeignKey('addresses.id'))
-
-	# relationships
-	flavor = db.relationship('Flavors', foreign_keys='Instances.flavor_id')
-	image = db.relationship('Images', foreign_keys='Instances.image_id')
-	address = db.relationship('Addresses', foreign_keys='Instances.address_id')
-
-	def __init__(self, 
-		created=None,
-		updated=None,
-		expires=None,
-		name=None,
-		osid=None,
-		poolid=None,
-		privateipv4=None,
-		publicipv4=None,
-		publicipv6=None,
-		ssltunnel=None,
-		state=None,
-		sshkey=None,
-		callback_url=None,
-		flavor_id=None,
-		image_id=None,
-		address_id=None
-	):
-		self.created = created
-		self.updated = updated
-		self.expires = expires
-		self.name = name
-		self.osid = osid
-		self.poolid = poolid
-		self.privateipv4 = privateipv4
-		self.publicipv4 = publicipv4
-		self.publicipv6 = publicipv6
-		self.ssltunnel = ssltunnel
-		self.state = state
-		self.sshkey = sshkey
-		self.callback_url = callback_url
-		self.flavor_id = flavor_id
-		self.image_id = image_id
-		self.address_id = address_id
-
-	def toggle(self, flavor_id, active):
-		# set active/inactive state for instances with a given flavor_id
-		# we only set instances that are in state 0 - inactive, or 1 - waiting on payment
-		state = 0 if int(active) == 1 else 1
-		instances = db.session.query(Instances).filter_by(flavor_id=flavor_id, state=state).all()
-
-		# set to active/inactive
-		for instance in instances:
-			instance.state = int(active)
-			instance.update()
-
-		return True
-
-	def warmup(self, appliance):
-		# create warm instances (state == 1) for flavors
-		# get a list of the current flavors appliance is serving
-		flavors = db.session.query(Flavors).filter_by(active=1).all()
-
-		# run through flavors and make sure we have an open instance for them
-		for flavor in flavors:
-			# the first instance which has this flavor assigned but is not running (active == 1)
-			instance = db.session.query(Instances).filter_by(flavor_id=flavor.id, state=1).first()
-
-			# startable instance NOT available for this flavor, so create a warm one
-			if not instance:
-				# create a new instance		
-				instance = Instances()
-				instance.name = "smi-%s" % generate_token(size=8, caselimit=True)
-				instance.flavor_id = flavor.id
-
-				# grab the first available image for a holder for the warm instance
-				image = db.session.query(Images).first()
-				instance.image_id = image.id
-
-				# timestamps
-				epoch_time = int(time.time())
-				instance.created = epoch_time
-				instance.updated = epoch_time
-				instance.expires = epoch_time # already expired
-
-				# set state
-				instance.state = 1 # has address, but no payments/not started (warm)
-
-				# update - provides instance.id to us
-				instance.update()
-
-				# finally, assign a bitcoin address
-				addresses = Addresses()
-				instance.address = addresses.assign(appliance, instance.id)	
-				instance.update()
-			else:
-				# found an instance - make sure we have an address assigned to it
-				if not instance.address:
-					instance.address = Addresses().assign(appliance, instance.id)
-					instance.update()
-
-		# overload the results with the list of current flavors
-		response = {"response": "success", "result": {}}
-		response['result']['instances'] = []
-		instances = db.session.query(Instances).all()
-
-		for instance in instances:
-			response['result']['instances'].append(row2dict(instance))
-
-		return response
-
-	def start(self, appliance):
-		from webapp.libs.openstack import flavor_install, image_install, instance_start
-		
-		# only interested in instances which have been paid and need to start
-		instances = db.session.query(Instances).filter_by(state=2).all()
-
-		# loop through all instances needing to start
-		for instance in instances:
-			# set the flag to running
-			instance.state = 3
-			instance.update()
-
-			# make a call to the pool for each instance
-			response = pool_api_instances( 
-				{
-					"name": instance.name,
-					"address": instance.address.address,
-					"flavor": instance.flavor.name,
-					"image": instance.image.name,
-					"ask": instance.flavor.ask
-				},
-				apitoken=appliance.apitoken
-			)
-		
-			# pull the image/flavor objects in and make sure they are installed
-			image = Images().get_by_id(instance.image.id)
-			osimage = image_install(image)
-
-			flavor = Flavors().get_by_id(instance.flavor.id)
-			osflavor = flavor_install(flavor)
-
-			message("Getting ready to start.")
-			# start the instance
-			instance_start(instance)
-
-			# send a message and reload
-			message("Instance %s launched." % instance.name, "success", True)
-
-		# set expire time
-
-		# query the instance's callback_url from the current callback_url
-
-		# if new callback url set, call it now and do previous step again
-
-		# start instances
-		pass
-
-	def suspend(self, appliance):
-		from webapp.libs.openstack import instance_suspend
-		# check the expire time for the instance
-		pass
-
-	def decomission(self, appliance):
-		from webapp.libs.openstack import instance_decomission
-		# check the decomission time for the instance
-		pass
-
-	def __repr__(self):
-		return '<Instance %r>' % (self.name)
-
-
-# images model
-class Images(CRUDMixin, db.Model):
-	__tablename__ = 'images'
-	id = db.Column(db.Integer, primary_key=True)
-	osid = db.Column(db.String(100))
-	name = db.Column(db.String(100), unique=True)
-	description = db.Column(db.String(200))
-	url = db.Column(db.String(400), unique=True)
-	diskformat = db.Column(db.String(100))
-	containerformat = db.Column(db.String(100))
-	size = db.Column(db.Integer)
-
-	# 8 - uninstall
-	flags = db.Column(db.Integer)
-
-	# 0 - not installed, 1 - know about it, 2 - installing, 3 - installed
-	active = db.Column(db.Integer)
-
-	def __init__(
-		self, 
-		osid=None, 
-		name=None, 
-		description=None, 
-		url=None, 
-		size=None, 
-		diskformat=None, 
-		containerformat=None, 
-		flags=None
-	):
-		self.osid = osid
-		self.name = name
-		self.description = description
-		self.url = url
-		self.size = size
-		self.diskformat = diskformat
-		self.containerformat = containerformat
-		self.flags = flags
-	
-	def __repr__(self):
-		return '<Image %r>' % (self.name)
-
-	def check(self):
-		images = db.session.query(Images).all()
-
-		# minimum one image installed?
-		image_active = False
-
-		for image in images:
-			if image.active:
-				image_active = True
-
-		return image_active
-
-	def sync(self, appliance):
-		# grab image list from pool server
-		response = pool_api_connect(method="images", apitoken=appliance.apitoken)
-
-		if response['response'] == "success":
-			remoteimages = response['result']
-					
-			# update database for images
-			for remoteimage in remoteimages['images']:
-				# see if we have a matching image
-				image = db.session.query(Images).filter_by(name=remoteimage['name']).first()
-				
-				# check if we need to delete image from local db
-				# b'001000' indicates delete image
-				# TODO: need to cleanup OpenStack images if we uninstall
-				if (remoteimage['flags'] & 8) == 8:
-					# only delete if we have it
-					if image is not None:
-						# try to delete the local copy
-						uninstall_image(image)
-
-						# remove the image from the database
-						image.delete(image)
-					else:
-						# we don't have it, so we do nothing
-						pass
-
-				# we don't have the image coming in from the server, so install
-				elif image is None:
-					# create a new image
-					image = Images()
-					image.name = remoteimage['name']
-					image.description = remoteimage['description']
-					image.url = remoteimage['url']
-					image.size = remoteimage['size'] # used as a suggestion of size only
-					image.diskformat = remoteimage['diskformat']
-					image.containerformat = remoteimage['containerformat']
-					image.active = 1 # indicates we know about it, but not downloaded
-					image.flags = remoteimage['flags']
-
-					# add and commit
-					image.update(image)
-
-				# we have the image and need to update it
-				else:
-					# update image from remote images
-					image.name = remoteimage['name']
-					image.description = remoteimage['description']
-					image.url = remoteimage['url']
-					image.diskformat = remoteimage['diskformat']
-					image.containerformat = remoteimage['containerformat']
-					image.flags = remoteimage['flags']
-					
-					# udpate
-					image.update(image)
-
-			# grab a new copy of the images in database
-			images = db.session.query(Images).all()
-
-			# overload the results with the list of current flavors
-			response['result']['images'] = []
-			images = db.session.query(Images).all()
-
-			for image in images:
-				response['result']['images'].append(row2dict(image))
-
-			return response
-
-		# failure contacting server
-		else:
-			# lift respose from server call to view
 			return response
 
 
@@ -805,6 +838,7 @@ class Appliance(CRUDMixin, db.Model):
 			with open(tunnel_conf_file, 'w') as yaml_file:
 				yaml_file.write( yaml.dump(data, default_flow_style=False))
 
+
 # settings check model
 class Status(CRUDMixin, db.Model):
 	__tablename__ = 'status'
@@ -822,7 +856,7 @@ class Status(CRUDMixin, db.Model):
 		status = db.session.query(Status).first()
 		
 		# calculate cache timeout (120 seconds)
-		epoch_time = int(time.time())
+		epoch_time = int(datetime.utcnow().strftime('%s'))
 		try:
 			if (status.updated + 120) < epoch_time:
 				# it's been 2 minutes so we are hot

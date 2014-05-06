@@ -1,6 +1,10 @@
 import os
+import time
+from datetime import datetime
 
-from urllib2 import urlopen 
+from webapp import app
+
+from urllib2 import urlopen
 from urllib import urlretrieve
 
 # download images, store locally in static/images & update images db
@@ -11,9 +15,6 @@ def download_images(appliance, images):
 		
 	# loop through images and try to download and install
 	for image in images:
-		# backup the original url
-		original_url = image.url
-
 		try:
 			# connect to remote URL's site and get size
 			site = urlopen(image.url)
@@ -40,36 +41,43 @@ def download_images(appliance, images):
 				# pull down file and write to disk
 				urlretrieve(image.url, "%s/%s" % (image_path, filename))
 
-				# update the database saying we have the file
+				# update the new size
 				image.size = size
-				image.active = 3
-
-				# write the new URL for the image
-				if app.config['DEBUG'] == True:
-					image.url = "http://%s:%s/images/%s" % (
-						appliance.local_ip, 
-						app.config['DEV_PORT'],
-						filename
-					)
-				else:
-					image.url = "http://%s/images/%s" % (
-						appliance.local_ip,
-						filename
-					)
-
-				image.update()
-
+				epoch_time = int(datetime.utcnow().strftime('%s'))
+				image.updated = epoch_time
+				
 			else:
-				# do nothing if we already have it locally
+				# basically do nothing if we already have it locally
 				image.size = on_disk_size
-				image.active = 3
-				image.update()
+				
+			# either way, write the local URL for the image
+			if app.config['DEBUG'] == True:
+				image.local_url = "http://%s:%s/images/%s" % (
+					appliance.local_ip, 
+					app.config['DEV_PORT'],
+					filename
+				)
+			else:
+				image.local_url = "http://%s/images/%s" % (
+					appliance.local_ip,
+					filename
+				)
+
+			# mark as live on the local filesystem
+			image.active = 3
+			image.update()
 
 		except Exception, e:
-			# reset the URL so OpenStack can download it directly
-			image.url = original_url
-			image.active = 1
-			image.update()
+			# we failed to open image.url for size, or failed to download it locally
+			# if the local url is empty, indicate we should use original url to boot image
+			if image.local_url == "":
+				epoch_time = int(datetime.utcnow().strftime('%s'))
+				image.updated = epoch_time
+				image.active = 1
+				image.update()
+			else:
+				# do nothing
+				pass
 
 # uninstall downloaded images
 def uninstall_image(image):

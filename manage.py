@@ -17,7 +17,6 @@ from webapp.models.models import Instances, Addresses
 from webapp.libs.utils import configure_blurb, query_yes_no, pprinttable, message
 from webapp.libs.coinbase import coinbase_get_addresses, coinbase_checker
 from webapp.libs.images import download_images
-from webapp.libs.openstack import instance_start, image_install
 
 # configuration file
 if os.path.isfile('./DEV'): 
@@ -191,6 +190,8 @@ def instances(app):
 
 		# start instances in starting state (set from /api/address/ handler)
 		response = instances.start(appliance)
+
+		# update instance states and do callbacks
 
 		# suspend instances which are payment expired
 		response = instances.suspend(appliance)
