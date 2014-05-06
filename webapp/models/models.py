@@ -868,21 +868,20 @@ class Status(CRUDMixin, db.Model):
 			check = True
 			status = Status()
 
+		# objects
+		appliance = Appliance().get()
+		openstack = OpenStack()
+		flavors = Flavors()
+
 		# if the cache time has been a while, or we are on
 		# the configuration page, check settings and cache
 		if check:
-			# objects
-			appliance = Appliance().get()
-			openstack = OpenStack()
-			# images = Images() - not used for the time being
-			flavors = Flavors()
+			message("Check triggered.")
 
 			# openstack connected?
 			openstack_check = openstack.check()
 		
 			# externals working?
-			# check_ngrok = ngrok_check(appliance)
-			ngrok_check = ngrok_checker(appliance)
 			coinbase_check = coinbase_checker(appliance)
 
 			# token valid?
@@ -892,20 +891,30 @@ class Status(CRUDMixin, db.Model):
 			else:
 				token_check = False
 			
-			# one flavor installed?
-			flavors_check = flavors.check()
-
 			# update database
 			status.updated = epoch_time
 			status.openstack_check = openstack_check
 			status.coinbase_check = coinbase_check
-			status.ngrok_check = ngrok_check
-			status.flavors_check = flavors_check
-			status.images_check = True
 			status.token_check = token_check
 			status.update()
 		else:
+			message("Not checking.")
 			pass
+
+		# stuff we check all the time
+		# ngrok connection
+		ngrok_check = ngrok_checker(appliance)
+		status.ngrok_check = ngrok_check
+
+		# one flavor installed?
+		flavors_check = flavors.check()
+		status.flavors_check = flavors_check
+
+		# images good?
+		status.images_check = True
+
+		# update
+		status.update()
 
 		# build the response object
 		settings = {
