@@ -219,47 +219,87 @@ def flavor_verify_install(flavor):
 		
 	return response
 
-def instance_start(instance):
-	# get the cluster configuration
+def nova_connection():
+	# openstack connection
 	openstack = OpenStack.get()
 
-	# default response
-	response = {"response": "success", "result": {}}
+	# establish connection to openstack
+	connection = novaclient.Client(
+		openstack.osusername,
+		openstack.ospassword,
+		openstack.tenantname,
+		openstack.authurl,
+		service_type="compute"
+	)
 
-	# if we can't talk to OpenStack
-	if not openstack:
-		response['response'] = "fail"
-		response['result'] = "OpenStack configuration entry missing."
-	elif not openstack.check():
+	return connection
+
+def instance_start(instance):
+	# default response
+	response = {"response": "success", "result": {"message": "", "instance": {}}}
+
+	# try establishing nova connection
+	try:
+		nova = nova_connection()
+	except:
 		response['response'] = "fail"
 		response['result'] = "Can't communicate with OpenStack cluster."
-	else:
+		return response
 
-		# establish connection to openstack
-		nova = novaclient.Client(
-			openstack.osusername,
-			openstack.ospassword,
-			openstack.tenantname,
-			openstack.authurl,
-			service_type="compute"
-		)
+	# check if we already have a server named this running
+	servers = nova.servers.list()
+	for server in servers:
+		if server.name == instance.name:
+			response['response'] = "fail"
+			response['result']['message'] = "Instance is already running."
+			return response
 
-		# check if we already have a server named this running
+	# start the server
+	server = nova.servers.create(
+		name=instance.name, 
+		image=instance.image.osid,
+		flavor=instance.flavor.osid, 
+		key_name="id-kord"
+	)
 
-		# start the server
-		server = nova.servers.create(
-			name=instance.name, 
-			image=instance.image.osid,
-			flavor=instance.flavor.osid, 
-			key_name="id-kord"
-		)
-
-	print server
-
+	# response
+	response['result']['message'] = "Server started."
+	response['result']['instance'] = server
 	return response
 
-def instance_suspend():
-	pass
+def instance_suspend(instance):
+	# default response
+	response = {"response": "success", "result": {"message": "", "instance": {}}}
 
-def instance_decomission():
-	pass
+	# try establishing nova connection
+	try:
+		nova = nova_connection()
+	except:
+		response['response'] = "fail"
+		response['result']['message'] = "Can't communicate with OpenStack cluster."
+		return response
+
+	# suspend the instance
+	server = nova.servers.suspend(instance.osid)
+
+	# response
+	response['result']['message'] = "Server suspended."
+	response['result']['instance'] = server
+	return response
+
+def instance_decommission():
+	# try establishing nova connection
+	try:
+		nova = nova_connection()
+	except:
+		response['response'] = "fail"
+		response['result'] = "Can't communicate with OpenStack cluster."
+		return response
+
+	# suspend the instance
+	server = nova.servers.stop(instance.osid)
+
+	# response
+	response['result']['message'] = "Server stopped."
+	response['result']['instance'] = server
+	return response

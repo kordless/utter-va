@@ -186,15 +186,18 @@ def configure():
 				addresses = Addresses()
 				addresses.sync(appliance)
 
-				# grab the first address we got from coinbase and use the callback url
-				address = db.session.query(Addresses).first()
-				if address:
-					# overload the appliance's existing subdomain with coinbase address one
-					appliance.subdomain = address.subdomain
-					appliance.update()
-				else:
-					# there exists no address with a subdomain, so we keep what we have
-					pass
+				# if we don't have a subdomain yet, let's find or make one (bit modelish)
+				if not appliance.subdomain:
+					# grab the first address we got from coinbase
+					address = db.session.query(Addresses).first()
+					
+					if address:
+						# overload the appliance's existing subdomain with coinbase address one
+						appliance.subdomain = address.subdomain
+						appliance.update()
+					else:
+						# there exists no address with a subdomain, so we keep what we have
+						appliance.subdomain = generate_token(size=16, caselimit=True)
 
 				# build the tunnel config file - ngrok will start after it's built
 				appliance.build_tunnel_conf()
