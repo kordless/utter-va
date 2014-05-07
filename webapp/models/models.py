@@ -802,16 +802,6 @@ class Appliance(CRUDMixin, db.Model):
 		# move file to backup
 		tunnel_conf_file = '%s/%s' % (app.config['BASE_PATH'], app.config['POOL_TUNNEL_CONF'])
 
-		# probably don't need this anymore
-		"""
-		try:
-			with open(tunnel_conf_file):
-				tmpext = generate_token(size=6)
-				shutil.move(tunnel_conf_file, "%s.%s" % (tunnel_conf_file, tmpext))
-		except IOError:
-			pass
-		"""
-
 		# create yaml object and write to file
 		# only do this if all user entered values are ready to role
 		if self.cbapikey and self.cbapisecret and self.ngroktoken:
