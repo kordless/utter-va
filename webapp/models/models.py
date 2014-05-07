@@ -144,7 +144,7 @@ class Addresses(CRUDMixin, db.Model):
 			if address:
 				# assign the instance id to the address
 				address.instance_id = instance_id
-				# leave the subdomain alone from the sync below
+				# leave the subdomain alone from the sync
 				# address.subdomain
 				address.update(address)
 				return address
@@ -275,13 +275,13 @@ class Instances(CRUDMixin, db.Model):
 
 		return True
 
-	def warmup(self, appliance):
+	def warmup(self):
 		# create warm instances (state == 1) for flavors
 		# get a list of the current flavors appliance is serving
 		flavors = db.session.query(Flavors).filter_by(active=1).all()
 
 		# run through flavors and make sure we have an open instance for them
-		for flavor in flavors:
+		#  for flavor in flavors:
 			# the first instance which has this flavor assigned but is not running (active == 1)
 			instance = db.session.query(Instances).filter_by(flavor_id=flavor.id, state=1).first()
 
@@ -318,17 +318,17 @@ class Instances(CRUDMixin, db.Model):
 					instance.address = Addresses().assign(appliance, instance.id)
 					instance.update()
 
-		# overload the results with the list of current flavors
+		# overload the results with the list of current instances
 		response = {"response": "success", "result": {}}
 		response['result']['instances'] = []
-		instances = db.session.query(Instances).all()
+		instances = db.session.query(Instances).filter_by(state=1).all()
 
 		for instance in instances:
 			response['result']['instances'].append(row2dict(instance))
 
 		return response
 
-	def start(self, appliance):
+	def start(self):
 		from webapp.libs.openstack import flavor_verify_install
 		from webapp.libs.openstack import image_verify_install
 		from webapp.libs.openstack import instance_start
@@ -336,8 +336,11 @@ class Instances(CRUDMixin, db.Model):
 		# only interested in instances which have been paid and need to start
 		instances = db.session.query(Instances).filter_by(state=2).all()
 
+		# build the response
+		response = {"response": "success", "result": {"messages": [], "instances": []}}
+
 		# loop through all instances needing to start
-		for instance in instances:
+		#for instance in instances:
 			# make a call to the pool for each instance
 			response = pool_api_instances( 
 				{
@@ -367,17 +370,26 @@ class Instances(CRUDMixin, db.Model):
 				# do some fail thing
 				message("Something failed with creating image or flavor.", "error")
 
-			message("Getting ready to start %s." % instance.name) 
 
-			# start the instance
-			instance_start(instance)
+			else:
+				message("Getting ready to start %s." % instance.name)
 
-			# send a message and reload
-			message("Instance %s launched." % instance.name, "success", True)
+				# start the instance
+				instance_start(instance)
 
-			# finally, update instance to running
-			instance.state = 3
-			instance.update()
+				# send a message and reload
+				message("Instance %s launched." % instance.name, "success", True)
+
+				# finally, update instance to running
+				instance.state = 3
+				instance.update()
+
+
+		instances = db.session.query(Instances).filter_by(state=3).all()
+
+		for instance in instances:
+			response['result']['instances'].append(row2dict(instance))
+
 
 		# set expire time
 
@@ -390,11 +402,18 @@ class Instances(CRUDMixin, db.Model):
 
 	def suspend(self, appliance):
 		from webapp.libs.openstack import instance_suspend
-		# check the expire time for the instance
-		pass
+		
+		# only interested in instances which are payment expired
+		epoch_time = int(datetime.utcnow().strftime('%s'))
+		instances = db.session.query(Instances).filter_by(expires<epoch_time).all()
 
-	def decomission(self, appliance):
-		from webapp.libs.openstack import instance_decomission
+		# suspend the guilty parties
+		for instance in instances:
+			response = instance_suspend(instance)
+
+
+	def decommission(self, appliance):
+		from webapp.libs.openstack import instance_decommission
 		# check the decomission time for the instance
 		pass
 
@@ -776,9 +795,9 @@ class Appliance(CRUDMixin, db.Model):
 
 		# remainder of settings
 		self.ngroktoken = ""
-		self.subdomain = generate_token(size=16, caselimit=True)
+		self.subdomain = ""
 		self.dynamicimages = 1
-		self.secret = generate_token(size=8, caselimit=True)
+		self.secret = generate_token(size=8, caselimit=True) # not used, but fun
 		self.cbapikey = ""
 		self.cbapisecret = ""
 		self.cbaccesstoken = ""
@@ -811,7 +830,6 @@ class Appliance(CRUDMixin, db.Model):
 			else:
 				port = 80
 
-			# need to loop through subdomains we found from coinbase
 			# create data structure for yaml file
 			data = dict(
 				auth_token = self.ngroktoken.encode('ascii','ignore'),

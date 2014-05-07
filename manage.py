@@ -158,20 +158,6 @@ def images(app):
 
 	return action
 
-# grab the list of bitcoin addresses from coinbase
-# runs every 15 minutes via cron
-def addresses(app):
-	def action():
-		# get the appliance for coinbase tokens
-		appliance = db.session.query(Appliance).first()
-
-		# sync up all the addresses
-		if coinbase_checker(appliance):
-			addresses = Addresses()
-			response = addresses.sync(appliance)
-
-	return action
-
 # attach addresses to instance warmups
 # runs every minute via cron
 def instances(app):
@@ -181,12 +167,18 @@ def instances(app):
 
 		# check appliance is ready to go
 		# TODO
-
-		# grab instances
+		
 		instances = Instances()
 
-		# warmup instances for flavors with none
-		response = instances.warmup(appliance)
+		# warmup an instance for each flavor
+		flavors = Flavors().filter_by(active=1).all()
+		for flavor in flavors:
+			response = instances.warmup(flavor)
+
+		# start instances which have received payment
+		instances = Instances().filter(state=2).all()
+		for instance in instances():
+			response = instances.start(instance)
 
 		# start instances in starting state (set from /api/address/ handler)
 		response = instances.start(appliance)
@@ -231,8 +223,8 @@ manager.add_action('clean', clean)
 manager.add_action('tunnel', tunnel)
 manager.add_action('flavors', flavors)
 manager.add_action('images', images)
-manager.add_action('addresses', addresses)
 manager.add_action('instances', instances)
+# manager.add_action('appliance', appliance)
 
 # message actions
 manager.add_action('message', messenger)
