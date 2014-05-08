@@ -20,7 +20,7 @@
         <h4 class="modal-title">Manual Instance Payment</h4>
       </div>
       <div class="modal-body">
-        <p>The following Bitcoin address can be used to make a payment on this instance. The current rate of this instance set to <code><span id="#rate">XX</span> μBTC/Hour</code>.</p>
+        <p>The following Bitcoin address can be used to make a payment on this instance. The current rate of this instance set to <code><span id="ask">XXX</span> μBTC/Hour</code>.</p>
         <div class="qrcode-address">
           <div class="text-center" id="qrcode"></div>
           <div class="text-center" id="address"></div>
@@ -103,7 +103,7 @@
                 <td>{{ instance.image.name }}</td>
                 <td>
                   <button id="instance-start-{{ instance.id }}" title="Start instance {{ instance.name }}." data-instance="{{ instance.id }}" data-flavor="{{ instance.flavor.id }}" data-image="{{ instance.image.id }}" data-description="{{ instance.flavor.description }}" class="btn btn-xs btn-success {% if instance.state > 1 %}disabled{% endif %}"><span class="glyphicon glyphicon-play"></span> Start</button>
-                  <button id="instance-payment-{{ instance.address.address }}" title="Make a payment." class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-qrcode"></span> Payment</button>
+                  <button id="instance-payment-{{ instance.address.address }}" title="Make a payment." data-ask="{{ instance.flavor.ask }}" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-qrcode"></span> Payment</button>
                 </td>
               </tr>
               {% endfor %}
@@ -123,7 +123,7 @@
 <script type="text/javascript" src="/js/socket.io.min.js"></script>
 <script type="text/javascript">
   $().ready(function() {
-    var csrf_token = "{{ csrf_token }}";
+    var csrf_token = "{{ csrf_token() }}";
 
     // socket notifications
     var socket = io.connect('http://' + document.domain + ':' + location.port + '/xovio');
@@ -140,14 +140,14 @@
     $('button[id^="instance-start-"]').each(function(index){
       $('#'+this.id).click(function() {
         // show the description in the modal
-        description = $('#'+this.id).attr('data-description');
+        var description = $('#'+this.id).attr('data-description');
         $('#flavor-description').html(description);
         $('#instance-start-modal').modal();
 
         // load the instance_id, flavor_id, and image_id into the button
-        instance_id = $('#'+this.id).attr('data-instance');
-        flavor_id = $('#'+this.id).attr('data-flavor');
-        image_id = $('#'+this.id).attr('data-image');
+        var instance_id = $('#'+this.id).attr('data-instance');
+        var flavor_id = $('#'+this.id).attr('data-flavor');
+        var image_id = $('#'+this.id).attr('data-image');
         $('#instance-start-button').attr('data-flavor', flavor_id);
         $('#instance-start-button').attr('data-image', image_id);
         $('#instance-start-button').attr('data-instance', instance_id);
@@ -157,21 +157,20 @@
     // handle the start button click
     $('#instance-start-button').click(function() {
       // reload our variables
-      instance_id = $('#instance-start-button').attr('data-instance');
-      flavor_id = $('#instance-start-button').attr('data-flavor');
-      image_id = $('#instance-start-button').attr('data-image');
-      console.log(instance_id);
+      var instance_id = $('#instance-start-button').attr('data-instance');
+      var flavor_id = $('#instance-start-button').attr('data-flavor');
+      var image_id = $('#instance-start-button').attr('data-image');
       
       // fire the call to start
       $.ajax({
         url: '/configure/instances/'+instance_id,
         type: 'PUT',
         data: {_csrf_token: csrf_token, action: 'start', flavor: flavor_id, image: image_id},
-        success: function() {
-          alertify.log("The instance is starting.", "success");
+        success: function(data) {
+          alertify.log(data.result.message, "success");
         },
         error: function() {
-          alertify.log("The instance failed to start.", "error");
+          alertify.log("Instance start request failed.", "error");
         }
       });
 
@@ -182,10 +181,13 @@
     // payment buttons to show qrcodes
     $('button[id^="instance-payment-"]').each(function(index){
       $('#'+this.id).click(function() {
-        address = this.id.split("-").pop();
         $('#qrcode-modal').modal();
+        var address = this.id.split("-").pop();
+        var ask = $('#'+this.id).attr('data-ask');
+        var qrcode_string = "bitcoin:"+address+"?amount="+(parseInt(ask)/1000000);
+        $('#ask').html(ask);
         $('#qrcode').html('');
-        $('#qrcode').qrcode({text: address});
+        $('#qrcode').qrcode({text: qrcode_string});
         $('#address').html(address);
       })
     });

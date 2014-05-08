@@ -353,7 +353,7 @@ def configure_addresses():
 	)
 
 # configure instances page
-@mod.route('/configure/instances', methods=['GET', 'POST'])
+@mod.route('/configure/instances', methods=['GET', 'PUT'])
 @login_required
 def configure_instances():
 	# check configuration
@@ -372,3 +372,28 @@ def configure_instances():
 		instances=instances,
 		images=images
 	)
+
+
+# configure instances page
+@mod.route('/configure/instances/<int:instance_id>', methods=['GET', 'PUT'])
+@login_required
+def configure_instance_detail(instance_id):
+	# check configuration
+	settings = Status().check_settings()
+
+	# load instance
+	instance = db.session.query(Instances).filter_by(id=instance_id).first()
+
+	# page is PUT'ing data - coinop 0 mBTC
+	if request.method == 'PUT':
+		response = instance.coinop(0)
+		return jsonify(response)
+
+	else:
+		# GET
+		return render_template(
+			'configure/instance_detail.html', 
+			settings=settings, 
+			instance=instance
+		)
+

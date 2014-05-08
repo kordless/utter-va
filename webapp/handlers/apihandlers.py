@@ -81,6 +81,7 @@ def api_message():
 
 # METHODS USING ADDRESS TOKEN AUTH
 # handle callback from coinbase on address payment
+# all other instance methods are run out of cronjobs to ./manage.py
 @csrf.exempt
 @mod.route('/api/address/<string:address_token>', methods=('GET', 'POST'))
 def address_handler(address_token):
@@ -98,20 +99,20 @@ def address_handler(address_token):
 		try:
 			# find out how much we were paid
 			amount = float(request.json['amount'])
+			print request.json
+			print amount
+			
 		except:
 			# bad stuff happens
 			response['response'] = "fail"
-			response['result'] = "payment amount required"		
+			response['result'] = "amount not received"		
 			return jsonify(response), 401
 
-		# update the instance's state to starting (state == 2)
-		instance.state = 2
-		instance.update()
+		# coin-op the instance
+		instance_response = instance.coinop(amount)
 
 		# indicate we were paid and reload the page
 		message("Instance %s received a payment of %s." % (instance.name, amount), "success", True)
-
-		# everything else related to starting the instance is handled by a cron job
 
 		# load response
 		response['result'] = "acknowledged"

@@ -16,6 +16,21 @@ from webapp.models.models import OpenStack
 from webapp.libs.exceptions import OpenStackConfiguration
 from webapp.libs.utils import message, row2dict
 
+def nova_connection():
+	# openstack connection
+	openstack = OpenStack.get()
+
+	# establish connection to openstack
+	connection = novaclient.Client(
+		openstack.osusername,
+		openstack.ospassword,
+		openstack.tenantname,
+		openstack.authurl,
+		service_type="compute"
+	)
+
+	return connection
+
 # verify image is installed or install image correctly if it's not
 def image_verify_install(image):
 	# build the response
@@ -118,7 +133,6 @@ def image_verify_install(image):
 def flavor_verify_install(flavor):
 	# build the response
 	response = {"response": "", "result": {"message": "", "flavor": {}}}
-	
 	try:
 		# get the cluster configuration
 		openstack = db.session.query(OpenStack).first()
@@ -128,38 +142,34 @@ def flavor_verify_install(flavor):
 			raise OpenStackConfiguration("OpenStack configuration isn't complete.")
 
 		# establish connection to openstack
-		nova = novaclient.Client(
-			openstack.osusername,
-			openstack.ospassword,
-			openstack.tenantname,
-			openstack.authurl,
-			service_type="compute"
-		)
+		nova = nova_connection()
 
 		# handle exception from nova if not found
 		try:
+			targetflavor = None
 			# look up the flavor by name and stop on it
 			osflavors = nova.flavors.list()
 			for osflavor in osflavors:
 				if osflavor.name == flavor.name:
+					targetflavor = osflavor
 					break
 		except:
 			# no flavor found
-			osflavor = None
+			targetflavor = None
 
 		# check for install needed
 		install_flavor = False
-		if osflavor:
+		if targetflavor:
 			# check flavor specs match
-			if osflavor.vcpus != flavor.vpus: # vpus wrong
+			if targetflavor.vcpus != flavor.vpus: # vpus wrong
 				install_flavor = True
-			if osflavor.disk != flavor.disk: # disk size wrong
+			if targetflavor.disk != flavor.disk: # disk size wrong
 				install_flavor = True 
-			if osflavor.ram != flavor.memory: # memory wrong
+			if targetflavor.ram != flavor.memory: # memory wrong
 				install_flavor = True
 
 			# check the flavor quota keys match network limit
-			osikeys = osflavor.get_keys()
+			osikeys = targetflavor.get_keys()
 			if flavor.network != int(osikeys['quota:inbound_average']):
 				install_flavor = True
 			if flavor.network != int(osikeys['quota:outbound_average']):
@@ -170,15 +180,15 @@ def flavor_verify_install(flavor):
 
 		# install the flavor
 		if install_flavor:
-			if osflavor:
+			if targetflavor:
 				try:
 					# remove the old flavor
-					nova.flavors.delete(osflavor.id)
+					nova.flavors.delete(targetflavor.id)
 				except:
 					pass
 
 			# create the new flavor
-			osflavor = nova.flavors.create(
+			targetflavor = nova.flavors.create(
 				flavor.name,
 				flavor.memory,
 				flavor.vpus,
@@ -189,16 +199,16 @@ def flavor_verify_install(flavor):
 				1.0,
 				True
 			)
-
+			
 			# set provider info
-			osflavor.set_keys({"provider": app.config["POOL_NAME"]})
+			targetflavor.set_keys({"provider": app.config["POOL_NAME"]})
 
 			# set bandwidth
-			osflavor.set_keys({"quota:inbound_average": flavor.network})
-			osflavor.set_keys({"quota:outbound_average": flavor.network})
+			targetflavor.set_keys({"quota:inbound_average": flavor.network})
+			targetflavor.set_keys({"quota:outbound_average": flavor.network})
 
 		# update the flavor database with id
-		flavor.osid = osflavor.id
+		flavor.osid = targetflavor.id
 		flavor.update(flavor)
 
 		# response
@@ -206,7 +216,7 @@ def flavor_verify_install(flavor):
 		response['result']['message'] = "Flavor added."
 		response['result']['flavor'] = row2dict(flavor)
 
-	except Exception as ex:
+	except Exception, ex:
 		# update our image to not be installed
 		flavor.osid = ""
 		flavor.active = 0
@@ -218,21 +228,6 @@ def flavor_verify_install(flavor):
 		response['result']['message'] = "%s" % ex
 		
 	return response
-
-def nova_connection():
-	# openstack connection
-	openstack = OpenStack.get()
-
-	# establish connection to openstack
-	connection = novaclient.Client(
-		openstack.osusername,
-		openstack.ospassword,
-		openstack.tenantname,
-		openstack.authurl,
-		service_type="compute"
-	)
-
-	return connection
 
 def instance_start(instance):
 	# default response
@@ -249,9 +244,10 @@ def instance_start(instance):
 	# check if we already have a server named this running
 	servers = nova.servers.list()
 	for server in servers:
-		if server.name == instance.name:
-			response['response'] = "fail"
+		if server.name == instance.name and server.status == "ACTIVE":
+			response['response'] = "success"
 			response['result']['message'] = "Instance is already running."
+			response['result']['instance'] = instance
 			return response
 
 	# start the server

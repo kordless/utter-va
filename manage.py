@@ -10,7 +10,7 @@ from flaskext.actions import Manager
 
 from webapp import app, socketio, db
 
-from webapp.models.models import Appliance
+from webapp.models.models import Appliance, Status
 from webapp.models.models import OpenStack, Images, Flavors
 from webapp.models.models import Instances, Addresses
 
@@ -158,39 +158,74 @@ def images(app):
 
 	return action
 
-# attach addresses to instance warmups
+# warmup, start, halt, decommission instances
 # runs every minute via cron
 def instances(app):
 	def action():
-		# get the appliance settings
-		appliance = db.session.query(Appliance).first()
+		# check appliance is ready to go - exit if not
+		settings = Status().check_settings()
+		for key in settings:
+			if not settings[key]:
+				print "Appliance is not ready."
+				return action
 
-		# check appliance is ready to go
-		# TODO
-		
+		# instances for the win
 		instances = Instances()
 
-		# warmup an instance for each flavor
-		flavors = Flavors().filter_by(active=1).all()
+		# make sure we have mixed an instance for each flavor
+		flavors = db.session.query(Flavors).filter_by(active=1).all()
 		for flavor in flavors:
-			response = instances.warmup(flavor)
+			response = instances.mix(flavor)
 
-		# start instances which have received payment
-		instances = Instances().filter(state=2).all()
-		for instance in instances():
-			response = instances.start(instance)
+			if response['response'] != "success":
+				print "Instance for %s failed to create. Something is wrong." % instance.name
+				print response['result']['message']
 
-		# start instances in starting state (set from /api/address/ handler)
-		response = instances.start(appliance)
+		# find instances which have received payment (light to warm)
+		instances = db.session.query(Instances).filter_by(state=2).all()
+		
+		# loop and start each
+		for instance in instances:
+			message("Getting ready to start %s." % instance.name)
+			response = instance.start()
+
+			if response['response'] == "success":
+				message("Instance %s launched." % instance.name, "success", True)
+			else:
+				print "Instance %s failed to launch. Something is wrong." % instance.name
+				print response['result']['message']
 
 		# update instance states and do callbacks
 
 		# suspend instances which are payment expired
-		response = instances.suspend(appliance)
+		#response = instances.suspend(appliance)
 
 		# decomission non-paid instances
-		response = instances.decomission(appliance)
+		#response = instances.decomission(appliance)
 
+	return action
+
+# salesman puts up instances for sale on pool
+def salesman(app):
+	def action():
+		# instances for the win
+		instances = Instances()
+
+	return action
+
+def coinop(app):
+	def action(
+		amount=('a', 0),
+		iname=('i', '')
+	):
+		instance = db.session.query(Instances).filter_by(name=iname).first()
+		if amount == 0:
+			print "Enter a whole amount to pay instance."
+		elif instance:
+			print "Paying %s mBTC to instance %s." % (amount, iname)
+			instance.coinop(amount)
+		else:
+			print "Can't find that instance!"
 	return action
 
 # message client
@@ -213,6 +248,7 @@ def messenger(app):
 
 # for development
 manager.add_action('serve', serve)
+manager.add_action('coinop', coinop)
 
 # commands for user managment
 manager.add_action('reset', reset)
@@ -224,7 +260,6 @@ manager.add_action('tunnel', tunnel)
 manager.add_action('flavors', flavors)
 manager.add_action('images', images)
 manager.add_action('instances', instances)
-# manager.add_action('appliance', appliance)
 
 # message actions
 manager.add_action('message', messenger)

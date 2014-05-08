@@ -128,13 +128,15 @@ class Addresses(CRUDMixin, db.Model):
 			return response
 
 	# assign a bitcoin address for use with an instance
-	def assign(self, appliance, instance_id):
+	def assign(self, instance_id):
 		# check if the instance id is already assigned to an address (just in case)
 		address = db.session.query(Addresses).filter_by(instance_id=instance_id).first()
+		
+		# appliance object
+		appliance = db.session.query(Appliance).first()
 
 		# if we found an address, just return it
 		if address:
-			print 'returning'
 			return address
 		else:
 			# check if we have an empty address to assign
@@ -207,12 +209,14 @@ class Instances(CRUDMixin, db.Model):
 
 	state = db.Column(db.Integer) 
 	# instance state is one of:
-	# 0 - inactive
-	# 1 - payment address available (warm)
-	# 2 - payment observed from callback (start)
-	# 3 - instance running (hot)
-	# 4 - instance halted (cooldown)
-	# 5 - instance decommissioned (removed)
+	# 0 - inactive (frozen)
+	# 1 - payment address available (thaw)
+	# 2 - payment observed from callback (light)
+	# 3 - instance starting (warm)
+	# 4 - instance running (hot)
+	# 5 - instance suspended (cooling)
+	# 6 - payment observed from callback and unsuspend (relight)
+	# 7 - instance decommissioned (removed)
 	
 	sshkey = db.Column(db.String(2048))
 	callback_url = db.Column(db.String(1024))
@@ -275,130 +279,150 @@ class Instances(CRUDMixin, db.Model):
 
 		return True
 
-	def warmup(self):
-		# create warm instances (state == 1) for flavors
-		# get a list of the current flavors appliance is serving
-		flavors = db.session.query(Flavors).filter_by(active=1).all()
+	# whip up a nice instance for receiving payments
+	def mix(self, flavor):
+		# build response
+		response = {"response": "success", "result": {"message": "", "instance": {}}}
 
-		# run through flavors and make sure we have an open instance for them
-		#  for flavor in flavors:
-			# the first instance which has this flavor assigned but is not running (active == 1)
-			instance = db.session.query(Instances).filter_by(flavor_id=flavor.id, state=1).first()
+		# the first instance which has this flavor assigned but is not running (active == 1)
+		instance = db.session.query(Instances).filter_by(flavor_id=flavor.id, state=1).first()
 
-			# startable instance NOT available for this flavor, so create a warm one
-			if not instance:
-				# create a new instance		
-				instance = Instances()
-				instance.name = "smi-%s" % generate_token(size=8, caselimit=True)
-				instance.flavor_id = flavor.id
+		# startable instance NOT available for this flavor, so create a warm one
+		if not instance:
+			# create a new instance		
+			instance = Instances()
+			instance.name = "smi-%s" % generate_token(size=8, caselimit=True)
+			instance.flavor_id = flavor.id
 
-				# grab the first available image for a holder for the warm instance
-				image = db.session.query(Images).first()
-				instance.image_id = image.id
+			# grab the first available image for a holder for the warm instance
+			image = db.session.query(Images).first()
+			instance.image_id = image.id
 
-				# timestamps
-				epoch_time = int(datetime.utcnow().strftime('%s'))
-				instance.created = epoch_time
-				instance.updated = epoch_time
-				instance.expires = epoch_time # already expired
+			# timestamps
+			epoch_time = int(datetime.utcnow().strftime('%s'))
+			instance.created = epoch_time
+			instance.updated = epoch_time
+			instance.expires = epoch_time # already expired
 
-				# set state
-				instance.state = 1 # has address, but no payments/not started (warm)
+			# set state
+			instance.state = 1 # has address, but no payments/not started (warm)
 
-				# update - provides instance.id to us
+			# update - provides instance.id to us
+			instance.update()
+
+			# finally, assign a bitcoin address
+			addresses = Addresses()
+			instance.address = addresses.assign(instance.id)	
+			instance.update()
+
+			response['result']['message'] = "Created new instance and assigned address."
+		
+		else:
+			# found an instance - make sure we have an address assigned to it
+			if not instance.address:
+				instance.address = Addresses().assign(instance.id)
 				instance.update()
-
-				# finally, assign a bitcoin address
-				addresses = Addresses()
-				instance.address = addresses.assign(appliance, instance.id)	
-				instance.update()
+				response['result']['message'] = "Found instance and assigned address."
 			else:
-				# found an instance - make sure we have an address assigned to it
-				if not instance.address:
-					instance.address = Addresses().assign(appliance, instance.id)
-					instance.update()
+				response['result']['message'] = "Found instance and address."
 
 		# overload the results with the list of current instances
-		response = {"response": "success", "result": {}}
-		response['result']['instances'] = []
-		instances = db.session.query(Instances).filter_by(state=1).all()
-
-		for instance in instances:
-			response['result']['instances'].append(row2dict(instance))
-
+		response['result']['instance'] = instance
 		return response
 
+	# receive a payment on an instance or allow a zero payment short start
+	def coinop(self, amount):
+		# build response
+		response = {"response": "success", "result": {"message": "", "instance": {}}}
+
+		# calculate the purchased seconds based on payment we received
+		ask = self.flavor.ask/1000000 # BTC per hour
+		
+		try:
+			purchased_seconds = (amount/ask)*3600 # amount in BTC/ask in BTC * seconds in hour
+		except:
+			purchased_seconds = 0
+
+		# handle local appliance start
+		if amount == 0:
+			purchased_seconds = 15*60 # give 15 minutes to instance for free
+
+		# current UTC time in seconds since epoch
+		epoch_time = int(datetime.utcnow().strftime('%s'))
+
+		# if we're not running (state==1), set the run state to light (to be started)
+		# if we're suspended (state==5), set the run state to relight (to be unsuspended)
+		# cron jobs will take care of the rest of the job of starting/unsuspending
+		# NOTE: We're getting paid pennies for doing nothing until cronjob runs!
+		if self.state == 1: 
+			self.state = 2
+			self.expires = epoch_time + purchased_seconds # starting from now
+		elif self.state == 5:
+			self.state = 6
+			self.expires = epoch_time + purchased_seconds # starting from now
+		else:
+			# states 0, 2, 3, 4, 6, 7
+			self.expires = self.expires + purchased_seconds # starting from expire time
+
+		# update the instance
+		self.update()
+
+		# response
+		response['result']['message'] = "Added %s seconds to %s's expire time." % (purchased_seconds, self.name)
+		response['result']['instance'] = self
+		return response
+
+	# move instances from light to warm
 	def start(self):
 		from webapp.libs.openstack import flavor_verify_install
 		from webapp.libs.openstack import image_verify_install
 		from webapp.libs.openstack import instance_start
-		
-		# only interested in instances which have been paid and need to start
-		instances = db.session.query(Instances).filter_by(state=2).all()
-
+	
 		# build the response
-		response = {"response": "success", "result": {"messages": [], "instances": []}}
+		response = {"response": "success", "result": {"message": "", "instance": {}}}
 
-		# loop through all instances needing to start
-		#for instance in instances:
-			# make a call to the pool for each instance
-			response = pool_api_instances( 
-				{
-					"name": instance.name,
-					"address": instance.address.address,
-					"flavor": instance.flavor.name,
-					"image": instance.image.name,
-					"ask": instance.flavor.ask
-				},
-				apitoken=appliance.apitoken
-			)
+		# appliance
+		appliance = Appliance().get()
+
+		# make a call to the pool for the instance details
+		pool_response = pool_api_instances(self, appliance.apitoken)
+		if pool_response['response'] == "fail":
+			return pool_response
+
+		# overload the response from the server into the instance settings
+		# do something with response - TODO
+		# how do we do a dynamic image?
+
+		# take the image and verify install
+		image = Images().get_by_id(self.image.id)
+		osimage = image_verify_install(image)
+
+		# take the flavor and verify install
+		flavor = Flavors().get_by_id(self.flavor.id)
+		osflavor = flavor_verify_install(flavor)
+
+		# handle failures of either flavor or image
+		if osimage['response'] == 'fail':
+			response['response'] = "fail"
+			response['result']['message'] = "Failed to create image."
+			return response
+		if osflavor['response'] == 'fail':
+			response['response'] = "fail"
+			response['result']['message'] = "Failed to create flavor."
+			return response
+
+		# start the instance, set state and expire times
+		cluster_response = instance_start(self)
 		
-			# overload the response from the server into the instance settings
-			# do something with response - TODO
-			# how do we do a dynamic image?
+		# build response
+		if cluster_response['response'] == "success":
+			self.state = 3
+			self.update()
+			response['result'] = cluster_response['result']
+		else:
+			response = cluster_response
 
-			# take the image and verify install
-			image = Images().get_by_id(instance.image.id)
-			osimage = image_verify_install(image)
-
-			# take the flavor and verify install
-			flavor = Flavors().get_by_id(instance.flavor.id)
-			osflavor = flavor_verify_install(flavor)
-
-			# handle failures of either flavor or image
-			if osimage['response'] == 'fail' or osflavor['response'] == 'fail':
-				# do some fail thing
-				message("Something failed with creating image or flavor.", "error")
-
-
-			else:
-				message("Getting ready to start %s." % instance.name)
-
-				# start the instance
-				instance_start(instance)
-
-				# send a message and reload
-				message("Instance %s launched." % instance.name, "success", True)
-
-				# finally, update instance to running
-				instance.state = 3
-				instance.update()
-
-
-		instances = db.session.query(Instances).filter_by(state=3).all()
-
-		for instance in instances:
-			response['result']['instances'].append(row2dict(instance))
-
-
-		# set expire time
-
-		# query the instance's callback_url from the current callback_url
-
-		# if new callback url set, call it now and do previous step again
-
-		# start instances
-		pass
+		return response
 
 	def suspend(self, appliance):
 		from webapp.libs.openstack import instance_suspend
@@ -866,8 +890,8 @@ class Status(CRUDMixin, db.Model):
 		# calculate cache timeout (120 seconds)
 		epoch_time = int(datetime.utcnow().strftime('%s'))
 		try:
-			if (status.updated + 120) < epoch_time:
-				# it's been 2 minutes so we are hot
+			if (status.updated + 900) < epoch_time:
+				# it's been 15 minutes so we are hot
 				check = True
 			else:
 				check = False
@@ -884,13 +908,13 @@ class Status(CRUDMixin, db.Model):
 		# if the cache time has been a while, or we are on
 		# the configuration page, check settings and cache
 		if check:
-			message("Check triggered.")
-
 			# openstack connected?
 			openstack_check = openstack.check()
-		
-			# externals working?
+			status.openstack_check = openstack_check
+
+			# coinbase tokens working?
 			coinbase_check = coinbase_checker(appliance)
+			status.coinbase_check = coinbase_check
 
 			# token valid?
 			response = pool_api_connect('authorization', appliance.apitoken)
@@ -898,36 +922,44 @@ class Status(CRUDMixin, db.Model):
 				token_check = True
 			else:
 				token_check = False
-			
+			status.token_check = token_check
+
 			# update database
 			status.updated = epoch_time
-			status.openstack_check = openstack_check
-			status.coinbase_check = coinbase_check
-			status.token_check = token_check
+
+			# ngrok connection
+			ngrok_check = ngrok_checker(appliance)
+			status.ngrok_check = ngrok_check
+			
+			# one flavor installed?
+			flavors_check = flavors.check()
+			status.flavors_check = flavors_check
+
+			# images aren't really checked
+			status.images_check = True
+
 			status.update()
+		
 		else:
-			message("Not checking.")
-			pass
+			# stuff we check all the time
+			# ngrok connection
+			ngrok_check = ngrok_checker(appliance)
+			status.ngrok_check = ngrok_check
 
-		# stuff we check all the time
-		# ngrok connection
-		ngrok_check = ngrok_checker(appliance)
-		status.ngrok_check = ngrok_check
+			# one flavor installed?
+			flavors_check = flavors.check()
+			status.flavors_check = flavors_check
 
-		# one flavor installed?
-		flavors_check = flavors.check()
-		status.flavors_check = flavors_check
+			# images good?
+			status.images_check = True
 
-		# images good?
-		status.images_check = True
-
-		# update
-		status.update()
+			# update
+			status.update()
 
 		# build the response object
 		settings = {
 			"flavors": status.flavors_check,
-			"images": True, 
+			"images": 1, 
 			"openstack": status.openstack_check,
 			"coinbase": status.coinbase_check,
 			"ngrok": status.ngrok_check,
@@ -938,6 +970,7 @@ class Status(CRUDMixin, db.Model):
 
 	# delete all settings
 	def flush(self):
-		status = db.session.query(Status).first()	
-		status.delete()
+		status = db.session.query(Status).first()
+		if status:
+			status.delete()
 		db.session.commit()

@@ -59,7 +59,7 @@ def coinbase_generate_address(appliance=None, callback_url=None, label=None):
 
 	# call coinbase
 	try:
-		result = json.loads(opener.open(Request(url, data)).read())
+		result = json.loads(opener.open(Request(url, data), timeout=10).read())
 
 		# check the returned data matches what we sent - adding "instance-" to the label check
 		if result['callback_url'] != callback_url or result['label'] != label:
@@ -98,7 +98,7 @@ def coinbase_get_addresses(appliance=None):
 
 	# call coinbase
 	try:
-		result = json.loads(opener.open(Request(url)).read())
+		result = json.loads(opener.open(Request(url), timeout=10).read())
 		response['result']['addresses'] = result['addresses']
 
 	except HTTPError as ex:
@@ -129,7 +129,7 @@ def coinbase_checker(appliance=None):
 
 	# call coinbase
 	try:
-		result = json.loads(opener.open(Request(url)).read())
+		result = json.loads(opener.open(Request(url), timeout=5).read())
 		return True
 	except:
 		return False

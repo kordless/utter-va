@@ -84,21 +84,7 @@ def generate_token(size=64, caselimit=False):
 		characters  = string.ascii_uppercase + string.ascii_lowercase + string.digits
 	token = ''.join(random.choice(characters) for x in range(size))
 	return token
-
-# check ngrok is up on port 4040
-def ngrok_checker(appliance=None):
-	# use the local port 4040 to test if we're running in debug
-	if app.config['DEBUG'] == True:
-		url = "http://127.0.0.1:4040/"
-	else:
-		url = "https://%s.ngrok.com/" % appliance.subdomain
-
-	try:
-		response = urlopen(url, timeout=10).read()
-		return True
-	except Exception, e:
-		return False
-
+	
 # message bus - sending messages to ourselves
 def message(text=None, status="Success", reloader=False):
 	from webapp.models.models import Appliance
@@ -128,3 +114,19 @@ def message(text=None, status="Success", reloader=False):
 		return True
 	except Exception, e:
 		return False
+
+# check ngrok is up on port 4040
+def ngrok_checker(appliance=None):
+	# use the local port 4040 to test if we're running in debug
+	if app.config['DEBUG'] == True:
+		url = "http://127.0.0.1:4040/"
+	else:
+		url = "https://%s.ngrok.com/" % appliance.subdomain
+
+	try:
+		response = urlopen(url, timeout=10).read()
+		return True
+	except Exception, e:
+		return False
+
+

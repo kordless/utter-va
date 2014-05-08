@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% import "macros.html" as macros %}
+
+{% block page_styles %}
+    <!-- Config Page -->
+    <link href="/css/configure.css" rel="stylesheet">
+{% endblock %}
+
+{% block navbar %}
+  {% include 'navbar.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container content">
+  <div class="row">
+
+    {{ macros.nav_pills("instances", settings) }}
+
+    <!-- form on right side -->
+    <div class="col-md-10">
+
+      <!-- form header -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="section-header">
+            <h2><small>Instance <strong>{{ instance.name }}</strong></small></h2>
+            <p><span class="glyphicon glyphicon-remove-sign"></span> is inactive, <span class="glyphicon glyphicon-time"></span> is waiting on payment, <span class="glyphicon glyphicon-off"></span> is starting, <span class="glyphicon glyphicon-play"></span> is running, <span class="glyphicon glyphicon-pause"></span> is suspended, <span class="glyphicon glyphicon-fire"></span> is decommissioned.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <button id="reload-page" class="btn btn-info"><span class="glyphicon glyphicon-refresh"></span> Reload Page</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script type="text/javascript" src="/js/jquery.qrcode.js"></script>
+<script type="text/javascript" src="/js/qrcode.js"></script>
+<script type="text/javascript" src="/js/socket.io.min.js"></script>
+<script type="text/javascript">
+  $().ready(function() {
+    var csrf_token = "{{ csrf_token }}";
+  });
+</script>
+{% endblock %}
+
+{% block extras %}
+    <script src='/js/popovers.js'></script>
+{% endblock %}

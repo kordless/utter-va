@@ -2,26 +2,36 @@ import json
 
 from urllib2 import urlopen, Request
 from urllib2 import HTTPError
+
 from webapp import app
+from webapp.libs.utils import row2dict
 
 def loader():
 	pass
 
 # remote connection to pool operator's POST methods for instances
 def pool_api_instances(instance=None, apitoken=None):
+
 	url = "%s/api/v1/instances/%s?ver=%s&apitoken=%s" % (
 		app.config['POOL_APPSPOT_WEBSITE'],
-		instance['name'],
+		instance.name,
 		app.config['VERSION'],
 		apitoken
 	)
+
+	# patch up instance for consumption by server
+	pool_instance = row2dict(instance)
+	pool_instance['flavor'] = instance.flavor.name
+	pool_instance['ask'] = instance.flavor.ask
+	pool_instance['image'] = instance.image.name
+	pool_instance['address'] = instance.address.address
 
 	response = {"response": "success", "result": ""}
 
 	try:
 		request = Request(url)
 		request.add_header('Content-Type', 'application/json')
-		response = json.loads(urlopen(request, json.dumps(instance), timeout=10).read())
+		response = json.loads(urlopen(request, json.dumps(pool_instance), timeout=10).read())
 	except HTTPError, e:
 		response['response'] = "fail"
 		response['result'] = "Error code %s returned from server. Authorization failed." % str(e.code)
