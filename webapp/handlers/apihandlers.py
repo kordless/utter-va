@@ -99,13 +99,12 @@ def address_handler(address_token):
 		try:
 			# find out how much we were paid
 			amount = float(request.json['amount'])
-			print request.json
-			print amount
 			
 		except:
 			# bad stuff happens
+			amount = 0
 			response['response'] = "fail"
-			response['result'] = "amount not received"		
+			response['result'] = "amount not received or zero"		
 			return jsonify(response), 401
 
 		# coin-op the instance

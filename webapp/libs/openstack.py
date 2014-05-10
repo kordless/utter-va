@@ -69,7 +69,7 @@ def image_verify_install(image):
 			# check update times
 			pattern = '%Y-%m-%dT%H:%M:%S'
 			image_epoch = int(time.mktime(time.strptime(osimage.created_at, pattern)))
-			
+
 			# if we have an old copy in openstack, we delete it and install new
 			if image_epoch < image.updated:
 				install_image = True
@@ -93,15 +93,15 @@ def image_verify_install(image):
 				container_format = image.containerformat,
 				location = location
 			)
+			
+			# update updated time for image
+			pattern = '%Y-%m-%dT%H:%M:%S'
+			image.updated = int(time.mktime(time.strptime(osimage.created_at, pattern)))
 
-		# we *should* have an osimage.id here. If not, we'll bomb 
-		# to the exception below and wipe the entry from the appliance.
-		image.osid = osimage.id
-
-		# update updated time for image
-		pattern = '%Y-%m-%dT%H:%M:%S'
-		image.updated = int(time.mktime(time.strptime(osimage.created_at, pattern)))
-		image.update()
+			# we *should* have an osimage.id here. If not, we'll bomb 
+			# to the exception below and wipe the entry from the appliance.
+			image.osid = osimage.id
+			image.update()
 
 		# response
 		response['response'] = "success"
@@ -246,11 +246,12 @@ def instance_start(instance):
 	for server in servers:
 		if server.name == instance.name and server.status == "ACTIVE":
 			response['response'] = "success"
-			response['result']['message'] = "Instance is already running."
-			response['result']['instance'] = instance
+			response['result']['message'] = "Server is already running."
+			response['result']['server'] = server
+			print "returning found server"
 			return response
 
-	# start the server
+	# otherwise, start the server instances
 	server = nova.servers.create(
 		name=instance.name, 
 		image=instance.image.osid,
@@ -259,13 +260,39 @@ def instance_start(instance):
 	)
 
 	# response
-	response['result']['message'] = "Server started."
-	response['result']['instance'] = server
+	response['result']['message'] = "OpenStack instance started."
+	response['result']['server'] = server
 	return response
+
+def instance_info(instance):
+	# default response
+	response = {"response": "success", "result": {"message": "", "server": {}}}
+
+	# try establishing nova connection
+	try:
+		nova = nova_connection()
+	except:
+		response['response'] = "fail"
+		response['result'] = "Can't communicate with OpenStack cluster."
+		return response
+
+	try:
+		# grab the server info from openstack
+		server = nova.servers.get(instance.osid)
+		
+		response['response'] = "success"
+		response['result']['message'] = "OpenStack instance detail."
+		response['result']['server'] = server
+		return response
+
+	except:
+		response['response'] = "fail"
+		response['result']['message'] = "OpenStack instance not found."
+		return response
 
 def instance_suspend(instance):
 	# default response
-	response = {"response": "success", "result": {"message": "", "instance": {}}}
+	response = {"response": "success", "result": {"message": "", "server": {}}}
 
 	# try establishing nova connection
 	try:
@@ -279,11 +306,31 @@ def instance_suspend(instance):
 	server = nova.servers.suspend(instance.osid)
 
 	# response
-	response['result']['message'] = "Server suspended."
-	response['result']['instance'] = server
+	response['result']['message'] = "OpenStack instance suspended."
+	response['result']['server'] = server
 	return response
 
-def instance_decommission():
+def instance_resume(instance):
+	# default response
+	response = {"response": "success", "result": {"message": "", "server": {}}}
+
+	# try establishing nova connection
+	try:
+		nova = nova_connection()
+	except:
+		response['response'] = "fail"
+		response['result']['message'] = "Can't communicate with OpenStack cluster."
+		return response
+
+	# suspend the instance
+	server = nova.servers.resume(instance.osid)
+
+	# response
+	response['result']['message'] = "OpenStack instance resumed."
+	response['result']['server'] = server
+	return response
+
+def instance_decommission(instance):
 	# try establishing nova connection
 	try:
 		nova = nova_connection()
@@ -297,5 +344,5 @@ def instance_decommission():
 
 	# response
 	response['result']['message'] = "Server stopped."
-	response['result']['instance'] = server
+	response['result']['server'] = server
 	return response

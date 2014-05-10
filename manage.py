@@ -3,10 +3,12 @@
 # -*- encoding:utf-8 -*-
 import os
 import sys
+import time
 import gevent.monkey; gevent.monkey.patch_thread()
 
 from flask import Flask
 from flaskext.actions import Manager
+from sqlalchemy import or_
 
 from webapp import app, socketio, db
 
@@ -158,7 +160,7 @@ def images(app):
 
 	return action
 
-# warmup, start, halt, decommission instances
+# warmup, start, halt, manage, decommission instances
 # runs every minute via cron
 def instances(app):
 	def action():
@@ -169,10 +171,9 @@ def instances(app):
 				print "Appliance is not ready."
 				return action
 
-		# instances for the win
-		instances = Instances()
-
+		# WAITING PAYMENT
 		# make sure we have mixed an instance for each flavor
+		instances = Instances()
 		flavors = db.session.query(Flavors).filter_by(active=1).all()
 		for flavor in flavors:
 			response = instances.mix(flavor)
@@ -181,27 +182,45 @@ def instances(app):
 				print "Instance for %s failed to create. Something is wrong." % instance.name
 				print response['result']['message']
 
-		# find instances which have received payment (light to warm)
+		# START
+		# instances which have received payment and move to starting
 		instances = db.session.query(Instances).filter_by(state=2).all()
-		
-		# loop and start each
 		for instance in instances:
-			message("Getting ready to start %s." % instance.name)
 			response = instance.start()
 
 			if response['response'] == "success":
 				message("Instance %s launched." % instance.name, "success", True)
 			else:
-				print "Instance %s failed to launch. Something is wrong." % instance.name
-				print response['result']['message']
+				message(response['result']['message'], "error", True)
 
-		# update instance states and do callbacks
+		# NUDGE
+		# instances in the process of starting are monitored and updated
+		instances = db.session.query(Instances).filter_by(state=3).all()
+		for instance in instances:
+			response = instance.nudge()
 
-		# suspend instances which are payment expired
-		#response = instances.suspend(appliance)
+			if response['response'] == "success":
+				message("Instance %s is now running." % instance.name, "success", True)
 
-		# decomission non-paid instances
-		#response = instances.decomission(appliance)
+		# HOUSEKEEPING
+		# general houskeeping work including pausing, unpausing, decomission, delete
+		# runs on all currently running and suspended instances
+		instances = db.session.query(Instances).filter(or_(Instances.state == 4, Instances.state == 5)).all()
+
+		# loop through them and do housekeeping
+		for instance in instances:
+			response = instance.housekeeping()
+
+			# if instance ins't running
+			if response['response'] == "fail":
+				message(response['result']['message'], "error", True)
+			else:
+				if response['result']['message'] != "":
+					message(response['result']['message'])
+
+		# TRASHMAN
+		# cleans up after the housekeepers - yeah, he's the fucking trashman!
+		instances = db.session.query(Instances).filter_by(state=4).all()
 
 	return action
 

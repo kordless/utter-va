@@ -1,6 +1,5 @@
 import os
 import time
-from datetime import datetime
 
 from webapp import app
 
@@ -43,7 +42,7 @@ def download_images(appliance, images):
 
 				# update the new size
 				image.size = size
-				epoch_time = int(datetime.utcnow().strftime('%s'))
+				epoch_time = int(time.time())
 				image.updated = epoch_time
 				
 			else:
@@ -71,7 +70,7 @@ def download_images(appliance, images):
 			# we failed to open image.url for size, or failed to download it locally
 			# if the local url is empty, indicate we should use original url to boot image
 			if image.local_url == "":
-				epoch_time = int(datetime.utcnow().strftime('%s'))
+				epoch_time = int(time.time())
 				image.updated = epoch_time
 				image.active = 1
 				image.update()

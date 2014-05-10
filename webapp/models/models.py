@@ -5,7 +5,6 @@ import json
 import time
 import md5
 
-from datetime import datetime
 from urlparse import urlparse
 
 from keystoneclient.v2_0 import client as keyclient
@@ -299,7 +298,7 @@ class Instances(CRUDMixin, db.Model):
 			instance.image_id = image.id
 
 			# timestamps
-			epoch_time = int(datetime.utcnow().strftime('%s'))
+			epoch_time = int(time.time())
 			instance.created = epoch_time
 			instance.updated = epoch_time
 			instance.expires = epoch_time # already expired
@@ -336,7 +335,7 @@ class Instances(CRUDMixin, db.Model):
 		response = {"response": "success", "result": {"message": "", "instance": {}}}
 
 		# calculate the purchased seconds based on payment we received
-		ask = self.flavor.ask/1000000 # BTC per hour
+		ask = float(self.flavor.ask)/1000000 # BTC per hour
 		
 		try:
 			purchased_seconds = (amount/ask)*3600 # amount in BTC/ask in BTC * seconds in hour
@@ -348,10 +347,10 @@ class Instances(CRUDMixin, db.Model):
 			purchased_seconds = 15*60 # give 15 minutes to instance for free
 
 		# current UTC time in seconds since epoch
-		epoch_time = int(datetime.utcnow().strftime('%s'))
+		epoch_time = int(time.time())
 
 		# if we're not running (state==1), set the run state to light (to be started)
-		# if we're suspended (state==5), set the run state to relight (to be unsuspended)
+		# if we're suspended (state==7), set the run state to relight (to be unsuspended)
 		# cron jobs will take care of the rest of the job of starting/unsuspending
 		# NOTE: We're getting paid pennies for doing nothing until cronjob runs!
 		if self.state == 1: 
@@ -369,7 +368,7 @@ class Instances(CRUDMixin, db.Model):
 
 		# response
 		response['result']['message'] = "Added %s seconds to %s's expire time." % (purchased_seconds, self.name)
-		response['result']['instance'] = self
+		response['result']['instance'] = row2dict(self)
 		return response
 
 	# move instances from light to warm
@@ -392,6 +391,7 @@ class Instances(CRUDMixin, db.Model):
 		# overload the response from the server into the instance settings
 		# do something with response - TODO
 		# how do we do a dynamic image?
+		# sshkey, post creation script, security rules
 
 		# take the image and verify install
 		image = Images().get_by_id(self.image.id)
@@ -411,34 +411,128 @@ class Instances(CRUDMixin, db.Model):
 			response['result']['message'] = "Failed to create flavor."
 			return response
 
-		# start the instance, set state and expire times
-		cluster_response = instance_start(self)
-		
-		# build response
-		if cluster_response['response'] == "success":
-			self.state = 3
-			self.update()
-			response['result'] = cluster_response['result']
+		# start the instance and set state
+		epoch_time = int(time.time())
+		if self.expires > epoch_time:
+			cluster_response = instance_start(self)
+			
+			# process response
+			if cluster_response['response'] == "success":
+				server = cluster_response['result']['server']
+				self.osid = server.id # assign openstack instance id
+				self.state = 3 # mark as starting
+				self.update()
+				response['result'] = cluster_response['result']
+			else:
+				response = cluster_response
 		else:
-			response = cluster_response
+			# instance time expired, so don't start
+			self.state = 1
+			self.update()
+			response['response'] = "fail"
+			response['result']['message'] = "Instance payment is expired.  Now waiting on payment."
 
 		return response
 
-	def suspend(self, appliance):
+	# returns information about an instance once it moves to ACTIVE state
+	# sets information about the instance and does a callback with info
+	def nudge(self):
+		from webapp.libs.openstack import instance_info
+
+		# get instance (server) info
+		response = instance_info(self)
+
+		# set instance meta data
+		if response['response'] == "success":
+			server = response['result']['server']
+
+			# set network info
+			# make RUNNING callback
+			# if the state is ACTIVE, we set to be running state==4
+			if server.status == "ACTIVE":
+				self.state = 4
+				self.update()
+			else:
+				response['response'] = "fail"
+				response['message'] = "Server isn't in active state yet."
+
+			# notify the pool server of update
+			updated = False
+			if updated:
+				pass
+
+		return response
+
+	# does a bunch of things...
+  # pauses instances which are payment expired
+  # decomissions instances which are past paused grace period
+	# starts instances which should be running and aren't expired
+	# decomissions non-running instances which are payment expired
+	def housekeeping(self):
+		from webapp.libs.openstack import instance_info
 		from webapp.libs.openstack import instance_suspend
-		
-		# only interested in instances which are payment expired
-		epoch_time = int(datetime.utcnow().strftime('%s'))
-		instances = db.session.query(Instances).filter_by(expires<epoch_time).all()
-
-		# suspend the guilty parties
-		for instance in instances:
-			response = instance_suspend(instance)
-
-
-	def decommission(self, appliance):
+		from webapp.libs.openstack import instance_resume
 		from webapp.libs.openstack import instance_decommission
-		# check the decomission time for the instance
+
+		# get instance (server) info
+		response = instance_info(self)
+		server = response['result']['server']
+
+		# this is some dense ass code
+		if response['response'] == "success" and server.status == "ACTIVE":
+			# openstack knows these instances
+			epoch_time = int(time.time())
+			if self.expires < epoch_time and (self.state == 4):
+				# suspend the guilty running party
+				response = instance_suspend(self)
+				response['result']['message'] = "Instance %s suspended." % self.name
+				self.state = 5
+			elif self.expires < (epoch_time+7200) and (self.state == 5):
+				# instance has been suspended for over 2 hours (grace period)
+				response = instance_decommission(self)
+				response['result']['message'] = "Instance %s decommissioned." % self.name
+				self.state = 7
+			elif self.expires > epoch_time and (self.state == 6 or self.state == 5):
+				# instance has been unsuspended by a payment callback to the API
+				response = instance_resume(self)
+				response['result']['message'] = "Instance %s resumed." % self.name
+				self.state = 3 # mark as starting
+			else:
+				response['result']['message'] = ""
+		elif response['response'] == "success" and server.status != "ACTIVE":
+			# some other status besides ACTIVE
+			epoch_time = int(time.time())
+			if self.expires > epoch_time and server.status == "SUSPENDED":
+				# something suspended this instance
+				response = instance_resume(self)
+				response['result']['message'] = "Instance %s resumed." % self.name
+				self.state = 3 # mark as starting				
+			elif self.expires > epoch_time and (self.state == 4):
+				# basically we're paid, suppose to be running, but we're FUCKED somehow
+				response = instance_decommission(self)
+				response['result']['message'] = "Instance %s restarted." % self.name
+				self.state = 2 # set as paid and ready to start
+		else:
+			# openstack can't find these guys - check if it's expired
+			epoch_time = int(time.time())
+			if self.expires > epoch_time:
+				# set instance to restart - not expired, should be running
+				response['response'] = "fail" # technically, this shouldn't happen
+				response['result']['message'] = "Setting instance %s to restart." % self.name
+				self.state = 2 # will be started shortly after this by start
+			else:
+				# no reason to be running
+				response['response'] = "fail"
+				response['result']['message'] = "Instance %s decommissioned." % self.name
+				self.state = 7 # will be deleted shortly after this by mop
+			
+		# update
+		self.update()
+
+		return response
+
+	# delete and cleanup instances which have been decomissioned
+	def trashman(self):
 		pass
 
 	def __repr__(self):
@@ -538,7 +632,7 @@ class Images(CRUDMixin, db.Model):
 				elif image is None:
 					# create a new image
 					image = Images()
-					epoch_time = int(datetime.utcnow().strftime('%s'))
+					epoch_time = int(time.time())
 					image.created = epoch_time
 					image.updated = epoch_time
 					image.name = remoteimage['name']
@@ -555,7 +649,7 @@ class Images(CRUDMixin, db.Model):
 
 				else:
 					# update image from remote images (local lookup was by name)
-					epoch_time = int(datetime.utcnow().strftime('%s'))
+					epoch_time = int(time.time())
 					image.description = remoteimage['description']
 					if image.url != remoteimage['url']:
 						image.url = remoteimage['url']
@@ -888,7 +982,7 @@ class Status(CRUDMixin, db.Model):
 		status = db.session.query(Status).first()
 		
 		# calculate cache timeout (120 seconds)
-		epoch_time = int(datetime.utcnow().strftime('%s'))
+		epoch_time = int(time.time())
 		try:
 			if (status.updated + 900) < epoch_time:
 				# it's been 15 minutes so we are hot
