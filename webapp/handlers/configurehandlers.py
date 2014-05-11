@@ -343,7 +343,7 @@ def configure_addresses():
 	settings = Status().check_settings()
 
 	# pull out the addresses
-	addresses = db.session.query(Addresses).all()
+	addresses = db.session.query(Addresses).order_by("instance_id desc").all()
 
 	# render template
 	return render_template(

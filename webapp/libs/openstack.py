@@ -322,7 +322,7 @@ def instance_resume(instance):
 		response['result']['message'] = "Can't communicate with OpenStack cluster."
 		return response
 
-	# suspend the instance
+	# resume the instance
 	server = nova.servers.resume(instance.osid)
 
 	# response
@@ -331,6 +331,9 @@ def instance_resume(instance):
 	return response
 
 def instance_decommission(instance):
+	# default response
+	response = {"response": "success", "result": {"message": "", "server": {}}}
+
 	# try establishing nova connection
 	try:
 		nova = nova_connection()
@@ -339,10 +342,24 @@ def instance_decommission(instance):
 		response['result'] = "Can't communicate with OpenStack cluster."
 		return response
 
-	# suspend the instance
-	server = nova.servers.stop(instance.osid)
+	# sigh - no clue how to get novaclient to delete a supsended instance...
+	# loop for 30 seconds trying to kill the damn server after unsuspend
+	try:
+		for x in range(10):
+			server = nova.servers.get(instance.osid)
 
-	# response
-	response['result']['message'] = "Server stopped."
-	response['result']['server'] = server
+			if server.status == "SUSPENDED":
+				server = nova.servers.resume(instance.osid)
+			elif server.status == "ACTIVE":
+				server = nova.servers.delete(instance.osid)
+				response['result']['message'] = "Server stopped."
+				response['result']['server'] = server
+				break # break out of our stupid loop
+
+			time.sleep(3)
+	
+	except:
+		response['response'] = "fail"
+		response['result']['message'] = "Failed to decomission OpenStack instance."
+	
 	return response

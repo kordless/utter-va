@@ -90,7 +90,7 @@
                 <th>State</th>
                 <th>Instance</th>
                 <th>Flavor</th>
-                <th>Expires In</th>
+                <th>Pending Actions</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -99,7 +99,7 @@
                 <td>{% if instance.state == 0 %}<span title="Inactive" class="glyphicon glyphicon-remove-sign"></span>{% elif instance.state == 1 %}<span title="Waiting on payment." class="glyphicon glyphicon-time"></span>{% elif instance.state == 2 %}<span title="Payment Received" class="glyphicon glyphicon-usd"></span>{% elif instance.state == 3 %}<span title="Starting" class="glyphicon glyphicon-off"></span>{% elif instance.state == 4 %}<span title="Running" class="glyphicon glyphicon-play"></span>{% elif instance.state == 5 %}<span title="Suspended" class="glyphicon glyphicon-pause"></span>{% elif instance.state == 6 %}<span title="Unsuspend" class="glyphicon glyphicon-fire"></span>{% elif instance.state == 7 %}<span title="Decommission" class="glyphicon glyphicon-fullscreen"></span>{% endif %}</td>
                 <td><a href="/configure/instances/{{ instance.id }}">{{ instance.name }}</a></td>
                 <td><a href="/configure/flavors/{{ instance.flavor.id }}">{{ instance.flavor.name }}</a></td>                
-                <td id="instance-timer-{{instance.id}}" data-expires="{{ instance.expires }}"></td>
+                <td id="instance-timer-{{instance.id}}" data-state="{{ instance.state }}" data-expires="{{ instance.expires }}"></td>
                 <td>
                   <button id="instance-start-{{ instance.id }}" title="Start instance {{ instance.name }}." data-instance="{{ instance.id }}" data-flavor="{{ instance.flavor.id }}" data-image="{{ instance.image.id }}" data-description="{{ instance.flavor.description }}" class="btn btn-xs btn-success {% if instance.state > 1 %}disabled{% endif %}"><span class="glyphicon glyphicon-play"></span> Start</button>
                   <button id="instance-payment-{{ instance.address.address }}" title="Make a payment." data-ask="{{ instance.flavor.ask }}" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-qrcode"></span> Payment</button>
@@ -132,11 +132,16 @@
       var epoch_time = parseInt((new Date).getTime()/1000);
       $('td[id^="instance-timer-"]').each(function(index){
         var expires = parseInt($('#'+this.id).attr('data-expires'));
+        var state = parseInt($('#'+this.id).attr('data-state'));
         var timer = expires - epoch_time;
         if (timer < 0) {
-          $('#'+this.id).html('');
+          if (state == 1) {
+            $('#'+this.id).html('Waiting on payment.');
+          } else {
+            $('#'+this.id).html('Payment expired.');
+          } 
         } else {
-          $('#'+this.id).html(numberWithCommas(timer)+" seconds");
+          $('#'+this.id).html("Expires in "+numberWithCommas(timer)+" seconds.");
         }
       });
     }, 1000);

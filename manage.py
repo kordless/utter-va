@@ -171,17 +171,6 @@ def instances(app):
 				print "Appliance is not ready."
 				return action
 
-		# WAITING PAYMENT
-		# make sure we have mixed an instance for each flavor
-		instances = Instances()
-		flavors = db.session.query(Flavors).filter_by(active=1).all()
-		for flavor in flavors:
-			response = instances.mix(flavor)
-
-			if response['response'] != "success":
-				print "Instance for %s failed to create. Something is wrong." % instance.name
-				print response['result']['message']
-
 		# START
 		# instances which have received payment and move to starting
 		instances = db.session.query(Instances).filter_by(state=2).all()
@@ -192,6 +181,16 @@ def instances(app):
 				message("Instance %s launched." % instance.name, "success", True)
 			else:
 				message(response['result']['message'], "error", True)
+
+		# WAITING PAYMENT
+		# make sure we have mixed an instance for each flavor
+		instances = Instances()
+		flavors = db.session.query(Flavors).filter_by(active=1).all()
+		for flavor in flavors:
+			response = instances.mix(flavor)
+
+			if response['response'] != "success":
+				message("Instance for %s failed to create. Something is wrong." % instance.name)
 
 		# NUDGE
 		# instances in the process of starting are monitored and updated
@@ -216,12 +215,20 @@ def instances(app):
 				message(response['result']['message'], "error", True)
 			else:
 				if response['result']['message'] != "":
-					message(response['result']['message'])
+					message(response['result']['message'], "success", True)
 
-		# TRASHMAN
-		# cleans up after the housekeepers - yeah, he's the fucking trashman!
-		instances = db.session.query(Instances).filter_by(state=4).all()
+	return action
 
+# cleans up decomissioned and errant instances
+# runs every 10 minutes via cron
+def trashman(app):
+	def action():
+		instances = db.session.query(Instances).filter_by(state=7).all()
+
+		for instance in instances:
+			response = instance.trashman()
+			message(response['result']['message'], "success", True)
+			
 	return action
 
 # salesman puts up instances for sale on pool
@@ -279,6 +286,7 @@ manager.add_action('tunnel', tunnel)
 manager.add_action('flavors', flavors)
 manager.add_action('images', images)
 manager.add_action('instances', instances)
+manager.add_action('trashman', trashman)
 
 # message actions
 manager.add_action('message', messenger)

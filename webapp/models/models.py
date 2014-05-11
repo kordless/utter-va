@@ -177,19 +177,12 @@ class Addresses(CRUDMixin, db.Model):
 					return None
 
 	# release a bitcoin address back into pool
-	def release(self, instance_id):
-		# get the address assigned to the instance
-		address = db.session.query(Addresses).filter_by(instance_id=instance_id).first()
+	def release(self):
+		# now change the instance to indicate it's available
+		self.instance_id = 0
+		self.update(self)
+		return self
 		
-		if address:
-			# now change the instance to indicate it's available
-			address.instance_id = 0
-			address.update(address)
-			return address
-		else:
-			# found nothing so return fail response
-			return None
-
 
 # instance model
 class Instances(CRUDMixin, db.Model):
@@ -446,10 +439,10 @@ class Instances(CRUDMixin, db.Model):
 		if response['response'] == "success":
 			server = response['result']['server']
 
-			# set network info
-			# make RUNNING callback
 			# if the state is ACTIVE, we set to be running state==4
 			if server.status == "ACTIVE":
+			# set network info
+			# make RUNNING callback
 				self.state = 4
 				self.update()
 			else:
@@ -463,7 +456,7 @@ class Instances(CRUDMixin, db.Model):
 
 		return response
 
-	# does a bunch of things...
+	# HOUSEKEEPING WORKS ON STATE==4 and STATE==5 INSTANCES ONLY
   # pauses instances which are payment expired
   # decomissions instances which are past paused grace period
 	# starts instances which should be running and aren't expired
@@ -474,47 +467,46 @@ class Instances(CRUDMixin, db.Model):
 		from webapp.libs.openstack import instance_resume
 		from webapp.libs.openstack import instance_decommission
 
-		# get instance (server) info
-		response = instance_info(self)
-		server = response['result']['server']
+		# build the response
+		response = {"response": "success", "result": {"message": "", "server": {}}}
 
-		# this is some dense ass code
-		if response['response'] == "success" and server.status == "ACTIVE":
-			# openstack knows these instances
-			epoch_time = int(time.time())
-			if self.expires < epoch_time and (self.state == 4):
-				# suspend the guilty running party
-				response = instance_suspend(self)
-				response['result']['message'] = "Instance %s suspended." % self.name
-				self.state = 5
-			elif self.expires < (epoch_time+7200) and (self.state == 5):
-				# instance has been suspended for over 2 hours (grace period)
-				response = instance_decommission(self)
-				response['result']['message'] = "Instance %s decommissioned." % self.name
-				self.state = 7
-			elif self.expires > epoch_time and (self.state == 6 or self.state == 5):
-				# instance has been unsuspended by a payment callback to the API
-				response = instance_resume(self)
-				response['result']['message'] = "Instance %s resumed." % self.name
-				self.state = 3 # mark as starting
+		# get instance (server) info
+		cluster_response = instance_info(self)
+		server = cluster_response['result']['server']
+
+		# we all have limited time in this reality
+		epoch_time = int(time.time())
+
+		# this is complicated...because we aren't EC with OpenStack
+		if cluster_response['response'] == "success": 
+			# openstack responded it found this instance
+			if server.status == "ACTIVE":
+				# openstack says the server is running
+				if self.expires < epoch_time:
+					# suspend the instance for non-payment
+					response = instance_suspend(self)
+					response['result']['message'] = "Instance %s suspended." % self.name
+					self.state = 5
+			elif server.status == "SUSPENDED":
+				# openstack says this instance is suspended
+				if self.expires > epoch_time:
+					# should be running because not expired
+					response = instance_resume(self)
+					response['result']['message'] = "Instance %s resumed." % self.name
+					self.state = 3 # mark as starting		
+				if self.expires + 200 < epoch_time:
+					# should be destroyed (suspended for +2 hours without pay)
+					response['result']['message'] = "Instance %s decommissioned." % self.name
+					self.state = 7		
 			else:
-				response['result']['message'] = ""
-		elif response['response'] == "success" and server.status != "ACTIVE":
-			# some other status besides ACTIVE
-			epoch_time = int(time.time())
-			if self.expires > epoch_time and server.status == "SUSPENDED":
-				# something suspended this instance
-				response = instance_resume(self)
-				response['result']['message'] = "Instance %s resumed." % self.name
-				self.state = 3 # mark as starting				
-			elif self.expires > epoch_time and (self.state == 4):
-				# basically we're paid, suppose to be running, but we're FUCKED somehow
-				response = instance_decommission(self)
-				response['result']['message'] = "Instance %s restarted." % self.name
-				self.state = 2 # set as paid and ready to start
+				# openstack indicates another state besides SUSPENDED or ACTIVE
+				if self.expires > epoch_time:
+					# we should be running, but in a weird state - destroy then restart
+					response = instance_decommission(self)
+					response['result']['message'] = "Instance %s restarted." % self.name
+					self.state = 2 # set as paid and ready to start
 		else:
-			# openstack can't find these guys - check if it's expired
-			epoch_time = int(time.time())
+			# openstack can't find this instance
 			if self.expires > epoch_time:
 				# set instance to restart - not expired, should be running
 				response['response'] = "fail" # technically, this shouldn't happen
@@ -524,8 +516,8 @@ class Instances(CRUDMixin, db.Model):
 				# no reason to be running
 				response['response'] = "fail"
 				response['result']['message'] = "Instance %s decommissioned." % self.name
-				self.state = 7 # will be deleted shortly after this by mop
-			
+				self.state = 7 # will be deleted shortly after this by trashman
+
 		# update
 		self.update()
 
@@ -533,7 +525,29 @@ class Instances(CRUDMixin, db.Model):
 
 	# delete and cleanup instances which have been decomissioned
 	def trashman(self):
-		pass
+		from webapp.libs.openstack import instance_info
+		from webapp.libs.openstack import instance_suspend
+		from webapp.libs.openstack import instance_resume
+		from webapp.libs.openstack import instance_decommission		
+
+		# build the response
+		response = {"response": "success", "result": {"message": "", "server": {}}}
+
+		# get instance (server) info
+		cluster_response = instance_info(self)
+
+		if cluster_response['response'] == "success":
+			# we should NOT have this, so try to decomission out of desperation
+			cluster_response = instance_decommission(self)
+			response['result']['message'] = "Asking OpenStack to terminate instance %s" % self.name
+		else:
+			# delete this instance into forever
+			address = Addresses().get_by_id(self.address_id)
+			address.release()
+			self.delete(self)
+			response['result']['message'] = "Instance %s has been deleted." % self.name
+
+		return response
 
 	def __repr__(self):
 		return '<Instance %r>' % (self.name)
@@ -1036,6 +1050,10 @@ class Status(CRUDMixin, db.Model):
 		
 		else:
 			# stuff we check all the time
+			# openstack connected?
+			openstack_check = openstack.check()
+			status.openstack_check = openstack_check
+
 			# ngrok connection
 			ngrok_check = ngrok_checker(appliance)
 			status.ngrok_check = ngrok_check
