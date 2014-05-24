@@ -343,7 +343,7 @@ class Instances(CRUDMixin, db.Model):
 		epoch_time = int(time.time())
 
 		# if we're not running (state==1), set the run state to light (to be started)
-		# if we're suspended (state==7), set the run state to relight (to be unsuspended)
+		# if we're suspended (state==5), set the run state to relight (to be unsuspended)
 		# cron jobs will take care of the rest of the job of starting/unsuspending
 		# NOTE: We're getting paid pennies for doing nothing until cronjob runs!
 		if self.state == 1: 
@@ -476,6 +476,11 @@ class Instances(CRUDMixin, db.Model):
 
 		# we all have limited time in this reality
 		epoch_time = int(time.time())
+
+		# debugging
+		print server.status
+		print epoch_time
+		print self.expires
 
 		# this is complicated...because we aren't EC with OpenStack
 		if cluster_response['response'] == "success": 
