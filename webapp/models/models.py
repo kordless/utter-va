@@ -478,9 +478,9 @@ class Instances(CRUDMixin, db.Model):
 		epoch_time = int(time.time())
 
 		# debugging
-		print server.status
-		print epoch_time
-		print self.expires
+		# print server.status
+		# print epoch_time
+		# print self.expires
 
 		# this is complicated...because we aren't EC with OpenStack
 		if cluster_response['response'] == "success": 
@@ -499,10 +499,10 @@ class Instances(CRUDMixin, db.Model):
 					response = instance_resume(self)
 					response['result']['message'] = "Instance %s resumed." % self.name
 					self.state = 3 # mark as starting		
-				if self.expires + 200 < epoch_time:
+				if self.expires + app.config['POOL_DECOMMISSION_TIME'] < epoch_time:
 					# should be destroyed (suspended for +2 hours without pay)
 					response['result']['message'] = "Instance %s decommissioned." % self.name
-					self.state = 7		
+					self.state = 7
 			else:
 				# openstack indicates another state besides SUSPENDED or ACTIVE
 				if self.expires > epoch_time:
