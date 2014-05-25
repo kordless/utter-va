@@ -492,6 +492,12 @@ class Instances(CRUDMixin, db.Model):
 					response = instance_suspend(self)
 					response['result']['message'] = "Instance %s suspended." % self.name
 					self.state = 5
+				elif self.expires > epoch_time:
+					# openstack says we're running, and we're paid
+					if self.state == 5 or self.state == 6:
+						# we move the instance to starting mode
+						response['result']['message'] = "Instance %s is starting." % self.name
+						self.state = 3
 			elif server.status == "SUSPENDED":
 				# openstack says this instance is suspended
 				if self.expires > epoch_time:
@@ -499,7 +505,6 @@ class Instances(CRUDMixin, db.Model):
 					response = instance_resume(self)
 					response['result']['message'] = "Instance %s resumed." % self.name
 					self.state = 3 # mark as starting
-					print "marked as starting = 3"
 				if self.expires + app.config['POOL_DECOMMISSION_TIME'] < epoch_time:
 					# should be destroyed (suspended for +2 hours without pay)
 					response['result']['message'] = "Instance %s decommissioned." % self.name
