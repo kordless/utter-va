@@ -456,7 +456,7 @@ class Instances(CRUDMixin, db.Model):
 
 		return response
 
-	# HOUSEKEEPING WORKS ON STATE==4 and STATE==5 INSTANCES ONLY
+	# HOUSEKEEPING WORKS ON STATE==4, STATE==5 and STATE==6 INSTANCES ONLY
   # pauses instances which are payment expired
   # decomissions instances which are past paused grace period
 	# starts instances which should be running and aren't expired
@@ -482,7 +482,7 @@ class Instances(CRUDMixin, db.Model):
 		# print epoch_time
 		# print self.expires
 
-		# this is complicated...because we aren't EC with OpenStack
+		# this is complicated...because we aren't EC with OpenStack...or I'm crazy
 		if cluster_response['response'] == "success": 
 			# openstack responded it found this instance
 			if server.status == "ACTIVE":
@@ -498,7 +498,8 @@ class Instances(CRUDMixin, db.Model):
 					# should be running because not expired
 					response = instance_resume(self)
 					response['result']['message'] = "Instance %s resumed." % self.name
-					self.state = 3 # mark as starting		
+					self.state = 3 # mark as starting
+					print "marked as starting = 3"
 				if self.expires + app.config['POOL_DECOMMISSION_TIME'] < epoch_time:
 					# should be destroyed (suspended for +2 hours without pay)
 					response['result']['message'] = "Instance %s decommissioned." % self.name
