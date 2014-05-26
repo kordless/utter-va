@@ -204,7 +204,11 @@ def instances(app):
 		# HOUSEKEEPING
 		# general houskeeping work including pausing, unpausing, decomission, delete
 		# runs on all currently running and suspended instances
-		instances = db.session.query(Instances).filter(or_(Instances.state == 4, Instances.state == 5, Instances.state == 6)).all()
+		instances = db.session.query(Instances).filter(or_(
+			Instances.state == 4, 
+			Instances.state == 5, 
+			Instances.state == 6
+		)).all()
 
 		# loop through them and do housekeeping
 		for instance in instances:

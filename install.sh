@@ -10,6 +10,10 @@
 # update repos
 sudo apt-get update -y
 
+# time server
+apt-get install ntp -y
+service ntp restart
+
 # install dependencies and services
 sudo apt-get install git -y
 sudo apt-get install sqlite3 -y
@@ -107,6 +111,7 @@ sudo cat <<EOF > /var/www/xoviova/crontab
 $FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py images > /dev/null 2>&1
 $FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py flavors > /dev/null 2>&1
 $FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py addresses > /dev/null 2>&1
+$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py trashman > /dev/null 2>&1
 * * * * * /var/www/xoviova/manage.py instances > /dev/null 2>&1
 EOF
 sudo crontab -u ubuntu /var/www/xoviova/crontab

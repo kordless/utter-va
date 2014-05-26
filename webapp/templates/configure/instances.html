@@ -129,13 +129,11 @@
     }
 
     setInterval(function() {
-      console.log("hi");
       var epoch_time = parseInt((new Date).getTime()/1000);
       $('td[id^="instance-timer-"]').each(function(index){
         var expires = parseInt($('#'+this.id).attr('data-expires'));
         var state = parseInt($('#'+this.id).attr('data-state'));
         var timer = expires - epoch_time;
-        console.log(timer);
         if (timer < 0) {
           if (state == 1) {
             $('#'+this.id).html('Waiting on payment.');
