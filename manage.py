@@ -257,6 +257,16 @@ def coinop(app):
 			print "Can't find that instance!"
 	return action
 
+def nudge(app):
+	def action():
+		instances = db.session.query(Instances).all()
+		for instance in instances:
+			print instance
+			response = instance.nudge()
+			print response
+
+	return action
+
 # message client
 def messenger(app):
 	def action(
@@ -278,6 +288,7 @@ def messenger(app):
 # for development
 manager.add_action('serve', serve)
 manager.add_action('coinop', coinop)
+manager.add_action('nudge', nudge)
 
 # commands for user managment
 manager.add_action('reset', reset)
