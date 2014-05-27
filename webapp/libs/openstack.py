@@ -281,7 +281,7 @@ def instance_info(instance):
 	try:
 		# grab the server info from openstack
 		server = nova.servers.get(instance.osid)
-		print dir(server)		
+		print server.interface_list		
 		response['response'] = "success"
 		response['result']['message'] = "OpenStack instance detail."
 		response['result']['server'] = server
