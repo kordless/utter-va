@@ -166,10 +166,9 @@ def instances(app):
 	def action():
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
-		for key in settings:
-			if not settings[key]:
-				print "Appliance is not ready."
-				return action
+		if not settings['ngrok'] or not settings['openstack']:
+			print "Appliance is not ready."
+			return action
 
 		# START
 		# instances which have received payment and move to starting
