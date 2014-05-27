@@ -444,7 +444,9 @@ class Instances(CRUDMixin, db.Model):
 			# set network info
 			# make RUNNING callback
 				self.state = 4
-				self.privateipv4 = server.accessIPv4
+				for address in server.addresses['private']:
+					if address['version'] = 4:
+						self.privateipv4 = address['addr']
 				self.update()
 			else:
 				response['response'] = "fail"
