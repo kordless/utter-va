@@ -976,8 +976,8 @@ class Appliance(CRUDMixin, db.Model):
 		tunnel_conf_file = '%s/%s' % (app.config['BASE_PATH'], app.config['POOL_TUNNEL_CONF'])
 
 		# create yaml object and write to file
-		# only do this if all user entered values are ready to role
-		if self.cbapikey and self.cbapisecret and self.ngroktoken:
+		# only do this if all user entered values are ready to role - haha
+		if self.cbapikey and self.cbapisecret:
 			# set development port if we are in debug mode
 			if app.config['DEBUG']:
 				port = 5000
