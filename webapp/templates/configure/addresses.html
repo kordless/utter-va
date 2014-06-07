@@ -43,7 +43,7 @@
                 <td><a href="https://blockchain.info/address/{{ address.address }}" target="_blank">{{ address.address }}</a></td>
                 <td>{{ address.subdomain }}</td>
                 {% if address.instance > 0 %}
-                <td><a href="/configure/instances/{{ address.instance }}">{{ address.instance.name }}</a></td>
+                <td><a href="/configure/instances/{{ address.instance.id }}">{{ address.instance.name }}</a></td>
                 {% else %}
                 <td><span title="Bitcoin address is idle." class="glyphicon glyphicon glyphicon-ban-circle"></span></td>
                 {% endif %}

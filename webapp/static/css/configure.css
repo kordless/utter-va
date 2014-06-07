@@ -30,8 +30,12 @@ html, body {
 .nav-pills a {
   text-decoration: none;
 }
-h2 small {
+h1 small, h2 small, h3 small {
   color: #777;
+}
+.instance-state {
+  font-size: 18px;
+  font-weight: normal;
 }
 #login-tfa {
   margin-top: 10px;

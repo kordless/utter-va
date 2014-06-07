@@ -444,9 +444,12 @@ class Instances(CRUDMixin, db.Model):
 			# set network info
 			# make RUNNING callback
 				self.state = 4
+				print server.addresses
 				for address in server.addresses['private']:
 					if address['version'] == 4:
 						self.privateipv4 = address['addr']
+					if address['version'] == 6:
+						self.publicipv6 = address['addr']
 				self.update()
 			else:
 				response['response'] = "fail"
@@ -519,6 +522,11 @@ class Instances(CRUDMixin, db.Model):
 					response = instance_decommission(self)
 					response['result']['message'] = "Instance %s restarted." % self.name
 					self.state = 2 # set as paid and ready to start
+				else:
+					# expired but in a weird state - destroy
+					response = instance_decommission(self)
+					response['result']['message'] = "Instance %s decommissioned." % self.name
+					self.state = 7
 		else:
 			# openstack can't find this instance
 			if self.expires > epoch_time:

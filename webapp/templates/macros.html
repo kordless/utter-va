@@ -48,3 +48,46 @@
 </div>
 <!-- end navpills -->
 {% endmacro %}
+
+{% macro instance_state_icon(state) %}
+    {% if state==0 %}
+      <span class="label label-danger btn-lg instance-state">
+        <span class="glyphicon glyphicon-remove-sign"></span> Inactive
+      </span>
+    {% endif %}
+    {% if state==1 %}
+      <span class="label label-info btn-lg instance-state">
+        <span class="glyphicon glyphicon-time"></span> Waiting on Payment
+      </span>
+    {% endif %}
+    {% if state==2 %}
+      <span class="label label-success btn-lg instance-state">
+        <span class="glyphicon glyphicon-usd"></span> Payment Received
+      </span>
+    {% endif %}
+    {% if state==3 %}
+      <span class="label label-success btn-lg instance-state">
+        <span class="glyphicon glyphicon-off"></span> Starting
+      </span>
+    {% endif %}
+    {% if state==4 %}
+      <span class="label label-success btn-lg instance-state">
+        <span class="glyphicon glyphicon-play"></span> Running
+      </span>
+    {% endif %}
+    {% if state==5 %}
+      <span class="label label-warning btn-lg instance-state">
+        <span class="glyphicon glyphicon-pause"></span> Suspended
+      </span>
+    {% endif %}
+    {% if state==6 %}
+      <span class="label label-info btn-lg instance-state">
+        <span class="glyphicon glyphicon-fire"></span> Unsupended
+      </span>
+    {% endif %}
+    {% if state==7 %}
+      <span class="label label-warning btn-lg instance-state">
+        <span class="glyphicon glyphicon-fullscreen"></span> Decommissioned
+      </span>
+    {% endif %}
+{% endmacro %}

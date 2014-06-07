@@ -37,7 +37,6 @@
                 <th>Disk</th>
                 <th>Network</th>
                 <th>Ask Rate</th>
-                <th>Action</th>
                 <th>Serving</th>
               </tr>
             </thead>
@@ -50,9 +49,6 @@
                 <td>{{ flavor.disk }}GB</td>
                 <td>{{ flavor.network }}Mb/sec</td>
                 <td>{{ flavor.ask }} μBTC/Hour</td>
-		            <td>
-		              <button type="button" id="flavor-launch-{{flavor.id}}" class="btn btn-success btn-xs" title="test start" href="#"><span class="glyphicon glyphicon-play"></span> Start</span></button>
-		            </td>
 		            <td>
 		              <div class="toggle-modern">
 		                <div id="flavor-{{flavor.id}}" class="toggle{% if flavor.active %} enabled{% endif %}"></div>

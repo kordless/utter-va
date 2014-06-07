@@ -24,16 +24,35 @@
         <div class="col-md-12">
           <div class="section-header">
             <h2><small>Instance <strong>{{ instance.name }}</strong></small></h2>
-            <p>{{ instance.state }}</p>
-            <p>Private IP Address:  <a href="http://{{ instance.privateipv4 }}:8000/utterio.html"><strong>{{ instance.privateipv4 }}</strong></a></p>
-            <p><span class="glyphicon glyphicon-remove-sign"></span> inactive, <span class="glyphicon glyphicon-time"></span> waiting payment, <span class="glyphicon glyphicon-usd"></span> payment received, <span class="glyphicon glyphicon-off"></span> starting, <span class="glyphicon glyphicon-play"></span> running, <span class="glyphicon glyphicon-pause"></span> suspended, <span class="glyphicon glyphicon-fire"></span> unsuspend, <span class="glyphicon glyphicon-fullscreen"></span> decommissioned.</p>
+            <p>{{ macros.instance_state_icon(instance.state) }}</p>
+            <h3><small>Network Addresses</small></h3>
+            <table class="table table-condensed">
+              <thead>
+                <tr>
+                  <th>Private IPv4</th>
+                  <th>Public IPv4</th>
+                  <th>Public IPv6</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{{ instance.privateipv4 }}</td>
+                  <td>{{ instance.publicipv4 }}</td>
+                  <td>{{ instance.publicipv6 }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <h3><small>Instance Callback</small></h3>
+            <code>http://www.google.com/</code>
+            <h3><small>Instance Callback</small></h3>
+
           </div>
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-12">
-          <button id="reload-page" class="btn btn-info"><span class="glyphicon glyphicon-refresh"></span> Reload Page</button>
+          <button id="back-to-instances" class="btn btn-info"><span class="glyphicon glyphicon-arrow-left"></span> Back to Instances</button>
         </div>
       </div>
     </div>
@@ -48,6 +67,9 @@
 <script type="text/javascript">
   $().ready(function() {
     var csrf_token = "{{ csrf_token }}";
+
+    // back to instances button
+
   });
 </script>
 {% endblock %}

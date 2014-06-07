@@ -196,6 +196,7 @@ def configure():
 				else:
 					# there exists no address with a subdomain, so we generate a new one
 					appliance.subdomain = generate_token(size=16, caselimit=True)
+					appliance.update()
 
 				# build the tunnel config file - ngrok will start after it's built
 				appliance.build_tunnel_conf()

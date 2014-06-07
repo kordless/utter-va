@@ -261,9 +261,7 @@ def nudge(app):
 	def action():
 		instances = db.session.query(Instances).all()
 		for instance in instances:
-			print instance
 			response = instance.nudge()
-			print response
 
 	return action
 
