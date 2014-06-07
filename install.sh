@@ -20,9 +20,12 @@ sudo apt-get install sqlite3 -y
 sudo apt-get install python-pip -y
 sudo apt-get install build-essential -y
 sudo apt-get install python-dev -y
-sudo apt-get install python-gevent -y
 sudo apt-get install unzip -y
 sudo apt-get install monit -y
+
+# install and patch gevent
+sudo apt-get install python-gevent -y
+pip install gevent --upgrade
 
 # install ngrok
 sudo wget -qO /tmp/ngrok.zip https://dl.ngrok.com/linux_386/ngrok.zip
