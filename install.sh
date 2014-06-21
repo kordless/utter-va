@@ -115,6 +115,7 @@ $FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py images > /dev/n
 $FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py flavors > /dev/null 2>&1
 $FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py addresses > /dev/null 2>&1
 $FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py trashman > /dev/null 2>&1
+$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py salesman > /dev/null 2>&1
 * * * * * /var/www/xoviova/manage.py instances > /dev/null 2>&1
 EOF
 sudo crontab -u ubuntu /var/www/xoviova/crontab

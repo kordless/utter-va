@@ -21,8 +21,8 @@
         <div class="col-md-12">
           <div class="section-header">
             <h2><small>Flavors & Pricing</small></h2>
-            <p>Flavors are synced every 15 minutes from the pool operator and are automatically installed into the OpenStack cluster on instance start.  You can update this appliance's bid price on flavors by clicking on the flavor's <strong>Name</strong> link.</p>
-            <p>You should only enable flavors your OpenStack cluster can support and which you are OK with serving.  You can test support for a given flavor by clicking its <strong>Test Start</strong> button.</p>
+            <p>Flavors are synced every 15 minutes from the pool operator and are automatically installed into the OpenStack cluster on instance start.  You can update this appliance's ask price on flavors by clicking on the flavor's <strong>Name</strong> link.</p>
+            <p>You should only enable flavors your OpenStack cluster can support and which you are OK with serving.</p>
           </div>
         </div>
       </div>
@@ -31,29 +31,29 @@
           <table class="table table-hover">
             <thead>
               <tr>
-                <th>Name</th>
+                <th>State</th>
+                <th>Flavor</th>
                 <th>VPUs</th>
                 <th>Memory</th>
                 <th>Disk</th>
                 <th>Network</th>
                 <th>Ask Rate</th>
-                <th>Serving</th>
               </tr>
             </thead>
             <tbody>
               {% for flavor in flavors %}
               <tr>
+                <td>
+                  <div class="toggle-modern">
+                    <div id="flavor-{{flavor.id}}" class="toggle{% if flavor.active %} enabled{% endif %}"></div>
+                  </div>
+                </td>  
                 <td><a href="/configure/flavors/{{flavor.id}}">{{ flavor.name }}</a></td>
                 <td>{{ flavor.vpus }} Core{% if flavor.vpus > 1 %}s{% endif %}</td>
                 <td>{{ flavor.memory }}MB</td>
                 <td>{{ flavor.disk }}GB</td>
                 <td>{{ flavor.network }}Mb/sec</td>
-                <td>{{ flavor.ask }} μBTC/Hour</td>
-		            <td>
-		              <div class="toggle-modern">
-		                <div id="flavor-{{flavor.id}}" class="toggle{% if flavor.active %} enabled{% endif %}"></div>
-		              </div>
-		            </td>              
+                <td>{{ flavor.ask }} μBTC/Hour</td>            
               </tr>
               {% endfor %}
             </tbody>

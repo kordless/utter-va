@@ -17,17 +17,17 @@ def validate_login(form, field):
 
 
 class LoginForm(Form):
-	username = TextField(validators=[Required()])
-	password = PasswordField(validators=[Required(), validate_login])
+	username = TextField("Username", validators=[Required()])
+	password = PasswordField("Password", validators=[Required(), validate_login])
 
 	def get_user(self):
 		return db.session.query(User).filter_by(username=self.username.data).first()
 
 
 class RegisterForm(Form):
-	username = TextField(validators=[Required()])
-	password = PasswordField(validators=[Required(), EqualTo('conf_password', message="Passwords don't match.")])
-	conf_password = PasswordField(validators=[Required()])
+	username = TextField("Username", validators=[Required()])
+	password = PasswordField("Password", validators=[Required(), EqualTo('conf_password', message="Passwords don't match.")])
+	conf_password = PasswordField("Password Again", validators=[Required()])
 
 
 class OpenStackForm(Form):

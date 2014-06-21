@@ -24,34 +24,86 @@
         <div class="col-md-12">
           <div class="section-header">
             <h2><small>Instance <strong>{{ instance.name }}</strong></small></h2>
-            <p>{{ macros.instance_state_icon(instance.state) }}</p>
-            <h3><small>Network Addresses</small></h3>
-            <table class="table table-condensed">
-              <thead>
-                <tr>
-                  <th>Private IPv4</th>
-                  <th>Public IPv4</th>
-                  <th>Public IPv6</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{{ instance.privateipv4 }}</td>
-                  <td>{{ instance.publicipv4 }}</td>
-                  <td>{{ instance.publicipv6 }}</td>
-                </tr>
-              </tbody>
-            </table>
-            <h3><small>Instance Callback</small></h3>
-            <code>http://www.google.com/</code>
-            <h3><small>Instance Callback</small></h3>
+            <div class="row instance-detail-row">
+              <div class="col-md-4">
+                <div><h3><small>Instance Attributes</small></h3></div>
+                <div>
+                  <table class="table table-striped table-responsive">
+                    <tr>
+                      <td><strong>VPUs</strong></td>
+                      <td colspan="2">{{ instance.flavor.vpus }} Core</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Memory</strong></td>
+                      <td colspan="2">{{ instance.flavor.memory }}MB</td>
+                    </tr>
+                    <tr>
+                      <td><strong>VPUs</strong></td>
+                      <td colspan=2>{{ instance.flavor.disk }}GB</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Network</strong></td>
+                      <td colspan="2">{{ instance.flavor.network }}Mb/sec</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Ask</strong></td>
+                      <td>{{ instance.flavor.ask }} μBTC/Hour</td>
+                      <td><a href="#"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                    </tr>
+                    <tr>
+                      <td><strong>Image</strong></td>
+                      <td colspan="2"><a href="{{ instance.image.url }}">{{ instance.image.name }}</a></td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="text-center"><h3><small>Instance Timer</small></h3></div>
+                <div class="text-center">
+                  <input id="timer" data-state="{{ instance.state }}" data-expires="{{ instance.expires }}" data-updated="{{ instance.updated }}" data-step="1" data-readOnly=true data-min="0" value="{{ instance.expires - instance.updated }}" data-max="{{ instance.expires - instance.updated }}" data-width="230" data-height="230">
+                </div>
+                <div class="text-center timer-state">
+                  <p>{{ macros.instance_state_icon(instance.state) }}</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="text-center"><h3><small>Payment Address</small></h3></div>
+                <div class="text-center" id="qrcode"></div>
+                <div class="text-center" id="address"><a href="https://blockchain.info/address/{{ instance.address.address }}" target="_blank">{{ instance.address.address }}</a></div>
+              </div>
+            </div>
 
+            <div class="row">
+              <div class="col-md-4">
+                <h3><small>Network Addresses</small></h3>
+                <table class="table table-striped table-responsive">
+                  <tbody>
+                    <tr>
+                      <td><strong>Private IPv4</strong></td>
+                      <td>{{ instance.privateipv4 }}</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Public IPv4</strong></td>
+                      <td>{{ instance.publicipv4 }}</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Public IPv6</strong></td>
+                      <td>{{ instance.publicipv6 }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-md-8">
+                <h3><small>Instance Callbacks</small></h3>
+                <code>http://www.google.com/</code>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="row">
-        <div class="col-md-12">
+      <div class="row button-padding">
+        <div class="col-md-4">
           <button id="back-to-instances" class="btn btn-info"><span class="glyphicon glyphicon-arrow-left"></span> Back to Instances</button>
         </div>
       </div>
@@ -63,13 +115,43 @@
 {% block javascript %}
 <script type="text/javascript" src="/js/jquery.qrcode.js"></script>
 <script type="text/javascript" src="/js/qrcode.js"></script>
+<script type="text/javascript" src="/js/jquery.knob.js"></script>
 <script type="text/javascript" src="/js/socket.io.min.js"></script>
 <script type="text/javascript">
   $().ready(function() {
     var csrf_token = "{{ csrf_token }}";
 
-    // back to instances button
+    // socket notifications
+    var socket = io.connect(window.location.protocol+ '//' + document.domain + ':' + location.port + '/xovio');
+    socket.on('message', function(msg) {
+      alertify.log(msg.data.result.message, msg.data.response);
+      if (msg.data.result.reload) {
+        setTimeout(function() {
+          location.reload();
+        }, 3000);
+      }
+    });
 
+    // back to instances
+    $('#back-to-instances').click( function() {
+      window.location = "/configure/instances";
+    });
+
+    // timer knob
+    $('#timer').knob();
+    setInterval(function() {
+      var epoch_time = parseInt((new Date).getTime()/1000);
+      var expires = parseInt($('#timer').attr('data-expires'));
+      var state = parseInt($('#timer').attr('data-state'));
+      var timer2 = expires - epoch_time;
+      if (timer2 > -1) {
+        $('#timer').val(timer2).trigger("change");
+      }
+    }, 1000);
+
+    // build the QR code for the instance address
+    var qrcode_string = "bitcoin:{{instance.address.address}}?amount="+(parseInt({{instance.flavor.ask}})/1000000);
+    $('#qrcode').qrcode({text: qrcode_string});
   });
 </script>
 {% endblock %}

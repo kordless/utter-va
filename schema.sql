@@ -63,6 +63,7 @@ CREATE TABLE flavors (
   network INTEGER NOT NULL,
   rate INTEGER NOT NULL,
   ask INTEGER NOT NULL,
+  hot INTEGER NOT NULL,
   launches INTEGER NOT NULL,
   active INTEGER NOT NULL,
   flags INTEGER NOT NULL,

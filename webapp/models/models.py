@@ -75,7 +75,7 @@ class Addresses(CRUDMixin, db.Model):
 		if response['response'] == "success":
 			remoteaddresses = response['result']['addresses']
 
-			# update database for with remote addresses
+			# update database with remote addresses
 			for remoteaddress_address in remoteaddresses:
 				# work around coinbase's strange address:address thing
 				remoteaddress = remoteaddress_address['address']
@@ -134,8 +134,10 @@ class Addresses(CRUDMixin, db.Model):
 		# appliance object
 		appliance = db.session.query(Appliance).first()
 
-		# if we found an address, just return it
+		# if we found an address, update and return it
 		if address:
+			address.instance_id = instance_id
+			address.update(address)
 			return address
 		else:
 			# check if we have an empty address to assign
@@ -274,13 +276,13 @@ class Instances(CRUDMixin, db.Model):
 	# whip up a nice instance for receiving payments
 	def mix(self, flavor):
 		# build response
-		response = {"response": "success", "result": {"message": "", "instance": {}}}
+		response = {"response": "success", "result": {"message": ""}}
 
 		# the first instance which has this flavor assigned but is not running (active == 1)
-		instance = db.session.query(Instances).filter_by(flavor_id=flavor.id, state=1).first()
+		instances = db.session.query(Instances).filter_by(flavor_id=flavor.id, state=1).all()
 
-		# startable instance NOT available for this flavor, so create a warm one
-		if not instance:
+		# create a minimum number of instances based on hot amount for flavor
+		if len(instances) < flavor.hot:
 			# create a new instance		
 			instance = Instances()
 			instance.name = "smi-%s" % generate_token(size=8, caselimit=True)
@@ -310,16 +312,13 @@ class Instances(CRUDMixin, db.Model):
 			response['result']['message'] = "Created new instance and assigned address."
 		
 		else:
-			# found an instance - make sure we have an address assigned to it
-			if not instance.address:
+			# found enough instances - make sure they have addresses assigned to them
+			for instance in instances:
 				instance.address = Addresses().assign(instance.id)
 				instance.update()
-				response['result']['message'] = "Found instance and assigned address."
-			else:
-				response['result']['message'] = "Found instance and address."
 
-		# overload the results with the list of current instances
-		response['result']['instance'] = instance
+			response['result']['message'] = "Found existing instances and assigned addresses."
+
 		return response
 
 	# receive a payment on an instance or allow a zero payment short start
@@ -349,16 +348,20 @@ class Instances(CRUDMixin, db.Model):
 		if self.state == 1: 
 			self.state = 2
 			self.expires = epoch_time + purchased_seconds # starting from now
+			self.updated = epoch_time
 		elif self.state == 5:
 			self.state = 6
 			self.expires = epoch_time + purchased_seconds # starting from now
+			self.updated = epoch_time
 		else:
 			# states 0, 2, 3, 4, 6, 7
 			self.expires = self.expires + purchased_seconds # starting from expire time
+			self.updated = epoch_time
 
 		# update the instance
 		self.update()
 
+		
 		# response
 		response['result']['message'] = "Added %s seconds to %s's expire time." % (purchased_seconds, self.name)
 		response['result']['instance'] = row2dict(self)
@@ -451,9 +454,30 @@ class Instances(CRUDMixin, db.Model):
 					if address['version'] == 6:
 						self.publicipv6 = address['addr']
 				self.update()
-			else:
+			elif server.status == "ERROR":
+				# instance failed to start
+				print "error"
 				response['response'] = "fail"
 				response['message'] = "Server isn't in active state yet."
+			else:
+				response['response'] = "fail"
+				response['message'] = "Server isn't in a known state."
+
+		# openstack can't find this instance	
+		else:
+			# we all have limited time in this reality
+			epoch_time = int(time.time())			
+			
+			if self.expires > epoch_time:
+				# set instance to restart - not expired, should be running
+				response['response'] = "fail" # technically, this shouldn't happen
+				response['result']['message'] = "Setting instance %s to restart." % self.name
+				self.state = 2 # will be started shortly after this by start
+			else:
+				# no reason to be running
+				response['response'] = "fail"
+				response['result']['message'] = "Instance %s decommissioned." % self.name
+				self.state = 7 # will be deleted shortly after this by trashman
 
 			# notify the pool server of update
 			updated = False
@@ -734,23 +758,25 @@ class Flavors(CRUDMixin,  db.Model):
 	network = db.Column(db.Integer)
 	rate = db.Column(db.Integer)
 	ask = db.Column(db.Integer)
+	hot = db.Column(db.Integer)
 	launches = db.Column(db.Integer)
 	flags = db.Column(db.Integer)
 	active = db.Column(db.Integer)
 
 	def __init__(
-		self, 
-		name=None, 
-		osid=None, 
-		description=None, 
-		vpus=None, 
-		memory=None, 
-		disk=None, 
-		network=None, 
-		rate=None, 
-		ask=None, 
-		launches=None, 
-		flags=None, 
+		self,
+		name=None,
+		osid=None,
+		description=None,
+		vpus=None,
+		memory=None,
+		disk=None,
+		network=None,
+		rate=None,
+		ask=None,
+		hot=None,
+		launches=None,
+		flags=None,
 		active=None
 	):
 		self.name = name
@@ -762,6 +788,7 @@ class Flavors(CRUDMixin,  db.Model):
 		self.network = network
 		self.rate = rate
 		self.ask = ask
+		self.hot = hot
 		self.launches = launches
 		self.flags = flags
 		self.active = active
@@ -817,6 +844,7 @@ class Flavors(CRUDMixin,  db.Model):
 					flavor.network = remoteflavor['network']
 					flavor.rate = remoteflavor['rate']
 					flavor.ask = remoteflavor['rate'] # set ask to market rate
+					flavor.hot = remoteflavor['hot']
 					flavor.launches = remoteflavor['launches']
 					flavor.flags = remoteflavor['flags']
 					flavor.active = 1
@@ -836,6 +864,7 @@ class Flavors(CRUDMixin,  db.Model):
 					flavor.rate = remoteflavor['rate']
 					# we leave flavor.ask alone
 					# we leave flavor.active alone
+					# we leave flavor.hot alone
 					flavor.launches = remoteflavor['launches']
 					flavor.flags = remoteflavor['flags']
 					
@@ -977,7 +1006,7 @@ class Appliance(CRUDMixin, db.Model):
 
 		# create yaml object and write to file
 		# only do this if all user entered values are ready to role
-		if self.cbapikey and self.cbapisecret and self.ngroktoken:
+		if self.cbapikey and self.cbapisecret:
 			# set development port if we are in debug mode
 			if app.config['DEBUG']:
 				port = 5000

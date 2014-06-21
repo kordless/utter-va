@@ -1,5 +1,10 @@
 html, body {
 }
+.container {
+  width: 98% !important;
+  margin-left: 14px;
+  padding-right: 30px;
+}
 .content {
   margin-top: 70px;
   margin-bottom: 70px;
@@ -13,7 +18,10 @@ html, body {
   padding-bottom: 10px;
   margin-top: 10px;
   margin-bottom: 20px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #bbb;
+}
+.table > thead > tr > th {
+  color: #888;
 }
 .form-padding {
   margin-bottom: 20px;
@@ -27,11 +35,33 @@ html, body {
 .steps {
   margin-bottom: 30px;
 }
+.nav-pills > li.active > a, .nav-pills > li.active > a:hover, .nav-pills > li.active > a:focus {
+  color: #3BAFDA;
+  background-color: #FFF;
+  border: 1px solid #3BAFDA;
+  border-left: 6px solid #3BAFDA;
+}
 .nav-pills a {
   text-decoration: none;
 }
 h1 small, h2 small, h3 small {
   color: #777;
+}
+.control-label {
+  color: #888;
+}
+#address {
+  margin-top: 10px;
+}
+.instance-detail-row {
+  padding-bottom: 30px;
+  border-bottom: 1px dashed #bbb;
+}
+.button-padding {
+  margin-top: 30px;
+}
+.timer-state {
+  margin-top: 20px;
 }
 .instance-state {
   font-size: 18px;

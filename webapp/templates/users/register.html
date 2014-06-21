@@ -11,36 +11,65 @@
 {% endblock %}
 
 {% block content %}
-<div class="login-container">
-    <div class="row">
-        <div class="col-sm-6 col-md-4 col-md-offset-4">
-            <div class="account-wall">
-                <img class="profile-img" src="/img/photo.png?sz=120" alt="">
-                <form action="{{ url_for("users.register") }}" method="post" class="form-signin">
-                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-                    {{ form.csrf_token }}
-                	{{ form.username(class="form-control", placeholder="Username", autofocus=true, required=true) }}
-                	{{ form.password(class="form-control form-password-again", placeholder="Password", required=true) }}
-                	{{ form.conf_password(class="form-control form-password", placeholder="Password Again", required=true) }}
-                	{% if form.password.errors %}
-                        {% for error in form.password.errors %}<div class="alert alert-danger">{{ error }}</div>{% endfor %}
-                    {% endif %}
-                    <button class="btn btn-lg btn-warning btn-block" type="submit">Create Admin Account</button>
-                    <a href="{{ config['APP_WEBSITE'] }}/provider" class="pull-right need-help">Need a provider account?</a><span class="clearfix"></span>
-                </form>
-            </div>
+<!-- hidden register modal -->
+<div id="login-modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{{ url_for("users.register") }}" method="post" class="form-signin">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Create an Administration Account</h4>
         </div>
+        <div class="modal-body">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+          {{ form.csrf_token }}
+          <div class="row form-group {% if form.username.errors %}has-error{% endif %}">
+            <div class="col-md-12">
+              {{ form.username.label(class="control-label") }}
+              {{ form.username(class="form-control", placeholder="Username", autofocus=true, required=true) }}
+            </div>
+          </div>
+          <div class="row form-group {% if form.password.errors %}has-error{% endif %}">
+            <div class="col-md-12">
+              {{ form.password.label(class="control-label") }}
+              {{ form.password(class="form-control form-password-again", placeholder="Password", required=true) }}
+            </div>
+          </div>
+          <div class="row form-group {% if form.conf_password.errors %}has-error{% endif %}">
+            <div class="col-md-12">
+              {{ form.conf_password.label(class="control-label") }}
+              {{ form.conf_password(class="form-control form-password-again", placeholder="Password Again", required=true) }}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="instance-close-button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button class="btn btn-danger" type="submit">Create Admin Account</button>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
+
 <div id='map'></div>
 {% endblock %}
 
 {% block javascript %}
     <script type="text/javascript">
     $().ready(function() {
-	   // login button
+
+	   // sign in button
 	   $('#nav-login').on('click', function(e) { window.location = "/login" });
-	   $('#get-started').on('click', function(e) { window.location = "/getstarted" });
+     
+     // login modal show
+     $('#login-modal').modal('show');
+     
+     // reopen login if they try to dismiss
+     $('#login-modal').on('hidden.bs.modal', function () {
+      $('#login-modal').modal('show');
+     });
+
+     // the map
 	   var themap = L.mapbox.map('map', 'xovio.h1o6ii64', {scrollWheelZoom: false, zoomControl: false}).setView([20, 20], 3);
         setInterval(function(){themap.panBy([-1, 0]);},3000);
     });

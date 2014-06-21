@@ -1,5 +1,5 @@
 $().ready(function() {
-  // help popovers
+  // help popovers for appliance setup
   $("#hover-cb-api-secret").popover({ 
     title: '<strong>Coinbase Client Secret</strong>', 
     content: '<p>Enter your Coinbase <strong>API secret</strong> here.</p>', 
@@ -71,6 +71,16 @@ $().ready(function() {
   $("#flavors-settings").popover({ 
     title: '<strong>Warning</strong>', 
     content: "<p>This appliance needs a minimum of one flavor enabled to provide service.</p>", 
+    html: true,
+    trigger: "hover",
+    placement: "bottom"
+  }).blur(function () {
+    $(this).popover('hide');
+  });
+
+  // instance detail page
+  $(".instance-state").popover({
+    content: $(".instance-state").attr("data-state-string"),
     html: true,
     trigger: "hover",
     placement: "bottom"

@@ -20,7 +20,7 @@
         <h4 class="modal-title">Manual Instance Payment</h4>
       </div>
       <div class="modal-body">
-        <p>The following Bitcoin address can be used to make a payment on this instance. The current rate of this instance set to <code><span id="ask">XXX</span> μBTC/Hour</code>.</p>
+        <p>The following Bitcoin address can be used to make a payment on this instance. The current ask for this instance is <code><span id="ask">XXX</span> μBTC/Hour</code>.</p>
         <div class="qrcode-address">
           <div class="text-center" id="qrcode"></div>
           <div class="text-center" id="address"></div>
@@ -44,11 +44,11 @@
       <div class="modal-body">
         <p>You are starting a <strong><span id="flavor-description"></span></strong> instance.  Select the system image to use and then click the <strong>Start Instance</strong> button.</p>
         <div class="row form-group">
-          <div class="col-md-8">
+          <div class="col-md-12">
             <label class="control-label" for="osimageid">Image</label>
             <select name="osimageid" class="form-control">
             {% for image in images %}
-              <option value="{{ image.id }}">{{ image.name }}</option>
+              <option value="{{ image.id }}">{{ image.description }}</option>
             {% endfor %}
             </select>
           </div>

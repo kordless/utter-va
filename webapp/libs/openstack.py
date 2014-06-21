@@ -193,15 +193,15 @@ def flavor_verify_install(flavor):
 				flavor.memory,
 				flavor.vpus,
 				flavor.disk,
-				None,
-				0,
-				0,
-				1.0,
-				True
+				flavorid='auto',
+				ephemeral=0,
+				swap=0,
+				rxtx_factor=1.0,
+				is_public=True
 			)
 			
 			# set provider info
-			targetflavor.set_keys({"provider": app.config["POOL_NAME"]})
+			#targetflavor.set_keys({"provider": app.config["POOL_NAME"]})
 
 			# set bandwidth
 			targetflavor.set_keys({"quota:inbound_average": flavor.network})
@@ -319,13 +319,14 @@ def instance_resume(instance):
 	# try establishing nova connection
 	try:
 		nova = nova_connection()
+		
+		# resume the instance
+
+		server = nova.servers.resume(instance.osid)
 	except:
 		response['response'] = "fail"
 		response['result']['message'] = "Can't communicate with OpenStack cluster."
 		return response
-
-	# resume the instance
-	server = nova.servers.resume(instance.osid)
 
 	# response
 	response['result']['message'] = "OpenStack instance resumed."
@@ -336,31 +337,22 @@ def instance_decommission(instance):
 	# default response
 	response = {"response": "success", "result": {"message": "", "server": {}}}
 
-	# try establishing nova connection
 	try:
+		# establish a connection to nova
 		nova = nova_connection()
+
+		# get the server's info
+		server = nova.servers.get(instance.osid)
+		
+		# delete it
+		server.delete()
+		
+		# build response
+		response['result']['message'] = "Server stopped."
+		response['result']['server'] = server
+
 	except:
-		response['response'] = "fail"
-		response['result'] = "Can't communicate with OpenStack cluster."
-		return response
-
-	# sigh - no clue how to get novaclient to delete a supsended instance...
-	# loop for 30 seconds trying to kill the damn server after unsuspend
-	try:
-		for x in range(10):
-			server = nova.servers.get(instance.osid)
-
-			if server.status == "SUSPENDED":
-				server = nova.servers.resume(instance.osid)
-			elif server.status == "ACTIVE":
-				server = nova.servers.delete(instance.osid)
-				response['result']['message'] = "Server stopped."
-				response['result']['server'] = server
-				break # break out of our stupid loop
-
-			time.sleep(3)
-	
-	except:
+		# oh noes, something went wrong
 		response['response'] = "fail"
 		response['result']['message'] = "Failed to decomission OpenStack instance."
 	

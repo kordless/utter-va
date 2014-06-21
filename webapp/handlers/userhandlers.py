@@ -27,7 +27,7 @@ def login():
 	if form.validate_on_submit():
 		user = form.get_user()
 		login_user(user)
-		return redirect(request.args.get("next") or url_for("index"))
+		return redirect(url_for("configure.configure"))
 	
 	return render_template('users/login.html', form=form)
 

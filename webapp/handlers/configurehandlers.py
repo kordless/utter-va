@@ -382,17 +382,19 @@ def configure_instance_detail(instance_id):
 
 	# load instance
 	instance = db.session.query(Instances).filter_by(id=instance_id).first()
+	print instance
+	if instance:
+		# page is PUT'ing data - coinop 0 mBTC
+		if request.method == 'PUT':
+			response = instance.coinop(0)
+			return jsonify(response)
 
-	# page is PUT'ing data - coinop 0 mBTC
-	if request.method == 'PUT':
-		response = instance.coinop(0)
-		return jsonify(response)
-
+		else:
+			# GET
+			return render_template(
+				'configure/instance_detail.html', 
+				settings=settings, 
+				instance=instance
+			)
 	else:
-		# GET
-		return render_template(
-			'configure/instance_detail.html', 
-			settings=settings, 
-			instance=instance
-		)
-
+		return redirect("/configure/instances")

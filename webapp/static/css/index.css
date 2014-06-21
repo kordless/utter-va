@@ -88,8 +88,8 @@ body {
   margin-top: 20px;
 }
 .marketing > .drivel {
-  padding-top: 30px;
   min-height: 200px;
+  padding-bottom: 40px;
 }
 .big-quote > p {
   font-size: 24px;

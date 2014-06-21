@@ -19,6 +19,7 @@ from webapp.models.models import Instances, Addresses
 from webapp.libs.utils import configure_blurb, query_yes_no, pprinttable, message
 from webapp.libs.coinbase import coinbase_get_addresses, coinbase_checker
 from webapp.libs.images import download_images
+from webapp.libs.pool import pool_api_salesman
 
 # configuration file
 if os.path.isfile('./DEV'): 
@@ -189,7 +190,7 @@ def instances(app):
 			response = instances.mix(flavor)
 
 			if response['response'] != "success":
-				message("Instance for %s failed to create. Something is wrong." % instance.name)
+				message("Instance mixing failed. Something is wrong.")
 
 		# NUDGE
 		# instances in the process of starting are monitored and updated
@@ -204,8 +205,8 @@ def instances(app):
 		# general houskeeping work including pausing, unpausing, decomission, delete
 		# runs on all currently running and suspended instances
 		instances = db.session.query(Instances).filter(or_(
-			Instances.state == 4, 
-			Instances.state == 5, 
+			Instances.state == 4,
+			Instances.state == 5,
 			Instances.state == 6
 		)).all()
 
@@ -237,9 +238,16 @@ def trashman(app):
 # salesman puts up instances for sale on pool
 def salesman(app):
 	def action():
-		# instances for the win
-		instances = Instances()
+		# get the appliance
+		appliance = db.session.query(Appliance).first()
 
+		# instances for sale, get 'em while they're hot
+		instances = db.session.query(Instances).filter_by(state=1).all()
+
+		# call the pool with instances for sale
+		response = pool_api_salesman(instances, appliance)
+		print response
+		
 	return action
 
 def coinop(app):
@@ -255,14 +263,6 @@ def coinop(app):
 			instance.coinop(amount)
 		else:
 			print "Can't find that instance!"
-	return action
-
-def nudge(app):
-	def action():
-		instances = db.session.query(Instances).all()
-		for instance in instances:
-			response = instance.nudge()
-
 	return action
 
 # message client
@@ -286,7 +286,6 @@ def messenger(app):
 # for development
 manager.add_action('serve', serve)
 manager.add_action('coinop', coinop)
-manager.add_action('nudge', nudge)
 
 # commands for user managment
 manager.add_action('reset', reset)
@@ -299,6 +298,7 @@ manager.add_action('flavors', flavors)
 manager.add_action('images', images)
 manager.add_action('instances', instances)
 manager.add_action('trashman', trashman)
+manager.add_action('salesman', salesman)
 
 # message actions
 manager.add_action('message', messenger)
