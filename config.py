@@ -29,7 +29,7 @@ class BaseConfiguration(object):
 	APP_WEBSITE = POOL_WEBSITE
 	APP_IRC_URL = "http://mibbit.com/?channel=#%s&server=irc.mibbit.net" % POOL_NAME_LOWER
 	
-	DATABASE = "xoviova.db"
+	DATABASE = "utterio.db"
 	DATABASE_PATH = os.path.join(_basedir, DATABASE)
 	SQLALCHEMY_DATABASE_URI = 'sqlite:///' + DATABASE_PATH
 	
