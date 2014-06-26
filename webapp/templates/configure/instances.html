@@ -2,8 +2,8 @@
 {% import "macros.html" as macros %}
 
 {% block page_styles %}
-    <!-- Config Page -->
     <link href="/css/configure.css" rel="stylesheet">
+    <link href="/css/docs.css" rel="stylesheet">
 {% endblock %}
 
 {% block navbar %}
@@ -66,18 +66,17 @@
 
 <div class="container content">
   <div class="row">
-
     {{ macros.nav_pills("instances", settings) }}
-
-    <!-- form on right side -->
-    <div class="col-md-10">
-
-      <!-- form header -->
+    <div class="col-md-9">
       <div class="row">
         <div class="col-md-12">
           <div class="section-header">
             <h2><small>Appliance Instances</small></h2>
-            <p>Instances are automatically created by this appliance, assigned Bitcoin addresses from Coinbase, and registered with the <a href="{{ config['POOL_WEBSITE'] }}">{{ config['POOL_NAME'] }}</a> website for sale. Instances can be manually started by using the <strong>Start</strong> or <strong>Payment</strong> buttons.</p>
+            <div class="bs-callout bs-callout-info bs-callout-top">
+              <h4>About Instances</h4>
+              <p><strong>Appliance Instances</strong> are are automatically created by <strong>Appliances</strong>, assigned <strong>Bitcoin Addresses</strong> from <stron>Coinbase</strong>, and registered for sale with the <strong>Pool Operator</strong> site. Instances are started by this appliance when Coinbase makes a <strong>Payment Callback</strong> to the appliance.</p>
+              <p>Instances can be manually started by using the <strong>Start</strong> or <strong>Payment</strong> buttons. A detailed view of the instance can be seen by clicking on the <strong>Instance Name</strong> link.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -99,7 +98,7 @@
                 <td>{% if instance.state == 0 %}<span title="Inactive" class="glyphicon glyphicon-remove-sign"></span>{% elif instance.state == 1 %}<span title="Waiting on payment." class="glyphicon glyphicon-time"></span>{% elif instance.state == 2 %}<span title="Payment Received" class="glyphicon glyphicon-usd"></span>{% elif instance.state == 3 %}<span title="Starting" class="glyphicon glyphicon-off"></span>{% elif instance.state == 4 %}<span title="Running" class="glyphicon glyphicon-play"></span>{% elif instance.state == 5 %}<span title="Suspended" class="glyphicon glyphicon-pause"></span>{% elif instance.state == 6 %}<span title="Unsuspend" class="glyphicon glyphicon-fire"></span>{% elif instance.state == 7 %}<span title="Decommission" class="glyphicon glyphicon-fullscreen"></span>{% endif %}</td>
                 <td><a href="/configure/instances/{{ instance.id }}">{{ instance.name }}</a></td>
                 <td><a href="/configure/flavors/{{ instance.flavor.id }}">{{ instance.flavor.name }}</a></td>                
-                <td id="instance-timer-{{instance.id}}" data-state="{{ instance.state }}" data-expires="{{ instance.expires }}"></td>
+                <td id="instance-timer-{{instance.id}}" data-state="{{ instance.state }}" data-expires="{{ instance.expires }}"><img src="/img/loading.gif"/></td>
                 <td>
                   <button id="instance-start-{{ instance.id }}" title="Start instance {{ instance.name }}." data-instance="{{ instance.id }}" data-flavor="{{ instance.flavor.id }}" data-image="{{ instance.image.id }}" data-description="{{ instance.flavor.description }}" class="btn btn-xs btn-success {% if instance.state > 1 %}disabled{% endif %}"><span class="glyphicon glyphicon-play"></span> Start</button>
                   <button id="instance-payment-{{ instance.address.address }}" title="Make a payment." data-ask="{{ instance.flavor.ask }}" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-qrcode"></span> Payment</button>
@@ -147,7 +146,7 @@
     }, 1000);
     
     // socket notifications
-    var socket = io.connect(window.location.protocol+ '//' + document.domain + ':' + location.port + '/xovio');
+    var socket = io.connect(window.location.protocol+ '//' + document.domain + ':' + location.port + '/utterio');
     socket.on('message', function(msg) {
       alertify.log(msg.data.result.message, msg.data.response);
       if (msg.data.result.reload) {

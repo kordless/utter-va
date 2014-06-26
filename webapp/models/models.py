@@ -31,11 +31,11 @@ class User(UserMixin, CRUDMixin,  db.Model):
 	password = db.Column(db.String(100), unique=True)
 
 	def __init__(self, username=None, password=None):
-			self.username = username
-			self.password = password
+		self.username = username
+		self.password = password
 
 	def __repr__(self):
-			return '<Username %r>' % (self.username)
+		return '<Username %r>' % (self.username)
 
 
 # address model
@@ -487,8 +487,8 @@ class Instances(CRUDMixin, db.Model):
 		return response
 
 	# HOUSEKEEPING WORKS ON STATE==4, STATE==5 and STATE==6 INSTANCES ONLY
-  # pauses instances which are payment expired
-  # decomissions instances which are past paused grace period
+	# pauses instances which are payment expired
+	# decomissions instances which are past paused grace period
 	# starts instances which should be running and aren't expired
 	# decomissions non-running instances which are payment expired
 	def housekeeping(self):
@@ -1017,7 +1017,7 @@ class Appliance(CRUDMixin, db.Model):
 			data = dict(
 				auth_token = self.ngroktoken.encode('ascii','ignore'),
 				tunnels = dict(
-					xoviova = dict(
+					utterio = dict(
 						subdomain = self.subdomain.encode('ascii', 'ignore'),
 						proto = dict(
 							https = port

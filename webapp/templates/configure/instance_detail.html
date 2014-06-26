@@ -13,13 +13,8 @@
 {% block content %}
 <div class="container content">
   <div class="row">
-
     {{ macros.nav_pills("instances", settings) }}
-
-    <!-- form on right side -->
-    <div class="col-md-10">
-
-      <!-- form header -->
+    <div class="col-md-9">
       <div class="row">
         <div class="col-md-12">
           <div class="section-header">
@@ -122,7 +117,7 @@
     var csrf_token = "{{ csrf_token }}";
 
     // socket notifications
-    var socket = io.connect(window.location.protocol+ '//' + document.domain + ':' + location.port + '/xovio');
+    var socket = io.connect(window.location.protocol+ '//' + document.domain + ':' + location.port + '/utterio');
     socket.on('message', function(msg) {
       alertify.log(msg.data.result.message, msg.data.response);
       if (msg.data.result.reload) {

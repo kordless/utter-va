@@ -2,11 +2,6 @@
 <!-- nav pills -->
 <div class="col-md-2">
   <ul class="nav nav-pills nav-stacked">
-    <li {% if active=="status" %}class="active"{% endif %}>
-      <a href="#">
-        Status
-      </a>
-    </li>
     <li {% if active=="appliance" %}class="active"{% endif %}>
       <a href="{{ url_for('configure.configure') }}">
         Appliance
@@ -25,7 +20,7 @@
     </li>
     <li {% if active=="systems" %}class="active"{% endif %}>
       <a href="{{ url_for('configure.configure_flavors') }}">
-        Flavors & Rates
+        Flavors & Ask Prices
         <span id="flavors-settings"class="glyphicon glyphicon-exclamation-sign{% if settings['flavors'] == True %}hidden{% endif %}"></span>
       </a>
     </li>

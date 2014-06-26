@@ -28,7 +28,7 @@ def load_user(user_id):
 # file upload extensions
 ALLOWED_EXTENSIONS = set(['sh'])
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+		return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 # configure flavors page
 @mod.route('/configure/flavors', methods=['GET'])
@@ -342,7 +342,7 @@ def configure_addresses():
 	settings = Status().check_settings()
 
 	# pull out the addresses
-	addresses = db.session.query(Addresses).order_by("instance_id desc").all()
+	addresses = db.session.query(Addresses).order_by("address asc").all()
 
 	# render template
 	return render_template(

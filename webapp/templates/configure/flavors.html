@@ -2,8 +2,8 @@
 {% import "macros.html" as macros %}
 
 {% block page_styles %}
-    <!-- Config Page -->
     <link href="/css/configure.css" rel="stylesheet">
+    <link href="/css/docs.css" rel="stylesheet">
 {% endblock %}
 
 {% block navbar %}
@@ -15,14 +15,17 @@
   <div class="row">
     {{ macros.nav_pills("systems", settings) }}
     <!-- form on right side -->
-    <div class="col-md-10">
+    <div class="col-md-9">
       <!-- form header -->
       <div class="row">
         <div class="col-md-12">
           <div class="section-header">
-            <h2><small>Flavors & Pricing</small></h2>
-            <p>Flavors are synced every 15 minutes from the pool operator and are automatically installed into the OpenStack cluster on instance start.  You can update this appliance's ask price on flavors by clicking on the flavor's <strong>Name</strong> link.</p>
-            <p>You should only enable flavors your OpenStack cluster can support and which you are OK with serving.</p>
+            <h2><small>Flavors & Ask Prices</small></h2>
+            <div class="bs-callout bs-callout-info bs-callout-top">
+              <h4>About Flavors</h4>
+              <p><strong>Flavors</strong> are used by <strong>Appliances</strong> to describe <strong>Instance Type</strong> values for <strong># of Compute Cores</strong>, <strong>Memory</strong>, <strong>Disk</strong> and <strong>Network Speed</strong>. You can update this appliance's <strong>Ask Prices</strong> for flavors it advertises via <strong>Instance Asks</strong> by clicking on the <strong>Flavor Name</strong> link.</p>
+              <p>Flavors are synced every 15 minutes from the <strong>Pool Operator</strong> and are automatically installed into the <strong>OpenStack Cluster</strong> by the appliance.  You should only enable flavors your OpenStack cluster can readily support.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -61,9 +64,9 @@
         </div>
       </div>
       <div class="row">
-      	<div class="col-md-12">
-      		<p><code>10 μBTC = ~US${{ '%0.4f'| format(quote*10|float) }}</code> <a href="https://coinbase.com" target="_blank">via Coinbase</a></p>
-      	</div>
+        <div class="col-md-12">
+          <p><code>10 μBTC = ~US${{ '%0.4f'| format(quote*10|float) }}</code> <a href="https://coinbase.com" target="_blank">via Coinbase</a></p>
+        </div>
       </div>
     </div>
     <!-- end right side -->

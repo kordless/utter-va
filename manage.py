@@ -46,7 +46,7 @@ def reset(app):
 
 				# initialize database
 				path = os.path.dirname(os.path.abspath(__file__))
-				os.system('sqlite3 "%s/xoviova.db" < "%s/schema.sql"' % (path, path))
+				os.system('sqlite3 "%s/utterio.db" < "%s/schema.sql"' % (path, path))
 
 				# initialize the appliance object
 				appliance = Appliance()
@@ -79,7 +79,7 @@ def install(app):
 		path = os.path.dirname(os.path.abspath(__file__))
 
 		# initialize database
-		os.system('sqlite3 "%s/xoviova.db" < "%s/schema.sql"' % (path, path))
+		os.system('sqlite3 "%s/utterio.db" < "%s/schema.sql"' % (path, path))
 		
 		# initialize the appliance object
 		appliance = Appliance()
@@ -97,13 +97,6 @@ def install(app):
 
 	return action
 
-# clean up all the extra tunnel.conf files (remove later)
-def clean(app):
-	def action():
-		path = os.path.dirname(os.path.abspath(__file__))
-		os.system('rm tunnel.conf.*')
-	return action
-
 # DEVELOPMENT METHODS
 # serve application via dev server or gunicorn)
 def serve(app):
@@ -117,7 +110,39 @@ def serve(app):
 	
 	return action
 
-# CRONTAB METHODS
+# coinop command
+def coinop(app):
+	def action(
+		amount=('a', 0),
+		iname=('i', '')
+	):
+		instance = db.session.query(Instances).filter_by(name=iname).first()
+		if amount == 0:
+			print "Enter a whole amount to pay instance."
+		elif instance:
+			print "Paying %s mBTC to instance %s." % (amount, iname)
+			instance.coinop(amount)
+		else:
+			print "Can't find that instance!"
+	return action
+
+# message client
+def messenger(app):
+	def action(
+		text=('m', 'Hello from the administration console!'),
+		status=('s', 'success'),
+		reloader=('r', '0')
+	):
+		# muck the reload flags around
+		if reloader == '1' or reloader == 'true':
+			reloader = True
+		else:
+			reloader = False
+
+		# send out the message
+		message(text, status, reloader)
+	return action
+
 # build the tunnel.conf file
 def tunnel(app):
 	def action():
@@ -131,6 +156,7 @@ def tunnel(app):
 
 	return action
 
+# CRONTAB METHODS
 # grab the pool server's flavors and install
 # runs every 15 minutes via cron
 def flavors(app):
@@ -160,8 +186,8 @@ def images(app):
 		download_images(appliance, images)
 
 	return action
-
-# warmup, start, halt, manage, decommission instances
+	
+# warmup and start instances
 # runs every minute via cron
 def instances(app):
 	def action():
@@ -172,7 +198,7 @@ def instances(app):
 			return action
 
 		# START
-		# instances which have received payment and move to starting
+		# instances which have received payment are moved to starting
 		instances = db.session.query(Instances).filter_by(state=2).all()
 		for instance in instances:
 			response = instance.start()
@@ -181,16 +207,6 @@ def instances(app):
 				message("Instance %s launched." % instance.name, "success", True)
 			else:
 				message(response['result']['message'], "error", True)
-
-		# WAITING PAYMENT
-		# make sure we have mixed an instance for each flavor
-		instances = Instances()
-		flavors = db.session.query(Flavors).filter_by(active=1).all()
-		for flavor in flavors:
-			response = instances.mix(flavor)
-
-			if response['response'] != "success":
-				message("Instance mixing failed. Something is wrong.")
 
 		# NUDGE
 		# instances in the process of starting are monitored and updated
@@ -201,8 +217,30 @@ def instances(app):
 			if response['response'] == "success":
 				message("Instance %s is now running." % instance.name, "success", True)
 
+	return action
+
+# mix, pause, unpause instances
+# runs every 5 minutes via cron
+def housekeeper(app):
+	def action():
+		# check appliance is ready to go - exit if not
+		settings = Status().check_settings()
+		if not settings['ngrok'] or not settings['openstack']:
+			print "Appliance is not ready."
+			return action
+
+		# MIXING
+		# make sure we have mixed an instance for each flavor
+		instances = Instances()
+		flavors = db.session.query(Flavors).filter_by(active=1).all()
+		for flavor in flavors:
+			response = instances.mix(flavor)
+
+			if response['response'] != "success":
+				message("Instance mixing failed. Something is wrong.")
+
 		# HOUSEKEEPING
-		# general houskeeping work including pausing, unpausing, decomission, delete
+		# general houskeeping work including pausing, unpausing
 		# runs on all currently running and suspended instances
 		instances = db.session.query(Instances).filter(or_(
 			Instances.state == 4,
@@ -236,6 +274,7 @@ def trashman(app):
 	return action
 
 # salesman puts up instances for sale on pool
+# runs every 5 minutes via cron
 def salesman(app):
 	def action():
 		# get the appliance
@@ -250,58 +289,27 @@ def salesman(app):
 		
 	return action
 
-def coinop(app):
-	def action(
-		amount=('a', 0),
-		iname=('i', '')
-	):
-		instance = db.session.query(Instances).filter_by(name=iname).first()
-		if amount == 0:
-			print "Enter a whole amount to pay instance."
-		elif instance:
-			print "Paying %s mBTC to instance %s." % (amount, iname)
-			instance.coinop(amount)
-		else:
-			print "Can't find that instance!"
-	return action
-
-# message client
-def messenger(app):
-	def action(
-		text=('m', 'Hello from the administration console!'),
-		status=('s', 'success'),
-		reloader=('r', '0')
-	):
-		# muck the reload flags around
-		if reloader == '1' or reloader == 'true':
-			reloader = True
-		else:
-			reloader = False
-
-		# send out the message
-		message(text, status, reloader)
-	return action
-
-
 # for development
 manager.add_action('serve', serve)
 manager.add_action('coinop', coinop)
+manager.add_action('message', messenger)
 
 # commands for user managment
 manager.add_action('reset', reset)
 manager.add_action('install', install)
-manager.add_action('clean', clean)
-
-# intended to run from cron
 manager.add_action('tunnel', tunnel)
-manager.add_action('flavors', flavors)
-manager.add_action('images', images)
+
+# run from cron every 1 minute
 manager.add_action('instances', instances)
+
+# run from cron every 5 mintues
+manager.add_action('housekeeper', instances)
+
+# run from cron every 15 minutes
+manager.add_action('images', images)
+manager.add_action('flavors', flavors)
 manager.add_action('trashman', trashman)
 manager.add_action('salesman', salesman)
-
-# message actions
-manager.add_action('message', messenger)
 
 if __name__ == "__main__":
 	manager.run()

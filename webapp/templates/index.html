@@ -33,18 +33,18 @@
       <div class="row drivel">
         <div class="col-md-4">
           <h3><span class="glyphicon glyphicon-time"></span> Configure in Minutes</h3>
-          <p>Welcome to the {{ config['POOL_NAME'] }} virtual appliance! Start configuring your appliance by clicking on the get started button.  Configuration takes <a href="">about 10 minutes</a>!  If you need help with configuration, please see the <a href="{{ config['APP_WEBSITE'] }}/docs">docs on {{ config['POOL_NAME'] }}</a>!</p>
-          <a href="/login" class="btn btn-success btn-lg" role="button">Get Started</a>
+          <p>Welcome to the {{ config['POOL_NAME'] }} virtual appliance! Start configuring your appliance by clicking on the get started button.  Configuration takes <a href="{{ config['APP_WEBSITE'] }}/appliances/new/">about 10 minutes</a>!  If you need help with configuration, please see the <a href="{{ config['APP_WEBSITE'] }}/docs/">documentation</a>!</p>
+          <a href="/login" class="btn btn-success btn-lg" role="button">Get Started Now!</a>
         </div>
         <div class="col-md-4">
           <h3><span class="glyphicon glyphicon-qrcode"></span> 100% Open Source</h3>
-          <p>Everything you see here is Open Source and free to use by anyone, anywhere, at any time. The Bitcoin methodology teaches high decentralization and trust of all components, including infrastructure hardware and software.</p>  
-          <a href="https://github.com/stackmonkey/xovio-pool" class="btn btn-info btn-lg" role="button">Run a Pool</a>
+          <p>Everything you see here is <a href="https://github.com/stackmonkey/">Open Source</a> and free to use by anyone, anywhere, at any time. The Bitcoin methodology teaches high decentralization and trust of all components, including infrastructure hardware and software.</p>  
+          <a href="https://github.com/stackmonkey/utter-pool" class="btn btn-info btn-lg" role="button">Run Your Own Pool</a>
         </div>  
         <div class="col-md-4">
           <h3><span class="glyphicon glyphicon-tasks"></span> Powered by OpenStack</h3>
-          <p>The <a href="http://openstack.org">OpenStack Open Source project</a> provides the cloud controller fabric for the xovio pools and can run on anything from a single desktop computer to an entire datacenter. You can install more than one appliance across multiple OpenStack clusters!</p>
-          <a href="http://openstack.org/" class="btn btn-warning btn-lg" role="button">Learn More</a>
+          <p>The <a href="http://openstack.org">OpenStack Project</a> provides the cloud controller fabric for the {{ config['POOL_NAME'] }} compute pool.  OpenStack can run on anything from a single desktop computer to an entire datacenter.  Get started by installing OpenStack today!</p>
+          <a href="http://openstack.org/" class="btn btn-warning btn-lg" role="button">Install OpenStack</a>
         </div>
       </div>
       <!--/row-->
@@ -57,13 +57,16 @@
   <script type="text/javascript">
     $().ready(function() {
     	// login button
-    	$('#nav-login').on('click', function(e) { 
+    	$('#nav-login').click(function() { 
         window.location = "/login" 
       });
-    	$('#get-started-button').on('click', function(e) { 
+    	$('#get-started-button').click(function() {
         window.location = "/login" 
       });
-    	
+    	$('#learn-more-button').click(function() {
+        window.location = "{{ config['APP_WEBSITE'] }}/features/"
+      });
+
       // the map!
       var themap = L.mapbox.map('map', 'kordless.gnm28jg1', {scrollWheelZoom: false, zoomControl: false}).setView([20, 20], 3);
       setInterval(function(){themap.panBy([-1, 0]);},3000);

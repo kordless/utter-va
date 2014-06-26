@@ -2,8 +2,8 @@
 {% import "macros.html" as macros %}
 
 {% block page_styles %}
-    <!-- Config Page -->
     <link href="/css/configure.css" rel="stylesheet">
+    <link href="/css/docs.css" rel="stylesheet">
 {% endblock %}
 
 {% block navbar %}
@@ -13,19 +13,17 @@
 {% block content %}
 <div class="container content">
   <div class="row">
-
     {{ macros.nav_pills("openstack", settings) }}
-
-    <!-- form on right side -->
-    <div class="col-md-10">
-
-      <!-- form header -->
+    <div class="col-md-9">
       <div class="row">
         <div class="col-md-12">
           <div class="section-header">
             <h2><small>OpenStack Credentials</small></h2>
-            <p>The OpenStack credentials used by this virtual appliance can be imported by uploading your <a href="http://docs.openstack.org/user-guide/content/cli_openrc.html"><strong>OpenStack API RC file</strong></a>. Navigate and login to your OpenStack UI and then click on the <strong>Access and Security</strong> tab to the left under the <strong>Project</strong> tab.  Click on the <strong>API Access</strong> tab at the top and then click on the <strong>Download OpenStack RC File</strong> button at the top right.  Save the file locally.</p>
-            <p>Once you have downloaded the RC file locally, import it into the appliance by clicking on the button below or dragging and dropping the file onto the button.  <strong>Please note you will need to manually set the password below once you have imported the RC file</strong>.</p>
+            <div class="bs-callout bs-callout-info bs-callout-top">
+              <h4>Connecting OpenStack</h4>
+              <p>The OpenStack credentials used by this virtual appliance can be imported by uploading your <a href="http://docs.openstack.org/user-guide/content/cli_openrc.html"><strong>OpenStack API RC file</strong></a>. Navigate and login to your <strong>OpenStack Horizon UI</strong> and then click on the <strong>Access and Security</strong> tab to the left under the <strong>Project</strong> tab.  Click on the <strong>API Access</strong> tab at the top and then click on the <strong>Download OpenStack RC File</strong> button at the top right.  Save the file locally.</p>
+              <p>Once you have downloaded the RC file locally, import it into the appliance by clicking on the button below or dragging and dropping the file onto the button.  <strong>Please note you will need to manually set the password below once you have imported the RC file</strong>.</p>
+            </div>
           </div>
         </div>
       </div>

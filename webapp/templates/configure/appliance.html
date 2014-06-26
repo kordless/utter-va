@@ -2,8 +2,8 @@
 {% import "macros.html" as macros %}
 
 {% block page_styles %}
-    <!-- Config Page -->
     <link href="/css/configure.css" rel="stylesheet">
+    <link href="/css/docs.css" rel="stylesheet">
     <link href='https://api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.css' rel='stylesheet' />
 {% endblock %}
 
@@ -14,23 +14,20 @@
 {% block content %}
 <div class="container content">
   <div class="row">
-
     {{ macros.nav_pills("appliance", settings) }}
-
-    <!-- form on right side -->
-    <div class="col-md-10">
-
-      <!-- form header -->
+    <div class="col-md-9">
       <div class="row">
         <div class="col-md-12">
           <div class="section-header">
             <h2><small>Appliance Configuration</small></h2>
-            <p>Fill out the following form to configure your appliance. This appliance needs to have a regsitered API token, a valid <a href="https://coinbase.com/settings/api" target="_blank">Coinbase API key and secret</a> and an Ngrok API token created before it will function. If you don't have a Coinbase account, you can <a href="https://coinbase.com/signup?r=52a9c6bf937ab6453a00001e&utm_campaign=user-referral&src=referral-link" target="_blank">signup for Coinbase here</a>.</p>
+            <div class="bs-callout bs-callout-info bs-callout-top">
+              <h4>Getting Started</h4>
+              <p>Fill out the following form to configure your appliance. This appliance needs to have a <strong>Regsitered API Pool Token</strong>, a valid <strong><a href="https://coinbase.com/signup?r=52a9c6bf937ab6453a00001e&utm_campaign=user-referral&src=referral-link" target="_blank">Coinbase API Key and Secret</a></strong> and an <strong><a href="https://ngrok.com/">Ngrok API Token</a></strong> before it will function.  You will also need to set the map to the approximate location of your <strong>OpenStack Cluster</strong> so users can request instances by <strong>geolocation</strong>.</p>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- form content -->
       <div class="row">
         <div class="col-md-10">
           <form action="{{ url_for("configure.configure") }}" method="post" class="form-horizontal" role="form">

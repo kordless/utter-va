@@ -2,8 +2,8 @@
 {% import "macros.html" as macros %}
 
 {% block page_styles %}
-    <!-- Config Page -->
     <link href="/css/configure.css" rel="stylesheet">
+    <link href="/css/docs.css" rel="stylesheet">
 {% endblock %}
 
 {% block navbar %}
@@ -15,13 +15,17 @@
   <div class="row">
     {{ macros.nav_pills("addresses", settings) }}
     <!-- form on right side -->
-    <div class="col-md-10">
+    <div class="col-md-9">
       <!-- form header -->
       <div class="row">
         <div class="col-md-12">
           <div class="section-header">
             <h2><small>Appliance Addresses</small></h2>
-            <p>The following Coinbase Bitcoin addresses are being used by this appliance. The Bitcoin <strong>address links</strong> may be used to <strong>view payment transactions</strong>. When instances are attached to a Bitcoin address, you may click on their id to view instance details.</p>
+            <div class="bs-callout bs-callout-info bs-callout-top">
+              <h4>Appliance Addresses</h4>
+              <p><strong>Addresses</strong> are <strong>Bitcon Destinations</strong> which are managed by a <strong>Coinbase Account</strong> tied to this <strong>Appliance</strong>. This appliance advertises payment addresses via <strong>Instance Asks</strong> on the <strong>Pool Operator</strong>'s site.</p>
+              <p>The <strong>Bitcoin Address</strong> links may be used to <strong>view payment transactions</strong>. When instances are attached to a Bitcoin address, you may click on the <strong>Instance ID</strong> to view instance details.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -39,13 +43,13 @@
             <tbody>
               {% for address in addresses %}
               <tr>
-                <td>{% if address.instance %}<span title="Bitcoin address linked to instance." class="glyphicon glyphicon-transfer"></span>{% else %}<span title="Bitcoin address is idle." class="glyphicon glyphicon-pause"></span>{% endif %}</td>
+                <td>{% if address.instance %}<span title="Bitcoin address linked to instance." class="glyphicon glyphicon-link"></span>{% else %}&nbsp;{% endif %}</td>
                 <td><a href="https://blockchain.info/address/{{ address.address }}" target="_blank">{{ address.address }}</a></td>
                 <td>{{ address.subdomain }}</td>
                 {% if address.instance > 0 %}
                 <td><a href="/configure/instances/{{ address.instance.id }}">{{ address.instance.name }}</a></td>
                 {% else %}
-                <td><span title="Bitcoin address is idle." class="glyphicon glyphicon glyphicon-ban-circle"></span></td>
+                <td>None</span></td>
                 {% endif %}
               </tr>
               {% endfor %}

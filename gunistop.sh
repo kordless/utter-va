@@ -1,3 +1,3 @@
 #!/bin/bash
-cd /var/www/xoviova/
+cd /var/www/utterio/
 pkill gunicorn

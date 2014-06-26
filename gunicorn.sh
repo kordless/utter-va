@@ -1,3 +1,3 @@
 #!/bin/bash
-cd /var/www/xoviova/
-/usr/local/bin/gunicorn -c /var/www/xoviova/gunicorn.conf.py webapp:app
+cd /var/www/utterio/
+/usr/local/bin/gunicorn -c /var/www/utterio/gunicorn.conf.py webapp:app

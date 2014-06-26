@@ -31,7 +31,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" id="set-ask-close-button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <button type="button" id="set-ask-confirm-button" class="btn btn-danger">Set Ask Rate</button>
+        <button type="button" id="set-ask-confirm-button" class="btn btn-danger">Set Ask Price</button>
       </div>
     </div>
   </div>
@@ -41,9 +41,7 @@
 <div class="container content">
   <div class="row">
     {{ macros.nav_pills("systems", settings) }}
-    <!-- form on right side -->
-    <div class="col-md-10">
-      <!-- form header -->
+    <div class="col-md-9">
       <div class="row">
         <div class="col-md-12">
           <div class="section-header">
@@ -62,7 +60,7 @@
                 <th>Memory</th>
                 <th>Disk</th>
                 <th>Network</th>
-                <th>Ask Rate</th>
+                <th>Ask Price</th>
                 <th>Serving</th>
               </tr>
             </thead>
@@ -74,16 +72,16 @@
                 <td>{{ flavor.disk }}GB</td>
                 <td>{{ flavor.network }}Mb/sec</td>
                 <td>{{ flavor.ask }} μBTC/Hour</td>
-		            <td>
-		              <div class="toggle-modern">
-		                <div id="flavor-{{flavor.id}}" class="toggle{% if flavor.active %} enabled{% endif %}"></div>
-		              </div>
-		            </td>              
+                <td>
+                  <div class="toggle-modern">
+                    <div id="flavor-{{flavor.id}}" class="toggle{% if flavor.active %} enabled{% endif %}"></div>
+                  </div>
+                </td>              
               </tr>
             </tbody>
           </table>
-          <p>The pool is advertising this flavor's rate at <code>{{ flavor.rate }} μBTC/Hour</code> which is <code>~US${{ '%0.2f'| format(flavor.rate*quote*720|float) }}/Month</code> via <a href="https://coinbase.com" target="_blank">Coinbase</a>.</p>
-          <p><button type="button" id="flavor-set-ask-button" class="btn btn-warning">Set Ask Rate</button></p>
+          <p>The pool is advertising this flavor's price at <code>{{ flavor.rate }} μBTC/Hour</code> which is <code>~US${{ '%0.2f'| format(flavor.rate*quote*720|float) }}/Month</code> via <a href="https://coinbase.com" target="_blank">Coinbase</a>.</p>
+          <p><button type="button" id="flavor-set-ask-button" class="btn btn-warning">Set Ask Price</button></p>
         </div>
       </div>
     </div>
@@ -127,7 +125,7 @@
 
     // show set ask rate modal
     $('#flavor-set-ask-button').click(function() {
-    	$('#flavor-set-ask-modal').modal();
+      $('#flavor-set-ask-modal').modal();
     });
 
     // when clicking set rate button send rate to server
@@ -152,7 +150,7 @@
     // handle hitting enter on code input
     $('#askrate').keypress(function (e) {
       if (e.which == 13) {
-      	console.log("foo");
+        console.log("foo");
         $('#set-ask-confirm-button').click();
       }
     });

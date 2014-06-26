@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # name: install.sh
-# description: install script for xovio controller vm
-# author: info@xovio.com 
-# github: https://github.com/StackMonkey/xovio-va
+# description: install script for utter.io controller vm
+# author: info@utter.io 
+# github: https://github.com/stackmonkey/utter-va
 
 # overwrite the existing index.html file
 
@@ -56,9 +56,9 @@ sudo pip install python-glanceclient
 sudo pip install python-cinderclient
 sudo pip install python-novaclient
 
-# check out xovio-va repo
-sudo mkdir /var/log/xoviova/
-sudo git clone https://github.com/StackMonkey/xovio-va.git /var/www/xoviova
+# check out utter-va repo
+sudo mkdir /var/log/utterio/
+sudo git clone https://github.com/StackMonkey/utter-va.git /var/www/utterio
 
 # configure www directory
 sudo chown -R ubuntu:ubuntu /var/www/
@@ -73,8 +73,8 @@ set httpd port 5150 and
 set daemon 30
 with start delay 5
 
-check process ngrok matching "/usr/local/bin/ngrok -config /var/www/xoviova/tunnel.conf start xoviova"
-    start program = "/var/www/xoviova/tunnel.sh"
+check process ngrok matching "/usr/local/bin/ngrok -config /var/www/utterio/tunnel.conf start utterio"
+    start program = "/var/www/utterio/tunnel.sh"
     stop program = "/usr/bin/killall screen"
 EOF
 
@@ -87,8 +87,8 @@ set daemon 30
 with start delay 5
 
 check process gunicorn with pidfile /tmp/gunicorn.pid
-    start program = "/var/www/xoviova/gunicorn.sh"
-    stop program = "/var/www/xoviova/gunistop.sh"
+    start program = "/var/www/utterio/gunicorn.sh"
+    stop program = "/var/www/utterio/gunistop.sh"
 EOF
 
 # restart monit service
@@ -100,7 +100,7 @@ sudo monit monitor all
 MYIP=$(/sbin/ifconfig eth0| sed -n 's/.*inet *addr:\([0-9\.]*\).*/\1/p')
 
 # build the database and sync with pool operator
-sudo su -c "/var/www/xoviova/manage.py install $MYIP" -s /bin/sh ubuntu
+sudo su -c "/var/www/utterio/manage.py install $MYIP" -s /bin/sh ubuntu
 
 # install crontab for ubuntu user to run every 15 minutes
 MICROS=`date +%N`
@@ -109,16 +109,17 @@ SECOND=`expr $FIRST + 15`
 THIRD=`expr $FIRST + 30`
 FOURTH=`expr $FIRST + 45`
 
-sudo cat <<EOF > /var/www/xoviova/crontab
-# run various syncs every 15 minutes with servers
-$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py images > /dev/null 2>&1
-$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py flavors > /dev/null 2>&1
-$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py addresses > /dev/null 2>&1
-$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py trashman > /dev/null 2>&1
-$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/xoviova/manage.py salesman > /dev/null 2>&1
-* * * * * /var/www/xoviova/manage.py instances > /dev/null 2>&1
+sudo cat <<EOF > /var/www/utterio/crontab
+# run various manage commands every 15 minutes
+$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/utterio/manage.py images > /dev/null 2>&1
+$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/utterio/manage.py flavors > /dev/null 2>&1
+$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/utterio/manage.py trashman > /dev/null 2>&1
+$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/utterio/manage.py salesman > /dev/null 2>&1
+
+# run various manage commands every 15 minutes
+* * * * * /var/www/utterio/manage.py instances > /dev/null 2>&1
 EOF
-sudo crontab -u ubuntu /var/www/xoviova/crontab
+sudo crontab -u ubuntu /var/www/utterio/crontab
 
 # finally, start downloading images
-sudo su -c "/var/www/xoviova/manage.py images" -s /bin/sh ubuntu
+sudo su -c "/var/www/utterio/manage.py images" -s /bin/sh ubuntu

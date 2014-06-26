@@ -2,8 +2,8 @@
 {% import "macros.html" as macros %}
 
 {% block page_styles %}
-    <!-- Config Page -->
     <link href="/css/configure.css" rel="stylesheet">
+    <link href="/css/docs.css" rel="stylesheet">
 {% endblock %}
 
 {% block navbar %}
@@ -14,14 +14,16 @@
 <div class="container content">
   <div class="row">
     {{ macros.nav_pills("images", settings) }}
-    <!-- form on right side -->
-    <div class="col-md-10">
-      <!-- form header -->
+    <div class="col-md-9">
       <div class="row">
         <div class="col-md-12">
           <div class="section-header">
             <h2><small>System Images</small></h2>
-            <p>Default pool images are synced every <strong>15 minutes</strong> from the pool operator and are automatically installed into the OpenStack cluster when an instance is started.  If an instance uses a dynamic image, it will be downloaded by OpenStack before the instance is started.</p>
+            <div class="bs-callout bs-callout-info bs-callout-top">
+              <h4>About Images</h4>
+              <p><strong>Images</strong> are used by <strong>Appliances</strong> to start <strong>Instances</strong>.  Images are synced every 15 minutes from the <strong>Pool Operator</strong> and are automatically installed into the <strong>OpenStack Cluster</strong>. Clicking on the <strong>Image Name</strong> link will allow you to download the original file for inspection.</p>
+              <p><strong>Dynamic Images</strong> are downloaded by OpenStack before an instance is started.  You may disable this behavior by setting the slider below to <span class="label label-default">OFF</span>.
+            </div>
           </div>
         </div>
       </div>
@@ -54,9 +56,9 @@
           <div class="section-header">
             <h2><small>Dynamic Images</small></h2>
             <p>The appliance is currently <span class="not"><strong>not</strong></span> accepting dynamic images. <span class="not">This can affect the number of launches the appliance may receive.</span></p>
-          	<div class="toggle-modern">
-            	<div id="dynamic-images-toggle" class="toggle{% if appliance.dynamicimages %} enabled{% endif %}"></div>
-          	</div>
+            <div class="toggle-modern">
+              <div id="dynamic-images-toggle" class="toggle{% if appliance.dynamicimages %} enabled{% endif %}"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -84,25 +86,25 @@
 
     // toggle the message
     if ($('#dynamic-images-toggle').hasClass('enabled')) {
-    	$('.not').hide();
+      $('.not').hide();
     }
 
     $('#dynamic-images-toggle').click(function() {
       // handle slider state and do ajax put
       state = $('#dynamic-images-toggle').children('.active').length;
-    	if (state == 1) {
-    		$('.not').hide();
-    		var state_out = "enabled";
-    	} else {
-    		$('.not').show();
-    		var state_out = "disabled";
-    	}
-    	$.ajax({
+      if (state == 1) {
+        $('.not').hide();
+        var state_out = "enabled";
+      } else {
+        $('.not').show();
+        var state_out = "disabled";
+      }
+      $.ajax({
         url: '/configure/images',
         type: 'PUT',
         data: {_csrf_token: csrf_token, dynamicimages: state},
         success: function() {
-        	alertify.log("Dynamic images have been "+state_out+".", "success");
+          alertify.log("Dynamic images have been "+state_out+".", "success");
         }
       });
     });

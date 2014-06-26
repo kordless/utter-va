@@ -20,7 +20,6 @@
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown">@{{ current_user.username }}<b class="caret"></b></a>
                   <ul class="dropdown-menu">
                     <li class="dropdown-header">Virtual Appliance</li>
-                    <li><a href="/status">Status</a></li>
                     <li><a href="{{ url_for("configure.configure") }}">Configure</a></li>
                     <li class="divider"></li>
                     <li class="dropdown-header">OpenStack</li>
@@ -29,8 +28,8 @@
                     <li><a href="{{ url_for("configure.configure_images") }}">Images</a></li>
                     <li class="divider"></li>
                     <li class="dropdown-header">Manage</li>
-                    <li><a href="{{ url_for("configure.configure_instances") }}">Instances</a></li>
                     <li><a href="{{ url_for("configure.configure_addresses") }}">Addresses</a></li>
+                    <li><a href="{{ url_for("configure.configure_instances") }}">Instances</a></li>
                     <li class="divider"></li>
                     <li><a href="{{ url_for("users.logout") }}">Logout</a></li>
                   </ul>

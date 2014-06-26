@@ -72,7 +72,7 @@ def api_message():
 		
 		response['response'] = status
 		response['result'] = {"message": message, "reload": reloader}
-		socketio.emit('message', {"data": response}, namespace='/xovio')
+		socketio.emit('message', {"data": response}, namespace='/utterio')
 		return jsonify(response)
 	else:
 		response['response'] = "fail"
