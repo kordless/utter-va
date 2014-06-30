@@ -39,7 +39,7 @@ def token_validate():
 	appliance = db.session.query(Appliance).first()
 	
 	# check with pool operator
-	response = pool_connect(method="authorization", apitoken=appliance.apitoken)
+	response = pool_connect(method="authorization", appliance=appliance)
 
 	if response['response'] == "success":
 		# flush the cached status
