@@ -18,7 +18,7 @@ from webapp import bcrypt
 
 from webapp.models.mixins import CRUDMixin
 from webapp.libs.coinbase import coinbase_generate_address, coinbase_get_addresses, coinbase_checker
-from webapp.libs.pool import pool_api_instances, pool_api_connect
+from webapp.libs.pool import pool_instance, pool_connect
 from webapp.libs.utils import generate_token, row2dict, ngrok_checker, message
 from webapp.libs.images import uninstall_image
 from webapp.libs.geoip import get_geodata
@@ -361,7 +361,6 @@ class Instances(CRUDMixin, db.Model):
 		# update the instance
 		self.update()
 
-		
 		# response
 		response['result']['message'] = "Added %s seconds to %s's expire time." % (purchased_seconds, self.name)
 		response['result']['instance'] = row2dict(self)
@@ -374,15 +373,18 @@ class Instances(CRUDMixin, db.Model):
 		from webapp.libs.openstack import instance_start
 	
 		# build the response
-		response = {"response": "success", "result": {"message": "", "instance": {}}}
+		response = {"response": "success", "result": {"message": ""}}
 
 		# appliance
 		appliance = Appliance().get()
 
-		# make a call to the pool for the instance details
-		pool_response = pool_api_instances(self, appliance.apitoken)
+		# make a call to the pool with the instance details
+		pool_response = pool_instance(instance=self, appliance=appliance)
+		print pool_response
+
 		if pool_response['response'] == "fail":
-			return pool_response
+			response['result']['message'] = pool_response['result']
+			return response
 
 		# overload the response from the server into the instance settings
 		# do something with response - TODO
@@ -585,7 +587,7 @@ class Instances(CRUDMixin, db.Model):
 		if cluster_response['response'] == "success":
 			# we should NOT have this, so try to decomission out of desperation
 			cluster_response = instance_decommission(self)
-			response['result']['message'] = "Asking OpenStack to terminate instance %s" % self.name
+			response['result']['message'] = "Terminating instance %s" % self.name
 		else:
 			# delete this instance into forever
 			address = Addresses().get_by_id(self.address_id)
@@ -663,7 +665,7 @@ class Images(CRUDMixin, db.Model):
 
 	def sync(self, appliance):
 		# grab image list from pool server
-		response = pool_api_connect(method="images", apitoken=appliance.apitoken)
+		response = pool_connect(method="images", appliance=appliance)
 
 		if response['response'] == "success":
 			remoteimages = response['result']
@@ -809,7 +811,7 @@ class Flavors(CRUDMixin,  db.Model):
 
 	def sync(self, appliance):
 		# grab image list from pool server
-		response = pool_api_connect(method="flavors", apitoken=appliance.apitoken)
+		response = pool_connect(method="flavors", appliance=appliance)
 
 		# remote sync
 		if response['response'] == "success":
@@ -1076,7 +1078,8 @@ class Status(CRUDMixin, db.Model):
 			status.coinbase_check = coinbase_check
 
 			# token valid?
-			response = pool_api_connect('authorization', appliance.apitoken)
+			response = pool_connect(method='authorization', appliance=appliance)
+
 			if response['response'] == "success":
 				token_check = True
 			else:

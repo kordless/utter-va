@@ -20,7 +20,24 @@
           <div class="section-header">
             <h2><small>Instance <strong>{{ instance.name }}</strong></small></h2>
             <div class="row instance-detail-row">
-              <div class="col-md-4">
+              <div class="col-md-6">
+                <div class="text-center"><h3><small>Instance Timer</small></h3></div>
+                <div class="text-center">
+                  <input id="timer" data-state="{{ instance.state }}" data-expires="{{ instance.expires }}" data-updated="{{ instance.updated }}" data-step="1" data-readOnly=true data-min="0" value="0" data-max="{{ instance.expires - instance.updated }}" data-width="230" data-height="230">
+                </div>
+                <div class="text-center timer-state">
+                  <p>{{ macros.instance_state_icon(instance.state) }}</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="text-center"><h3><small>Payment Address</small></h3></div>
+                <div class="text-center" id="qrcode"></div>
+                <div class="text-center" id="address"><a href="https://blockchain.info/address/{{ instance.address.address }}" target="_blank">{{ instance.address.address }}</a></div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
                 <div><h3><small>Instance Attributes</small></h3></div>
                 <div>
                   <table class="table table-striped table-responsive">
@@ -52,24 +69,7 @@
                   </table>
                 </div>
               </div>
-              <div class="col-md-4">
-                <div class="text-center"><h3><small>Instance Timer</small></h3></div>
-                <div class="text-center">
-                  <input id="timer" data-state="{{ instance.state }}" data-expires="{{ instance.expires }}" data-updated="{{ instance.updated }}" data-step="1" data-readOnly=true data-min="0" value="{{ instance.expires - instance.updated }}" data-max="{{ instance.expires - instance.updated }}" data-width="230" data-height="230">
-                </div>
-                <div class="text-center timer-state">
-                  <p>{{ macros.instance_state_icon(instance.state) }}</p>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="text-center"><h3><small>Payment Address</small></h3></div>
-                <div class="text-center" id="qrcode"></div>
-                <div class="text-center" id="address"><a href="https://blockchain.info/address/{{ instance.address.address }}" target="_blank">{{ instance.address.address }}</a></div>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-4">
+              <div class="col-md-6">
                 <h3><small>Network Addresses</small></h3>
                 <table class="table table-striped table-responsive">
                   <tbody>
@@ -87,10 +87,6 @@
                     </tr>
                   </tbody>
                 </table>
-              </div>
-              <div class="col-md-8">
-                <h3><small>Instance Callbacks</small></h3>
-                <code>http://www.google.com/</code>
               </div>
             </div>
           </div>
@@ -141,6 +137,8 @@
       var timer2 = expires - epoch_time;
       if (timer2 > -1) {
         $('#timer').val(timer2).trigger("change");
+      } else {
+        $('#timer').val(0).trigger("change");
       }
     }, 1000);
 

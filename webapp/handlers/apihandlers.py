@@ -12,7 +12,7 @@ from webapp.models.models import Images, Flavors, OpenStack
 from webapp.models.models import Instances, Addresses
 
 from webapp.libs.utils import row2dict, message
-from webapp.libs.pool import pool_api_connect
+from webapp.libs.pool import pool_connect
 
 mod = Blueprint('api', __name__)
 
@@ -39,7 +39,7 @@ def token_validate():
 	appliance = db.session.query(Appliance).first()
 	
 	# check with pool operator
-	response = pool_api_connect(method="authorization", apitoken=appliance.apitoken)
+	response = pool_connect(method="authorization", apitoken=appliance.apitoken)
 
 	if response['response'] == "success":
 		# flush the cached status

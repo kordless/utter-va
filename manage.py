@@ -19,7 +19,7 @@ from webapp.models.models import Instances, Addresses
 from webapp.libs.utils import configure_blurb, query_yes_no, pprinttable, message
 from webapp.libs.coinbase import coinbase_get_addresses, coinbase_checker
 from webapp.libs.images import download_images
-from webapp.libs.pool import pool_api_salesman
+from webapp.libs.pool import pool_salesman, pool_connect
 
 # configuration file
 if os.path.isfile('./DEV'): 
@@ -156,6 +156,21 @@ def tunnel(app):
 
 	return action
 
+# check authorization
+def checkauth(app):
+	def action():
+		# get the appliance configuration
+		appliance = db.session.query(Appliance).first()
+
+		if appliance.apitoken:
+			response = pool_connect("authorization", appliance)		
+			print response
+		else:
+			configure_blurb()
+
+	return action
+
+
 # CRONTAB METHODS
 # grab the pool server's flavors and install
 # runs every 15 minutes via cron
@@ -265,6 +280,13 @@ def housekeeper(app):
 # runs every 10 minutes via cron
 def trashman(app):
 	def action():
+
+		# check appliance is ready to go - exit if not
+		settings = Status().check_settings()
+		if not settings['ngrok'] or not settings['openstack']:
+			print "Appliance is not ready."
+			return action
+
 		instances = db.session.query(Instances).filter_by(state=7).all()
 
 		for instance in instances:
@@ -277,6 +299,12 @@ def trashman(app):
 # runs every 5 minutes via cron
 def salesman(app):
 	def action():
+		# check appliance is ready to go - exit if not
+		settings = Status().check_settings()
+		if not settings['ngrok'] or not settings['openstack']:
+			print "Appliance is not ready."
+			return action
+
 		# get the appliance
 		appliance = db.session.query(Appliance).first()
 
@@ -284,8 +312,7 @@ def salesman(app):
 		instances = db.session.query(Instances).filter_by(state=1).all()
 
 		# call the pool with instances for sale
-		response = pool_api_salesman(instances, appliance)
-		print response
+		response = pool_salesman(instances, appliance)
 		
 	return action
 
@@ -298,12 +325,13 @@ manager.add_action('message', messenger)
 manager.add_action('reset', reset)
 manager.add_action('install', install)
 manager.add_action('tunnel', tunnel)
+manager.add_action('checkauth', checkauth)
 
 # run from cron every 1 minute
 manager.add_action('instances', instances)
 
 # run from cron every 5 mintues
-manager.add_action('housekeeper', instances)
+manager.add_action('housekeeper', housekeeper)
 
 # run from cron every 15 minutes
 manager.add_action('images', images)

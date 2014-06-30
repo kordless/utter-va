@@ -15,7 +15,6 @@ from webapp.forms.forms import OpenStackForm, ApplianceForm, InstanceForm
 
 from webapp.libs.geoip import get_geodata
 from webapp.libs.utils import row2dict, generate_token, message
-from webapp.libs.pool import pool_api_connect
 from webapp.libs.coinbase import coinbase_generate_address, coinbase_get_quote
 
 mod = Blueprint('configure', __name__)

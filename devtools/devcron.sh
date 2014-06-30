@@ -1,9 +1,10 @@
 #!/bin/bash
-
+cd ..
 while [ 1 ] 
 do
   echo "Running..."
   ./manage.py instances
+  ./manage.py housekeeper
   ./manage.py trashman
   ./manage.py salesman
   ./manage.py flavors

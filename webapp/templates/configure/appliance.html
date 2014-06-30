@@ -22,20 +22,20 @@
             <h2><small>Appliance Configuration</small></h2>
             <div class="bs-callout bs-callout-info bs-callout-top">
               <h4>Getting Started</h4>
-              <p>Fill out the following form to configure your appliance. This appliance needs to have a <strong>Regsitered API Pool Token</strong>, a valid <strong><a href="https://coinbase.com/signup?r=52a9c6bf937ab6453a00001e&utm_campaign=user-referral&src=referral-link" target="_blank">Coinbase API Key and Secret</a></strong> and an <strong><a href="https://ngrok.com/">Ngrok API Token</a></strong> before it will function.  You will also need to set the map to the approximate location of your <strong>OpenStack Cluster</strong> so users can request instances by <strong>geolocation</strong>.</p>
+              <p>Fill out the following form to configure your appliance. This appliance needs to have a <strong>Regsitered API Pool Token</strong>, a valid <strong><a href="https://coinbase.com/signup?r=52a9c6bf937ab6453a00001e&utm_campaign=user-referral&src=referral-link" target="_blank">Coinbase API Key and Secret</a></strong> and an <strong><a href="https://ngrok.com/">Ngrok API Token</a></strong> before it will function.  You will also need to set the map to the approximate location of your <strong>OpenStack Cluster</strong> so users can request instances by <strong>Geolocation</strong>.</p>
             </div>
           </div>
         </div>
       </div>
 
       <div class="row">
-        <div class="col-md-10">
+        <div class="col-md-12">
           <form action="{{ url_for("configure.configure") }}" method="post" class="form-horizontal" role="form">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
             {{ form.csrf_token }}
 
             <div class="row form-group">
-              <div class="col-md-10">
+              <div class="col-md-8">
                 {{ form.apitoken.label(class="control-label") }}
                 <div class="input-group" id="hover-api-token">
                   {{ form.apitoken(value=appliance.apitoken, class="form-control", disabled=true, id="api-token", required=true) }}
@@ -52,7 +52,7 @@
             </div>
             
             <div class="row form-group {% if form.cbapikey.errors %}has-error{% endif %}">
-              <div class="col-md-10">
+              <div class="col-md-8">
                 {{ form.cbapikey.label(class="control-label") }}
                 <div class="input-group" id="hover-cb-api-key">
                   {{ form.cbapikey(value=appliance.cbapikey, id="coinbase-api-key", placeholder="1bQDVJWdmCmyvx2o", class="form-control") }}
@@ -66,7 +66,7 @@
             </div>
 
             <div class="row form-group {% if form.cbapisecret.errors %}has-error{% endif %}" id="form-cb-api-secret">
-              <div class="col-md-10">
+              <div class="col-md-8">
                 {{ form.cbapisecret.label(class="control-label") }}
                 <div class="input-group {% if settings['coinbase'] == True %}hide-input{% endif %}" id="hover-cb-api-secret">
                   {{ form.cbapisecret(value=appliance.cbapisecret, id="coinbase-api-secret", placeholder="mvGCqnSP1KWVFOULPGQTthxsFVQOKyP8", class="form-control") }}
@@ -80,7 +80,7 @@
             </div>
             
             <div class="row form-group {% if form.ngroktoken.errors %}has-error{% endif %}">
-              <div class="col-md-10">
+              <div class="col-md-8">
                 {{ form.ngroktoken.label(class="control-label") }}
                 <div class="input-group" id="hover-ngrok-token">
                   {{ form.ngroktoken(value=appliance.ngroktoken, id="ngrok-token", placeholder="W7ern1ph6Q_I-95L54", class="form-control", required=true) }}
@@ -92,7 +92,7 @@
             </div>
 
             <div class="row form-group">
-              <div class="col-md-10">
+              <div class="col-md-12">
                 <label for="servicelocation" class="control-label">Service Location</label>
                 <div id='map'></div>
                 <div class='map-overlay'>

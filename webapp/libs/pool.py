@@ -6,32 +6,44 @@ from urllib2 import HTTPError
 from webapp import app
 from webapp.libs.utils import row2dict
 
-def loader():
-	pass
+# remote connection to pool operator's API method for a single instance
+def pool_instance(instance=None, appliance=None):
 
-# remote connection to pool operator's POST methods for instances
-def pool_api_instances(instance=None, apitoken=None):
-
-	url = "%s/api/v1/instances/%s?ver=%s&apitoken=%s" % (
+	url = "%s/api/v1/instances/%s/" % (
 		app.config['POOL_APPSPOT_WEBSITE'],
-		instance.name,
-		app.config['VERSION'],
-		apitoken
+		instance.name
 	)
 
-	# patch up instance for consumption by server
-	pool_instance = row2dict(instance)
-	pool_instance['flavor'] = instance.flavor.name
-	pool_instance['ask'] = instance.flavor.ask
-	pool_instance['image'] = instance.image.name
-	pool_instance['address'] = instance.address.address
+	# build the instance packet
+	packet = { 
+		"appliance": {
+			"apitoken": appliance.apitoken,
+			"version": app.config['VERSION'],
+			"dynamicimages": appliance.dynamicimages,
+			"location": {
+				"latitude": appliance.latitude,
+				"longitude": appliance.longitude
+			}
+		},
+		"instance": {
+			"name": instance.name,
+			"flavor": instance.flavor.name,
+			"ask": instance.flavor.ask,
+			"image": instance.image.name,
+			"state": instance.state,
+			"expires": instance.expires,
+			"address": instance.address.address
+		}
+	}
 
-	response = {"response": "success", "result": ""}
+	# response if things go wrong
+	response = {"response": "success", "result": {"message": ""}}
 
 	try:
 		request = Request(url)
 		request.add_header('Content-Type', 'application/json')
-		response = json.loads(urlopen(request, json.dumps(pool_instance), timeout=10).read())
+		data = urlopen(request, json.dumps(packet), timeout=10).read()
+		response = json.loads(data)
 	except HTTPError, e:
 		response['response'] = "fail"
 		response['result'] = "Error code %s returned from server. Authorization failed." % str(e.code)
@@ -48,13 +60,11 @@ def pool_api_instances(instance=None, apitoken=None):
 	return response
 
 # we're a salesman (provider) talking to the broker (pool) to hopefully sell stuff
-def pool_api_salesman(instances=None, appliance=None):
+def pool_salesman(instances=None, appliance=None):
 
 	# form the URL to advertise instance for sale
-	url = "%s/api/v1/broker?ver=%s&apitoken=%s" % (
-		app.config['POOL_APPSPOT_WEBSITE'],
-		app.config['VERSION'],
-		appliance.apitoken
+	url = "%s/api/v1/instances/broker/" % (
+		app.config['POOL_APPSPOT_WEBSITE']
 	)
 
 	# build the sales packet
@@ -78,14 +88,15 @@ def pool_api_salesman(instances=None, appliance=None):
 		# patch in flavor, ask, default image, address
 		pool_instance['flavor'] = instance.flavor.name
 		pool_instance['ask'] = instance.flavor.ask
+		pool_instance['state'] = instance.state
 		pool_instance['image'] = instance.image.name
 		pool_instance['address'] = instance.address.address
 
 		# add instances to the data packet
 		packet['instances'].append(pool_instance)
 
-	# build response to call to server
-	response = {"response": "success", "result": ""}
+	# response if things go wrong
+	response = {"response": "success", "result": {"message": ""}}
 
 	try:
 		request = Request(url)
@@ -107,18 +118,31 @@ def pool_api_salesman(instances=None, appliance=None):
 	return response
 
 # remote connection to pool operator's simple GET methods: flavor, image, auth
-def pool_api_connect(method="authorization", apitoken="unauthorized"):
-	url = "%s/api/v1/%s?ver=%s&apitoken=%s" % (
+def pool_connect(method="authorization", appliance=None):
+	url = "%s/api/v1/%s/" % (
 		app.config['POOL_APPSPOT_WEBSITE'],
-		method,
-		app.config['VERSION'],
-		apitoken
+		method
 	)
 
-	response = {"response": "success", "result": ""}
+	# build the packet
+	packet = { 
+		"appliance": {
+			"apitoken": appliance.apitoken, 
+			"dynamicimages": appliance.dynamicimages,
+			"location": {
+				"latitude": appliance.latitude,
+				"longitude": appliance.longitude
+			}
+		}
+	}
+
+	# response if things go wrong
+	response = {"response": "success", "result": {"message": ""}}
 
 	try:
-		response = json.loads(urlopen(url, timeout=10).read())
+		request = Request(url)
+		request.add_header('Content-Type', 'application/json')
+		response = json.loads(urlopen(request, json.dumps(packet), timeout=10).read())
 	except HTTPError, e:
 		response['response'] = "fail"
 		response['result'] = "Error code %s returned from server: %s" % (str(e.code), type(e).__name__)
