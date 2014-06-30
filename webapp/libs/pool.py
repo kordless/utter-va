@@ -6,13 +6,15 @@ from urllib2 import HTTPError
 from webapp import app
 from webapp.libs.utils import row2dict
 
-# remote connection to pool operator's API method for a single instance
-def pool_instance(instance=None, appliance=None):
+# provides callback initiation for an instance to the pool operator/callback handler
+def pool_instance(url=None, instance=None, appliance=None):
 
-	url = "%s/api/v1/instances/%s/" % (
-		app.config['POOL_APPSPOT_WEBSITE'],
-		instance.name
-	)
+	# assume no custom callback
+	if not url:
+		url = "%s/api/v1/instances/%s/" % (
+			app.config['POOL_APPSPOT_WEBSITE'],
+			instance.name
+		)
 
 	# build the instance packet
 	packet = { 
@@ -59,6 +61,7 @@ def pool_instance(instance=None, appliance=None):
 
 	return response
 
+# put instances up for sale
 # we're a salesman (provider) talking to the broker (pool) to hopefully sell stuff
 def pool_salesman(instances=None, appliance=None):
 

@@ -12,9 +12,11 @@ from sqlalchemy import or_
 
 from webapp import app, socketio, db
 
-from webapp.models.models import Appliance, Status
-from webapp.models.models import OpenStack, Images, Flavors
-from webapp.models.models import Instances, Addresses
+from webapp.models.models import User, Appliance, OpenStack, Status
+from webapp.models.images import Images 
+from webapp.models.flavors import Flavors
+from webapp.models.instances import Instances 
+from webapp.models.addresses import Addresses
 
 from webapp.libs.utils import configure_blurb, query_yes_no, pprinttable, message
 from webapp.libs.coinbase import coinbase_get_addresses, coinbase_checker
