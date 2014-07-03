@@ -69,7 +69,7 @@ def download_images(appliance, images):
 		except Exception, e:
 			# we failed to open image.url for size, or failed to download it locally
 			# if the local url is empty, indicate we should use original url to boot image
-			if image.local_url == "":
+			if image.local_url == "" or image.local_url is None:
 				epoch_time = int(time.time())
 				image.updated = epoch_time
 				image.active = 1

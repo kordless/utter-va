@@ -3,12 +3,12 @@ cd ..
 while [ 1 ] 
 do
   echo "Running..."
+  ./manage.py flavors
+  ./manage.py images
   ./manage.py instances
   ./manage.py housekeeper
   ./manage.py trashman
   ./manage.py salesman
-  ./manage.py flavors
-  ./manage.py images
   echo "Running in 60"
   sleep 30
   echo "Running in 30"

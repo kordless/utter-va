@@ -20,7 +20,7 @@
         <h4 class="modal-title">Manual Instance Payment</h4>
       </div>
       <div class="modal-body">
-        <p>The following Bitcoin address can be used to make a payment on this instance. The current ask for this instance is <code><span id="ask">XXX</span> μBTC/Hour</code>.</p>
+        <p>The following Bitcoin address can be used to make a payment on this instance. The current ask for this instance is <code><span id="ask">XXX</span> μBTC/Hour</code>. The instance will start using your {{ config['POOL_NAME'] }} account's <a target="_blank" href="{{ config['POOL_WEBSITE'] }}/wisps/">default wisp</a>.</p>
         <div class="qrcode-address">
           <div class="text-center" id="qrcode"></div>
           <div class="text-center" id="address"></div>
@@ -42,18 +42,8 @@
         <h4 class="modal-title">Manual Instance Start</h4>
       </div>
       <div class="modal-body">
-        <p>You are starting a <strong><span id="flavor-description"></span></strong> instance.  Select the system image to use and then click the <strong>Start Instance</strong> button.</p>
-        <div class="row form-group">
-          <div class="col-md-12">
-            <label class="control-label" for="osimageid">Image</label>
-            <select name="osimageid" class="form-control">
-            {% for image in images %}
-              <option value="{{ image.id }}">{{ image.description }}</option>
-            {% endfor %}
-            </select>
-          </div>
-        </div>
-         <p><strong>Note:</strong> Unless a Bitcoin payment is made to this instance, it will be automatically suspended after <strong>15 minutes</strong>.  Deprovisioning will occur <strong>2 hours</strong> later.</p>
+        <p>You are manually starting a <strong><span id="flavor-description"></span></strong> instance.  The instance will start using your {{ config['POOL_NAME'] }} account's <a target="_blank" href="{{ config['POOL_WEBSITE'] }}/wisps/">default wisp</a>.</p>  
+        <p><strong>Note:</strong> Unless a Bitcoin payment is made to this instance, it will be automatically suspended after <strong>15 minutes</strong>.  Deprovisioning will occur <strong>2 hours</strong> later.</p>
       </div>
       <div class="modal-footer">
         <button type="button" id="instance-close-button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -83,6 +73,7 @@
 
       <div class="row">
         <div class="col-md-12">
+          {% if instances %}
           <table class="table table-hover">
             <thead>
               <tr>
@@ -108,7 +99,11 @@
             </tbody>
           </table>
           <p><span class="glyphicon glyphicon-remove-sign"></span> inactive, <span class="glyphicon glyphicon-time"></span> waiting payment, <span class="glyphicon glyphicon-usd"></span> payment received, <span class="glyphicon glyphicon-off"></span> starting, <span class="glyphicon glyphicon-play"></span> running, <span class="glyphicon glyphicon-pause"></span> suspended, <span class="glyphicon glyphicon-fire"></span> unsuspend, <span class="glyphicon glyphicon-fullscreen"></span> decommissioned.</p>
+          {% else %}
+          <button id="reload" class="btn btn-danger"><span class="glyphicon glyphicon-time"></span> Please wait while instances are generated.</button>
+          {% endif %}
         </div>
+
       </div>
     </div>
   </div>
@@ -126,6 +121,11 @@
     function numberWithCommas(x) {
       return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
+
+    //reload
+    $('#reload').click(function() {
+      location.reload();
+    });
 
     setInterval(function() {
       var epoch_time = parseInt((new Date).getTime()/1000);

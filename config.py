@@ -18,7 +18,7 @@ class BaseConfiguration(object):
 	POOL_GPLUS_HANDLE = POOL_NAME_LOWER
 	POOL_GPLUS_NAME = POOL_NAME
 	POOL_TUNNEL_CONF = 'tunnel.conf'
-	POOL_DECOMMISSION_TIME = 60 # number of seconds to wait before cleaning up instance
+	POOL_DECOMMISSION_TIME = 7200 # number of seconds to wait before cleaning up instance
 	# End Pool Customization
 
 	DEBUG = False
@@ -58,3 +58,4 @@ class DebugConfiguration(BaseConfiguration):
 	DEV_PORT = 5000
 	APP_WEBSITE = "http://0.0.0.0:8079/".strip("/")
 	POOL_APPSPOT_WEBSITE = APP_WEBSITE
+	POOL_DECOMMISSION_TIME = 60

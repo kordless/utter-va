@@ -7,16 +7,17 @@ from webapp import app
 from webapp.libs.utils import row2dict
 
 # provides callback initiation for an instance to the pool operator/callback handler
+# calls InstancesHandler() in utter-pool's apihandlers.py 
 def pool_instance(url=None, instance=None, appliance=None):
 
-	# assume no custom callback
+	# no custom callback uses pool's default URL
 	if not url:
 		url = "%s/api/v1/instances/%s/" % (
 			app.config['POOL_APPSPOT_WEBSITE'],
 			instance.name
 		)
 
-	# build the instance packet
+	# build the outbound instance packet (to pool or callback service)
 	packet = { 
 		"appliance": {
 			"apitoken": appliance.apitoken,
@@ -31,20 +32,23 @@ def pool_instance(url=None, instance=None, appliance=None):
 			"name": instance.name,
 			"flavor": instance.flavor.name,
 			"ask": instance.flavor.ask,
-			"image": instance.image.name,
+			"address": instance.address.address,
 			"state": instance.state,
 			"expires": instance.expires,
-			"address": instance.address.address
+			"ipv4_address": instance.publicipv4,
+			"ipv6_address": instance.publicipv6,
+			"ipv4_private_address": instance.privateipv4
 		}
 	}
 
-	# response if things go wrong
+	# response template for if things go wrong
 	response = {"response": "success", "result": {"message": ""}}
 
 	try:
 		request = Request(url)
 		request.add_header('Content-Type', 'application/json')
 		data = urlopen(request, json.dumps(packet), timeout=10).read()
+		print data
 		response = json.loads(data)
 	except HTTPError, e:
 		response['response'] = "fail"
@@ -66,7 +70,7 @@ def pool_instance(url=None, instance=None, appliance=None):
 def pool_salesman(instances=None, appliance=None):
 
 	# form the URL to advertise instance for sale
-	url = "%s/api/v1/instances/broker/" % (
+	url = "%s/api/v1/broker/" % (
 		app.config['POOL_APPSPOT_WEBSITE']
 	)
 

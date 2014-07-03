@@ -1,13 +1,19 @@
 import time
 
+from HTMLParser import HTMLParser
+
 from webapp import app
 from webapp import db
 
 from webapp.models.mixins import CRUDMixin
 
 from webapp.libs.utils import generate_token, row2dict
+from webapp.libs.pool import pool_instance
+
 from webapp.models.models import Appliance
 from webapp.models.addresses import Addresses
+from webapp.models.images import Images
+from webapp.models.flavors import Flavors
 
 # instance model
 class Instances(CRUDMixin, db.Model):
@@ -18,7 +24,6 @@ class Instances(CRUDMixin, db.Model):
 	expires = db.Column(db.Integer)
 	name = db.Column(db.String(100))
 	osid = db.Column(db.String(100))
-	poolid = db.Column(db.String(100))
 	privateipv4 = db.Column(db.String(100))
 	publicipv4 = db.Column(db.String(100))
 	publicipv6 = db.Column(db.String(100))
@@ -35,8 +40,9 @@ class Instances(CRUDMixin, db.Model):
 	# 6 - payment observed from callback and unsuspend (relight)
 	# 7 - instance decommissioned (removed)
 	
-	sshkey = db.Column(db.String(2048))
 	callback_url = db.Column(db.String(1024))
+	dynamic_image_url = db.Column(db.String(1024))
+	post_creation = db.Column(db.String(8192))
 
 	# foreign keys
 	flavor_id = db.Column(db.Integer, db.ForeignKey('flavors.id'))
@@ -54,14 +60,14 @@ class Instances(CRUDMixin, db.Model):
 		expires=None,
 		name=None,
 		osid=None,
-		poolid=None,
 		privateipv4=None,
 		publicipv4=None,
 		publicipv6=None,
 		ssltunnel=None,
 		state=None,
-		sshkey=None,
 		callback_url=None,
+		dynamic_image_url=None,
+		post_creation=None,
 		flavor_id=None,
 		image_id=None,
 		address_id=None
@@ -71,14 +77,14 @@ class Instances(CRUDMixin, db.Model):
 		self.expires = expires
 		self.name = name
 		self.osid = osid
-		self.poolid = poolid
 		self.privateipv4 = privateipv4
 		self.publicipv4 = publicipv4
 		self.publicipv6 = publicipv6
 		self.ssltunnel = ssltunnel
 		self.state = state
-		self.sshkey = sshkey
 		self.callback_url = callback_url
+		self.dynamic_image_url = dynamic_image_url
+		self.post_creation = post_creation
 		self.flavor_id = flavor_id
 		self.image_id = image_id
 		self.address_id = address_id
@@ -201,22 +207,112 @@ class Instances(CRUDMixin, db.Model):
 		# appliance
 		appliance = Appliance().get()
 
-		# make a call to the pool with the instance details
-		pool_response = pool_instance(instance=self, appliance=appliance)
-		print pool_response
+		# load the callback url (usually None)
+		callback_url = self.callback_url
+		
+		# we run a maximum of 7 callback checks
+		for loop_count in range(7):
+			# make a call to the callback url to get instance details
+			pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
 
-		if pool_response['response'] == "fail":
-			response['result']['message'] = pool_response['result']
+			# check for a failure to contact the callback server
+			if pool_response['response'] == "fail":
+				response['result']['message'] = pool_response['result']
+				# probably should call the pool up and tell them...
+				return response
+
+			# look and see if we have a callback_url in the response
+			try:
+				callback_url = pool_response['result']['instance']['callback_url']
+				# run the loop again to call the callback url
+				continue 
+			except:
+				# break out
+				break
+		
+		# for else returns a depth error
+		else:
+			response['response'] = "fail"
+			response['result']['message'] = "Callback depth exceeded."
 			return response
+		
+		# and lo, callback_url is saved
+		self.callback_url = callback_url
+		self.update()
 
-		# overload the response from the server into the instance settings
-		# do something with response - TODO
-		# how do we do a dynamic image?
-		# sshkey, post creation script, security rules
+		# get the image name if it exists in the response 
+		try:
+			image_name = pool_response['result']['instance']['image']
+			image = db.session.query(Images).filter_by(name=image_name).first()
+			self.image_id = image.id
+			self.update()
+		except:
+			image_name = None
+			# get the dynamic image url if it exists in the response
+			try:
+				dynamic_image_url = pool_response['result']['instance']['dynamic_image_url']
+				self.dynamic_image_url = dynamic_image_url
+				self.update()
+			except:
+				# not good, but we can use a default
+				image = db.session.query(Images).first()
+				self.image_id = image.id
+				self.update()
+
+		# post creation file is blank to start
+		post_creation_ssh_key_combo = ""
+		
+		# load the parser to unencode jinja2 template stuff from appliance
+		h = HTMLParser()
+
+		# ssh_key unrolling
+		try:
+			ssh_key = pool_response['result']['instance']['ssh_key'] # an array
+
+			# loop through both strings and cat onto post_creation_ssh_key_combo
+			# using prefered method of injecting keys with cloud-init
+			post_creation_ssh_key_combo += "#cloud-config\n"
+			post_creation_ssh_key_combo += "ssh_authorized_keys:\n"
+			for line in ssh_key:
+				post_creation_ssh_key_combo += " - %s\n" % h.unescape(line)
+			post_creation_ssh_key_combo += "\n"
+
+		except:
+			# do nothing on various key failure
+			pass
+
+		# post creation unrolling
+		try:
+			post_creation = pool_response['result']['instance']['post_creation'] # an array
+
+			for line in post_creation:
+				# import what the user put in the textbox for their wisp
+				post_creation_ssh_key_combo += "%s\n" % h.unescape(line)
+
+		except:
+			# do nothing on post creation failure
+			pass
+
+		# update the instance with post creation
+		self.post_creation = post_creation_ssh_key_combo
+		self.update()
+
+		# deal with creating dynamic image or use predefined one
+		if self.dynamic_image_url:
+			image = Images().get_or_create_by_instance(self)
+		else:
+			image = Images().get_by_id(self.image.id)
+
+		if not image:
+			response['response'] = "fail"
+			response['result']['message'] = "Failed to create dynamic image."
+			return response
+		else:
+			self.image = image
+			self.update()
 
 		# take the image and verify install
-		image = Images().get_by_id(self.image.id)
-		osimage = image_verify_install(image)
+		osimage = image_verify_install(self.image)
 
 		# take the flavor and verify install
 		flavor = Flavors().get_by_id(self.flavor.id)
@@ -272,7 +368,6 @@ class Instances(CRUDMixin, db.Model):
 			# set network info
 			# make RUNNING callback
 				self.state = 4
-				print server.addresses
 				for address in server.addresses['private']:
 					if address['version'] == 4:
 						self.privateipv4 = address['addr']
@@ -281,7 +376,6 @@ class Instances(CRUDMixin, db.Model):
 				self.update()
 			elif server.status == "ERROR":
 				# instance failed to start
-				print "error"
 				response['response'] = "fail"
 				response['message'] = "Server isn't in active state yet."
 			else:
@@ -397,8 +491,6 @@ class Instances(CRUDMixin, db.Model):
 	# delete and cleanup instances which have been decomissioned
 	def trashman(self):
 		from webapp.libs.openstack import instance_info
-		from webapp.libs.openstack import instance_suspend
-		from webapp.libs.openstack import instance_resume
 		from webapp.libs.openstack import instance_decommission		
 
 		# build the response

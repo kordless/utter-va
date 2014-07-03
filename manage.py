@@ -6,6 +6,9 @@ import sys
 import time
 import gevent.monkey; gevent.monkey.patch_thread()
 
+import logging
+logging.basicConfig()
+
 from flask import Flask
 from flaskext.actions import Manager
 from sqlalchemy import or_
@@ -107,7 +110,7 @@ def serve(app):
 			socketio.run(app, host=default_ip)
 		else:
 			path = os.path.dirname(os.path.abspath(__file__))
-			os.system('gunicorn -c gunicorn.conf.py webapp:app')
+			os.system('gunicorn --access-logfile ./logs/access-log --error-logfile ./logs/error-log -c gunicorn.conf.py webapp:app')
 			sys.exit()
 	
 	return action
@@ -166,7 +169,6 @@ def checkauth(app):
 
 		if appliance.apitoken:
 			response = pool_connect("authorization", appliance)		
-			print response
 		else:
 			configure_blurb()
 
@@ -198,9 +200,14 @@ def images(app):
 		images = Images()
 		response = images.sync(appliance)
 
-		# now loop through and download if we don't have the files
-		images = db.session.query(Images).all()
+		# now loop through and download non dynamic images if we don't have the files
+		images = db.session.query(Images).filter_by(cache=1).all()
 		download_images(appliance, images)
+
+		# clear out old dynamic images
+		images = db.session.query(Images).filter_by(cache=0).all()
+		for image in images:
+			image.housekeeping()		
 
 	return action
 	

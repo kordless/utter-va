@@ -81,10 +81,12 @@ def image_verify_install(image):
 
 		if install_image:
 			# install remote or local image into openstack
-			if image.local_url != "":
-				location = image.local_url
-			else:
+			if image.local_url == "" or image.local_url is None:
 				location = image.url
+			else:
+				location = image.local_url
+
+			print location
 
 			osimage = glance.images.create(
 				name = image.name, 
@@ -244,21 +246,18 @@ def instance_start(instance):
 	# check if we already have a server named this running
 	servers = nova.servers.list()
 	for server in servers:
-		if server.name == instance.name and server.status == "ACTIVE":
+		if server.name == instance.name:
 			response['response'] = "success"
 			response['result']['message'] = "Server is already running."
 			response['result']['server'] = server
 			return response
 
-	# demo boot script - take this out later
-	boot_script = "#!/bin/bash\nwget http://goo.gl/Ox97xm -O - | bash"
 	# otherwise, start the server instances
 	server = nova.servers.create(
 		name=instance.name, 
 		image=instance.image.osid,
-		flavor=instance.flavor.osid, 
-		key_name="id-kord",
-		userdata=boot_script
+		flavor=instance.flavor.osid,
+		userdata=instance.post_creation
 	)
 
 	# response
@@ -341,12 +340,18 @@ def instance_decommission(instance):
 		# establish a connection to nova
 		nova = nova_connection()
 
-		# get the server's info
+		# get the server's info and delete
 		server = nova.servers.get(instance.osid)
-		
-		# delete it
 		server.delete()
 		
+		# search by name and delete any matches
+		# this attempts to address the observed behavior of an extra 
+		# copy of the same instance being started by manage.py  
+		servers = nova.servers.list()
+		for server in servers:
+			if server.name == instance.name:
+				server.delete()
+
 		# build response
 		response['result']['message'] = "Server stopped."
 		response['result']['server'] = server

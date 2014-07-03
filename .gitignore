@@ -5,3 +5,5 @@ DEV
 .DS_Store
 *.img
 *.log
+access-log
+error-log

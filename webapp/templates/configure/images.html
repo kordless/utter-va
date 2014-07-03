@@ -29,6 +29,7 @@
       </div>
       <div class="row">
         <div class="col-md-12">
+          {% if images %}
           <table class="table table-hover">
             <thead>
               <tr>
@@ -41,7 +42,7 @@
             <tbody>
               {% for image in images %}
               <tr>
-                <td>{% if image.active == 1 %}<span title="Local copy not available." class="glyphicon glyphicon-cloud"></span>{% elif image.active == 2 %}<span title="Local copy downloading." class="glyphicon glyphicon-floppy-save"></span>{% elif image.active == 3 %}<span title="Local copy installed." class="glyphicon glyphicon-floppy-saved"></span>{% else %}<span title="OpenStack having issues with image." class="glyphicon glyphicon-floppy-remove"></span>{% endif %}</td>
+                <td>{% if image.active == 1 %}<span title="Using dynamic cloud image." class="glyphicon glyphicon-cloud"></span>{% elif image.active == 2 %}<span title="Local copy downloading." class="glyphicon glyphicon-floppy-save"></span>{% elif image.active == 3 %}<span title="Local copy installed." class="glyphicon glyphicon-floppy-saved"></span>{% else %}<span title="OpenStack having issues with image." class="glyphicon glyphicon-floppy-remove"></span>{% endif %}</td>
                 <td><a href="{{ image.url}}">{{ image.name }}</a></td>
                 <td>{{ image.description }}</td>
                 <td>{{ image.size }}</td>
@@ -49,13 +50,16 @@
               {% endfor %}
             </tbody>
           </table>
+          {% else %}
+          <button id="reload" class="btn btn-danger"><span class="glyphicon glyphicon-time"></span> Please wait while images are loaded.</button>
+          {% endif %}
         </div>
       </div>
       <div class="row">
         <div class="col-md-12">
           <div class="section-header">
             <h2><small>Dynamic Images</small></h2>
-            <p>The appliance is currently <span class="not"><strong>not</strong></span> accepting dynamic images. <span class="not">This can affect the number of launches the appliance may receive.</span></p>
+            <p>The appliance is currently <span class="not"><strong>not</strong></span> advertising dynamic images for sale. <span class="not"><strong>Note:</strong> This appliance may still receive dynamic images under certain circumstances.</span></p>
             <div class="toggle-modern">
               <div id="dynamic-images-toggle" class="toggle{% if appliance.dynamicimages %} enabled{% endif %}"></div>
             </div>
@@ -74,6 +78,11 @@
 <script type="text/javascript">
   $().ready(function() {
     var csrf_token = "{{ csrf_token() }}";
+
+    //reload
+    $('#reload').click(function() {
+      location.reload();
+    });
 
     // dynamic images toggle
     $('#dynamic-images-toggle').toggles({

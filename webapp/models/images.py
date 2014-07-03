@@ -1,11 +1,13 @@
 import time
 
+from urllib2 import urlopen
+
 from webapp import app
 from webapp import db
 
 from webapp.models.mixins import CRUDMixin
 
-from webapp.libs.utils import row2dict
+from webapp.libs.utils import row2dict, generate_token
 from webapp.libs.images import uninstall_image
 from webapp.libs.pool import pool_connect
 
@@ -23,6 +25,7 @@ class Images(CRUDMixin, db.Model):
 	diskformat = db.Column(db.String(100))
 	containerformat = db.Column(db.String(100))
 	size = db.Column(db.Integer)
+	cache = db.Column(db.Integer) 
 
 	# 8 - uninstall
 	flags = db.Column(db.Integer)
@@ -40,6 +43,7 @@ class Images(CRUDMixin, db.Model):
 		url=None,
 		local_url=None,
 		size=None, 
+		cache=None,
 		diskformat=None, 
 		containerformat=None, 
 		flags=None
@@ -52,12 +56,63 @@ class Images(CRUDMixin, db.Model):
 		self.url = url
 		self.local_url = local_url
 		self.size = size
+		self.cache = cache
 		self.diskformat = diskformat
 		self.containerformat = containerformat
 		self.flags = flags
 	
 	def __repr__(self):
 		return '<Image %r>' % (self.name)
+
+	# create a dynamic image from an instance
+	def get_or_create_by_instance(self, instance):
+		# check if we already have it
+		image_name = "dynamic_image_%s" % generate_token(size=8, caselimit=True)
+		image = db.session.query(Images).filter_by(name=image_name).first()
+
+		# return it if we have it
+		if image:
+			return image
+
+		# else make a new one
+		if instance.dynamic_image_url:
+			image = Images()
+			epoch_time = int(time.time())
+			image.created = epoch_time
+			image.updated = epoch_time
+			image.name = image_name # from above
+			image.description = "Dynamic Image for Instance %s" % instance.name
+			image.url = instance.dynamic_image_url
+
+			# connect to remote URL's site and get size
+			site = urlopen(instance.dynamic_image_url)
+			meta = site.info()
+			size = int(meta.getheaders("Content-Length")[0])
+			site.close()
+
+			image.size = size
+			image.cache = 0 # don't cache
+			image.diskformat = "qcow2" # no time for anything fancy here
+			image.containerformat = "bare"
+			image.active = 1
+			image.flags = 1
+
+			# add and commit
+			image.update(image)
+
+			# return the image
+			return image
+		else:
+			return None
+
+	def housekeeping(self):
+		# limited time, all of us
+		epoch_time = int(time.time())
+
+		# delete if older than 2 hours and dynamic
+		if self.created + 7200 < epoch_time:
+			if not self.cache:
+				self.delete(self)
 
 	def check(self):
 		images = db.session.query(Images).all()
@@ -109,6 +164,7 @@ class Images(CRUDMixin, db.Model):
 					image.description = remoteimage['description']
 					image.url = remoteimage['url']
 					image.size = remoteimage['size'] # used as a suggestion of size only
+					image.cache = 1 # cache locally (unlike dynamic images)
 					image.diskformat = remoteimage['diskformat']
 					image.containerformat = remoteimage['containerformat']
 					image.active = 1 # indicates we know about it, but not downloaded
@@ -140,7 +196,7 @@ class Images(CRUDMixin, db.Model):
 			# grab a new copy of the images in database
 			images = db.session.query(Images).all()
 
-			# overload the results with the list of current flavors
+			# overload the results with the list of current images
 			response['result']['images'] = []
 			images = db.session.query(Images).all()
 

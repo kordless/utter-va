@@ -14,9 +14,7 @@
 <div class="container content">
   <div class="row">
     {{ macros.nav_pills("systems", settings) }}
-    <!-- form on right side -->
     <div class="col-md-9">
-      <!-- form header -->
       <div class="row">
         <div class="col-md-12">
           <div class="section-header">
@@ -41,6 +39,7 @@
                 <th>Disk</th>
                 <th>Network</th>
                 <th>Ask Rate</th>
+                <th>Limit</th>
               </tr>
             </thead>
             <tbody>
@@ -56,7 +55,8 @@
                 <td>{{ flavor.memory }}MB</td>
                 <td>{{ flavor.disk }}GB</td>
                 <td>{{ flavor.network }}Mb/sec</td>
-                <td>{{ flavor.ask }} μBTC/Hour</td>            
+                <td>{{ flavor.ask }} μBTC/Hour</td>
+                <td>10</td>            
               </tr>
               {% endfor %}
             </tbody>
