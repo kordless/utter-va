@@ -20,7 +20,7 @@
         <h4 class="modal-title">Manual Instance Payment</h4>
       </div>
       <div class="modal-body">
-        <p>The following Bitcoin address can be used to make a payment on this instance. The current ask for this instance is <code><span id="ask">XXX</span> μBTC/Hour</code>. The instance will start using your {{ config['POOL_NAME'] }} account's <a target="_blank" href="{{ config['POOL_WEBSITE'] }}/wisps/">default wisp</a>.</p>
+        <p>The following Bitcoin address can be used to make a payment on this instance. The current ask for this instance is <code><span id="ask">XXX</span> μBTC/Hour</code>. The instance will start using your {{ config['POOL_NAME'] }} account's <a target="_blank" href="{{ config['POOL_WEBSITE'] }}/wisps/">default wisp</a>, if you have one.</p>
         <div class="qrcode-address">
           <div class="text-center" id="qrcode"></div>
           <div class="text-center" id="address"></div>
@@ -42,7 +42,7 @@
         <h4 class="modal-title">Manual Instance Start</h4>
       </div>
       <div class="modal-body">
-        <p>You are manually starting a <strong><span id="flavor-description"></span></strong> instance.  The instance will start using your {{ config['POOL_NAME'] }} account's <a target="_blank" href="{{ config['POOL_WEBSITE'] }}/wisps/">default wisp</a>.</p>  
+        <p>You are manually starting a <strong><span id="flavor-description"></span></strong> instance.  The instance will start using your {{ config['POOL_NAME'] }} account's <a target="_blank" href="{{ config['POOL_WEBSITE'] }}/wisps/">default wisp</a>, if you have one.</p>  
         <p><strong>Note:</strong> Unless a Bitcoin payment is made to this instance, it will be automatically suspended after <strong>15 minutes</strong>.  Deprovisioning will occur <strong>{{ config['POOL_DECOMMISSION_TIME']|sec2min }} minutes</strong> later.</p>
       </div>
       <div class="modal-footer">
@@ -64,7 +64,7 @@
             <h2><small>Appliance Instances</small></h2>
             <div class="bs-callout bs-callout-info bs-callout-top">
               <h4>About Instances</h4>
-              <p><strong>Appliance Instances</strong> are are automatically created by <strong>Appliances</strong>, assigned <strong>Bitcoin Addresses</strong> from <stron>Coinbase</strong>, and registered for sale with the <strong>Pool Operator</strong> site. Instances are started by this appliance when Coinbase makes a <strong>Payment Callback</strong> to the appliance.</p>
+              <p><strong>Appliance Instances</strong> are are automatically created this <strong>Appliance</strong>, assigned <strong>Bitcoin Addresses</strong> from <strong>Coinbase</strong>, and registered for sale with the <strong>Pool Operator</strong> site. Instances are started by this appliance when Coinbase makes a <strong>Payment Callback</strong> to the appliance.</p>
               <p>Instances can be manually started by using the <strong>Start</strong> or <strong>Payment</strong> buttons. A detailed view of the instance can be seen by clicking on the <strong>Instance ID</strong> link.</p>
             </div>
           </div>

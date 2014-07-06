@@ -102,6 +102,8 @@ sudo monit monitor all
 # grab the IP address of the box
 MYIP=$(/sbin/ifconfig eth0| sed -n 's/.*inet *addr:\([0-9\.]*\).*/\1/p')
 
+# create random tokens for the config file
+
 # build the database and sync with pool operator
 sudo su -c "/var/www/utterio/manage.py install $MYIP" -s /bin/sh ubuntu
 

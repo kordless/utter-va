@@ -3,19 +3,28 @@ This is the utter.io virtual appliance, used by providers to manage their OpenSt
 
 More information about the utter.io project works can be seen on the first compute pool running at [https://www.stackmonkey.com](https://www.stackmonkey.com).
 
-### Installation
+### Installation by Script
 If you don't have OpenStack installed yet, follow [StackGeek's](http://www.stackgeek.com/) [Install OpenStack in 10 Minutes](http://www.stackgeek.com/guides/gettingstarted.html) guide. Once you've gotten OpenStack running, you'll run the [openstack_stackmonkey_va.sh](https://github.com/StackGeek/openstackgeek/blob/master/grizzly/openstack_stackmonkey_va.sh) script located in the [Grizzly](https://github.com/StackGeek/openstackgeek/tree/master/grizzly) directory.
 
     ./openstack_stackmonkey_va.sh
 
 The script installs a project, user, and security group rules for the virtual appliance.  It also starts a new instance named **StackMonkey VA** and adds a SSH keypair called **stackmonkey** to the project.
 
-Optionally, you can manually start the virtual appliance by entering the following two lines into the post creation field in the OpenStack Horizon UI:
 
-    #!/bin/bash
-    wget http://goo.gl/KJH5Sa -O - | sh
+### Installation by Instance Start
+If you already have OpenStack installed, you can manually start the virtual appliance by using a cloud init configuration file:
 
-Either way, once the instance has been started you can access the appliance's UI by entering the following into your browser (substituting the IP address, of course):
+    #cloud-config
+    hostname: stackmonkey-va
+    manage_etc_hosts: true
+    runcmd:
+     - [ wget, "http://goo.gl/KJH5Sa", -O, /tmp/install.sh ]
+     - chmod 755 /tmp/install.sh
+     - /tmp/install.sh
+
+
+# Configuration
+Once the instance has been started you can access the appliance's UI by entering the following into your browser (substituting the real IP address for this one):
 
     http://10.0.47.2/
 

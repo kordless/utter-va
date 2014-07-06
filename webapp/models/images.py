@@ -113,7 +113,14 @@ class Images(CRUDMixin, db.Model):
 		if self.created + app.config['POOL_DYNAMIC_IMAGES_EXPIRE_TIME'] < epoch_time:
 			# only delete images which were specified not to be cached (probably dynamic)
 			if not self.cache:
+				# openstack call to delete
+				from webapp.libs.openstack import image_delete
+				image_delete(self)
+
+				# delete from datastore
 				self.delete(self)
+
+		return True
 
 	def check(self):
 		images = db.session.query(Images).all()

@@ -25,7 +25,7 @@ class BaseConfiguration(object):
 	DEBUG = False
 	TESTING = False
 
-	VERSION = "0.1.0"
+	VERSION = "0.7"
 	APP_NAME = "%s Virtual Appliance" % POOL_NAME
 	APP_WEBSITE = POOL_WEBSITE
 

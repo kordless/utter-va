@@ -188,6 +188,44 @@ def image_verify_install(image):
 
 	return response
 
+# delete images
+def image_delete(image):
+	# build the response
+	response = {"response": "", "result": {"message": ""}}
+
+	# get the cluster configuration
+	openstack = db.session.query(OpenStack).first()
+
+	try:
+		# no configuration present
+		if not openstack:
+			raise OpenStackConfiguration("OpenStack configuration isn't complete.")
+	
+		# proper way of getting glance image via python
+		keystone = ksclient.Client(
+			auth_url = openstack.authurl, 
+			username = openstack.osusername, 
+			password = openstack.ospassword, 
+			tenant_id = openstack.tenantid
+		)
+
+		glance_endpoint = keystone.service_catalog.url_for(service_type='image')
+		glance = glanceclient.Client('1', endpoint=glance_endpoint, token=keystone.auth_token)
+
+		# try to delete the sucker
+		glance.images.delete(image.osid)
+
+		# response
+		response['response'] = "success"
+		response['result']['message'] = "Image deleted."
+
+	except Exception as ex:
+		# response
+		response['response'] = "fail"
+		response['result']['message'] = "Image delete failed: %s" % ex
+
+	return response
+
 # used by instance start method to install a flavor if we don't have it
 # or re-install a flavor if the flavor doesn't match appliance specs
 def flavor_verify_install(flavor):
