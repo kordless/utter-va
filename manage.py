@@ -9,6 +9,7 @@ import gevent.monkey; gevent.monkey.patch_thread()
 import logging
 logging.basicConfig()
 
+from IPy import IP
 from flask import Flask
 from flaskext.actions import Manager
 from sqlalchemy import or_
@@ -131,6 +132,94 @@ def coinop(app):
 			print "Can't find that instance!"
 	return action
 
+# show ips of running instances
+def ips(app):
+	def action():
+		from webapp.libs.openstack import instance_info
+
+		# check appliance is ready to go - exit if not
+		settings = Status().check_settings()
+		if not settings['ngrok'] or not settings['openstack']:
+			print "Appliance is not ready."
+			return action
+
+		instances = db.session.query(Instances).filter_by(state=4).all()
+
+		if not instances:
+			print "No instances are running.\n"
+
+		for instance in instances:
+			print "Instance %s" % instance.name
+			print "====================="
+
+			# get instance (server) info
+			response = instance_info(instance)
+			server = response['result']['server']
+
+			for key in server.networks.keys():
+				for network in server.networks[key]:
+					print "%s IPv%s: %s" % (IP(network).iptype(), IP(network).version(), network)
+			
+			# line break
+			print
+
+	return action
+
+# cleans up errant address assignments
+# unlikely to occur during regular operations
+def addressmop(app):
+	def action():
+
+		# check appliance is ready to go - exit if not
+		settings = Status().check_settings()
+		if not settings['ngrok'] or not settings['openstack']:
+			print "Appliance is not ready."
+			return action
+
+		instances = db.session.query(Instances).all()
+		addresses = db.session.query(Addresses).all()
+
+		# build an array of address ids from current instances
+		addresses_used = []
+		for instance in instances:
+			addresses_used.append(instance.address.id)
+
+		# build an array of address ids
+		addresses_known = []
+		for address in addresses:
+			addresses_known.append(address.id)
+		
+		# build the remove list
+		addresses_remove = [address for address in addresses_known if address not in addresses_used]
+
+		# zero out the ones to remove - if any
+		for address in addresses:
+			if address.id in addresses_remove:
+				address.instance_id = 0
+
+	return action
+
+# quick and dirty openstack stats
+def stats(app):
+	def action():
+		from webapp.libs.openstack import get_stats
+
+		# check appliance is ready to go - exit if not
+		settings = Status().check_settings()
+		if not settings['ngrok'] or not settings['openstack']:
+			print "Appliance is not ready."
+			return action
+
+		stats = get_stats()
+
+		print stats['result']['message']
+		for key in stats['result']['stats']:
+			print
+			print key 
+			print stats['result']['stats'][key]
+
+	return action
+
 # message client
 def messenger(app):
 	def action(
@@ -168,12 +257,12 @@ def checkauth(app):
 		appliance = db.session.query(Appliance).first()
 
 		if appliance.apitoken:
-			response = pool_connect("authorization", appliance)		
+			response = pool_connect("authorization", appliance)
+			print response['result']['message']
 		else:
 			configure_blurb()
 
 	return action
-
 
 # CRONTAB METHODS
 # grab the pool server's flavors and install
@@ -329,6 +418,9 @@ def salesman(app):
 manager.add_action('serve', serve)
 manager.add_action('coinop', coinop)
 manager.add_action('message', messenger)
+manager.add_action('ips', ips)
+manager.add_action('stats', stats)
+manager.add_action('addressmop', addressmop)
 
 # commands for user managment
 manager.add_action('reset', reset)

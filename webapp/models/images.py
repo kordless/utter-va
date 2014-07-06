@@ -109,8 +109,9 @@ class Images(CRUDMixin, db.Model):
 		# limited time, all of us
 		epoch_time = int(time.time())
 
-		# delete if older than 2 hours and dynamic
-		if self.created + 7200 < epoch_time:
+		# delete if older than configured amount 
+		if self.created + app.config['POOL_DYNAMIC_IMAGES_EXPIRE_TIME'] < epoch_time:
+			# only delete images which were specified not to be cached (probably dynamic)
 			if not self.cache:
 				self.delete(self)
 

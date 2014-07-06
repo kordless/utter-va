@@ -1,5 +1,7 @@
 import json
 
+from cgi import escape
+
 from urllib2 import urlopen, Request
 from urllib2 import HTTPError
 
@@ -16,11 +18,18 @@ def pool_instance(url=None, instance=None, appliance=None):
 			app.config['POOL_APPSPOT_WEBSITE'],
 			instance.name
 		)
+		apitoken = appliance.apitoken
+	else:
+		# mask our apitoken on subsequent redirects
+		apitoken = None
+
+	# getting lazy load errors every once in a while on flavors.  suggested fix here:
+	# http://stackoverflow.com/questions/4253176/issue-with-sqlalchemy-parent-instance-someclass-is-not-bound-to-a-session
+	flavor = instance.flavor.get()
 
 	# build the outbound instance packet (to pool or callback service)
 	packet = { 
 		"appliance": {
-			"apitoken": appliance.apitoken,
 			"version": app.config['VERSION'],
 			"dynamicimages": appliance.dynamicimages,
 			"location": {
@@ -30,9 +39,10 @@ def pool_instance(url=None, instance=None, appliance=None):
 		},
 		"instance": {
 			"name": instance.name,
-			"flavor": instance.flavor.name,
-			"ask": instance.flavor.ask,
+			"flavor": flavor.name,
+			"ask": flavor.ask,
 			"address": instance.address.address,
+			"console_output": [],
 			"state": instance.state,
 			"expires": instance.expires,
 			"ipv4_address": instance.publicipv4,
@@ -41,6 +51,15 @@ def pool_instance(url=None, instance=None, appliance=None):
 		}
 	}
 
+	# append the apitoken for the pool controller for pool auth
+	if apitoken:
+		packet['appliance']['apitoken'] = apitoken
+
+	# hack up the console object, if there is one
+	if instance.console:
+		for line in iter(instance.console.splitlines()):
+			packet['instance']['console_output'].append(escape(line))
+
 	# response template for if things go wrong
 	response = {"response": "success", "result": {"message": ""}}
 
@@ -48,7 +67,6 @@ def pool_instance(url=None, instance=None, appliance=None):
 		request = Request(url)
 		request.add_header('Content-Type', 'application/json')
 		data = urlopen(request, json.dumps(packet), timeout=10).read()
-		print data
 		response = json.loads(data)
 	except HTTPError, e:
 		response['response'] = "fail"
@@ -68,11 +86,18 @@ def pool_instance(url=None, instance=None, appliance=None):
 # put instances up for sale
 # we're a salesman (provider) talking to the broker (pool) to hopefully sell stuff
 def pool_salesman(instances=None, appliance=None):
+	from webapp.libs.openstack import get_stats
 
 	# form the URL to advertise instance for sale
 	url = "%s/api/v1/broker/" % (
 		app.config['POOL_APPSPOT_WEBSITE']
 	)
+
+	# grab the cluster's stats
+	try:
+		stats = get_stats()
+	except:
+		stats = {}
 
 	# build the sales packet
 	packet = { 
@@ -82,7 +107,8 @@ def pool_salesman(instances=None, appliance=None):
 			"location": {
 				"latitude": appliance.latitude,
 				"longitude": appliance.longitude
-			}
+			},
+			"stats": stats['result']['stats']
 		},
 		"instances": []
 	}

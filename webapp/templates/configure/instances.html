@@ -43,7 +43,7 @@
       </div>
       <div class="modal-body">
         <p>You are manually starting a <strong><span id="flavor-description"></span></strong> instance.  The instance will start using your {{ config['POOL_NAME'] }} account's <a target="_blank" href="{{ config['POOL_WEBSITE'] }}/wisps/">default wisp</a>.</p>  
-        <p><strong>Note:</strong> Unless a Bitcoin payment is made to this instance, it will be automatically suspended after <strong>15 minutes</strong>.  Deprovisioning will occur <strong>2 hours</strong> later.</p>
+        <p><strong>Note:</strong> Unless a Bitcoin payment is made to this instance, it will be automatically suspended after <strong>15 minutes</strong>.  Deprovisioning will occur <strong>{{ config['POOL_DECOMMISSION_TIME']|sec2min }} minutes</strong> later.</p>
       </div>
       <div class="modal-footer">
         <button type="button" id="instance-close-button" class="btn btn-default" data-dismiss="modal">Close</button>

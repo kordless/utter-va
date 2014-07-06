@@ -61,7 +61,7 @@ class Addresses(CRUDMixin, db.Model):
 					
 					# we don't have the address at coinbase in database
 					if address is None:
-						# create a new image
+						# create a new address
 						address = Addresses()
 						address.address = remoteaddress['address']
 						address.token = urlparse(remoteaddress['callback_url']).path.split('/')[-1]
@@ -73,7 +73,7 @@ class Addresses(CRUDMixin, db.Model):
 
 					# we have the address already and need to update it
 					else:
-						# update address from remote images
+						# update address from remote addresses
 						address.address = remoteaddress['address']
 						address.token = urlparse(remoteaddress['callback_url']).path.split('/')[-1]
 						address.subdomain = urlparse(remoteaddress['callback_url']).hostname.split('.')[0]

@@ -31,17 +31,77 @@ def nova_connection():
 
 	return connection
 
+# get stats for appliance cluster
+def get_stats():
+	# default response
+	response = {"response": "success", "result": {"message": ""}}
+
+	# openstack settings
+	openstack = OpenStack.get()
+
+	# try establishing nova connection
+	try:
+		nova = nova_connection()
+	except:
+		response['response'] = "fail"
+		response['result'] = "Can't communicate with OpenStack cluster."
+		return response
+	while 1:
+		# grab the infos from openstack
+		cluster_quota = nova.quotas.get(openstack.tenantname)
+		cluster_hypervisors = nova.hypervisors.list()
+			
+		# build the stats object
+		stats = {
+			"quota": {
+				"cores": cluster_quota.cores,
+				"fixips": cluster_quota.fixed_ips,
+				"instances": cluster_quota.instances,
+				"ram": cluster_quota.ram
+			},
+			"hypervisors": []
+		}
+
+		# loop through hypervisors
+		for cluster_hypervisor in cluster_hypervisors:
+			hypervisor = {}
+
+			hypervisor['hypervisor_hostname'] = cluster_hypervisor.hypervisor_hostname
+			hypervisor['is_loaded'] = cluster_hypervisor.is_loaded()
+			hypervisor['current_workload'] = cluster_hypervisor.current_workload
+			hypervisor['local_gb'] = cluster_hypervisor.local_gb
+			hypervisor['local_gb_used'] = cluster_hypervisor.local_gb_used
+			hypervisor['memory_mb'] = cluster_hypervisor.memory_mb
+			hypervisor['memory_mb_used'] = cluster_hypervisor.memory_mb_used
+			hypervisor['free_disk_gb'] = cluster_hypervisor.free_disk_gb
+			hypervisor['free_ram_mb'] = cluster_hypervisor.free_ram_mb
+			hypervisor['vcpus'] = cluster_hypervisor.vcpus
+			hypervisor['vcpus_used'] = cluster_hypervisor.vcpus_used
+			hypervisor['running_vms'] = cluster_hypervisor.running_vms
+			hypervisor['disk_available_least'] = cluster_hypervisor.disk_available_least
+
+			stats['hypervisors'].append(hypervisor)
+
+		response['response'] = "success"
+		response['result']['message'] = "OpenStack stats detail."
+		response['result']['stats'] = stats
+		return response
+
+	while 0:
+		response['response'] = "fail"
+		response['result']['message'] = "OpenStack stats not found."
+		return response
+
+
 # verify image is installed or install image correctly if it's not
 def image_verify_install(image):
 	# build the response
 	response = {"response": "", "result": {"message": "", "image": {}}}
 
+	# get the cluster configuration
 	openstack = db.session.query(OpenStack).first()
 
 	try:
-		# get the cluster configuration
-		openstack = db.session.query(OpenStack).first()
-	
 		# no configuration present
 		if not openstack:
 			raise OpenStackConfiguration("OpenStack configuration isn't complete.")
@@ -85,8 +145,6 @@ def image_verify_install(image):
 				location = image.url
 			else:
 				location = image.local_url
-
-			print location
 
 			osimage = glance.images.create(
 				name = image.name, 
@@ -202,9 +260,6 @@ def flavor_verify_install(flavor):
 				is_public=True
 			)
 			
-			# set provider info
-			#targetflavor.set_keys({"provider": app.config["POOL_NAME"]})
-
 			# set bandwidth
 			targetflavor.set_keys({"quota:inbound_average": flavor.network})
 			targetflavor.set_keys({"quota:outbound_average": flavor.network})
@@ -264,6 +319,32 @@ def instance_start(instance):
 	response['result']['message'] = "OpenStack instance started."
 	response['result']['server'] = server
 	return response
+
+def instance_console(instance):
+	# default response
+	response = {"response": "success", "result": {"message": "", "server": {}}}
+
+	# try establishing nova connection
+	try:
+		nova = nova_connection()
+	except:
+		response['response'] = "fail"
+		response['result'] = "Can't communicate with OpenStack cluster."
+		return response
+
+	try:
+		# grab the server info from openstack
+		console = nova.servers.get_console_output(instance.osid, 40)
+	
+		response['response'] = "success"
+		response['result']['message'] = "OpenStack instance console output."
+		response['result']['console'] = console
+		return response
+
+	except:
+		response['response'] = "fail"
+		response['result']['message'] = "OpenStack instance not found."
+		return response
 
 def instance_info(instance):
 	# default response

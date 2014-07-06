@@ -23,6 +23,9 @@ sudo apt-get install python-dev -y
 sudo apt-get install unzip -y
 sudo apt-get install monit -y
 
+# IPy address util
+sudo pip install IPy
+
 # install and patch gevent
 sudo apt-get install python-gevent -y
 pip install gevent --upgrade

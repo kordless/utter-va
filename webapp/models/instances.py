@@ -1,6 +1,7 @@
 import time
 
 from HTMLParser import HTMLParser
+from IPy import IP
 
 from webapp import app
 from webapp import db
@@ -27,6 +28,7 @@ class Instances(CRUDMixin, db.Model):
 	privateipv4 = db.Column(db.String(100))
 	publicipv4 = db.Column(db.String(100))
 	publicipv6 = db.Column(db.String(100))
+	console = db.Column(db.String(8192))
 	ssltunnel = db.Column(db.String(400))
 
 	state = db.Column(db.Integer) 
@@ -63,6 +65,7 @@ class Instances(CRUDMixin, db.Model):
 		privateipv4=None,
 		publicipv4=None,
 		publicipv6=None,
+		console=None,
 		ssltunnel=None,
 		state=None,
 		callback_url=None,
@@ -80,6 +83,7 @@ class Instances(CRUDMixin, db.Model):
 		self.privateipv4 = privateipv4
 		self.publicipv4 = publicipv4
 		self.publicipv6 = publicipv6
+		self.console = console
 		self.ssltunnel = ssltunnel
 		self.state = state
 		self.callback_url = callback_url
@@ -187,8 +191,23 @@ class Instances(CRUDMixin, db.Model):
 			self.expires = self.expires + purchased_seconds # starting from expire time
 			self.updated = epoch_time
 
+		# get instance console output - only run if we've got an osid
+		# basically this only runs when we get a repayment
+		if self.osid:
+			from webapp.libs.openstack import instance_console
+			response = instance_console(self)
+			if 'console' in response['result']:
+				self.console = response['result']['console']
+
 		# update the instance
 		self.update()
+
+		# make a call to the callback url to report instance details
+		# this will call the pool on initial payment.  subsequent payment calls go to 
+		# whatever callback address is set in the start() method below.
+		appliance = Appliance().get()
+		callback_url = self.callback_url
+		pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
 
 		# response
 		response['result']['message'] = "Added %s seconds to %s's expire time." % (purchased_seconds, self.name)
@@ -207,7 +226,7 @@ class Instances(CRUDMixin, db.Model):
 		# appliance
 		appliance = Appliance().get()
 
-		# load the callback url (usually None)
+		# load the callback url (expected to be None)
 		callback_url = self.callback_url
 		
 		# we run a maximum of 7 callback checks
@@ -262,7 +281,7 @@ class Instances(CRUDMixin, db.Model):
 		# post creation file is blank to start
 		post_creation_ssh_key_combo = ""
 		
-		# load the parser to unencode jinja2 template stuff from appliance
+		# load the parser to unencode jinja2 template escaping from appliance
 		h = HTMLParser()
 
 		# ssh_key unrolling
@@ -355,9 +374,19 @@ class Instances(CRUDMixin, db.Model):
 	# sets information about the instance and does a callback with info
 	def nudge(self):
 		from webapp.libs.openstack import instance_info
+		from webapp.libs.openstack import instance_console
+
+		# get instance console output
+		response = instance_console(self)
+		if 'console' in response['result']:
+			self.console = response['result']['console']
+		self.update()
 
 		# get instance (server) info
 		response = instance_info(self)
+
+		# set start state
+		start_state = self.state
 
 		# set instance meta data
 		if response['response'] == "success":
@@ -365,15 +394,27 @@ class Instances(CRUDMixin, db.Model):
 
 			# if the state is ACTIVE, we set to be running state==4
 			if server.status == "ACTIVE":
-			# set network info
-			# make RUNNING callback
+				# set network info
 				self.state = 4
-				for address in server.addresses['private']:
-					if address['version'] == 4:
-						self.privateipv4 = address['addr']
-					if address['version'] == 6:
-						self.publicipv6 = address['addr']
+
+				# extract IP addresses using IPy
+				# in some circumstances this will squash multiple same/same address types
+				# we only extract and store one each of private ipv4, public ipv4, and public ipv6
+				for key in server.networks.keys(): # any network names
+					for address in server.networks[key]: # loop through each address for each network
+						# private IPv4
+						if IP(address).iptype() == "PRIVATE" and IP(address).version() == 4:
+							self.privateipv4 = address
+						# public IPv4
+						elif IP(address).iptype() == "PUBLIC" and IP(address).version() == 4:
+							self.publicipv4 = address
+						# public IPv6
+						elif IP(address).iptype() == "ALLOCATED ARIN" and IP(address).version() == 6:
+							self.publicipv6 = address
+
+				# update the instance
 				self.update()
+			
 			elif server.status == "ERROR":
 				# instance failed to start
 				response['response'] = "fail"
@@ -403,6 +444,12 @@ class Instances(CRUDMixin, db.Model):
 			if updated:
 				pass
 
+		# make a call to the callback url to report instance details on state change
+		if self.state != start_state:
+			appliance = Appliance().get()
+			callback_url = self.callback_url
+			pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
+
 		return response
 
 	# HOUSEKEEPING WORKS ON STATE==4, STATE==5 and STATE==6 INSTANCES ONLY
@@ -415,6 +462,7 @@ class Instances(CRUDMixin, db.Model):
 		from webapp.libs.openstack import instance_suspend
 		from webapp.libs.openstack import instance_resume
 		from webapp.libs.openstack import instance_decommission
+		from webapp.libs.openstack import instance_console
 
 		# build the response
 		response = {"response": "success", "result": {"message": "", "server": {}}}
@@ -426,10 +474,8 @@ class Instances(CRUDMixin, db.Model):
 		# we all have limited time in this reality
 		epoch_time = int(time.time())
 
-		# debugging
-		# print server.status
-		# print epoch_time
-		# print self.expires
+		# set start state
+		start_state = self.state
 
 		# this is complicated...because we aren't EC with OpenStack...or I'm crazy
 		if cluster_response['response'] == "success": 
@@ -483,8 +529,19 @@ class Instances(CRUDMixin, db.Model):
 				response['result']['message'] = "Instance %s decommissioned." % self.name
 				self.state = 7 # will be deleted shortly after this by trashman
 
+		# get instance console output
+		cluster_response = instance_console(self)
+		if 'console' in response['result']:
+			self.console = response['result']['console']
+
 		# update
 		self.update()
+
+		# make a call to the callback url to report instance details on state change
+		if self.state != start_state:			
+			appliance = Appliance().get()
+			callback_url = self.callback_url
+			pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
 
 		return response
 
@@ -509,6 +566,11 @@ class Instances(CRUDMixin, db.Model):
 			address.release()
 			self.delete(self)
 			response['result']['message'] = "Instance %s has been deleted." % self.name
+
+		# make a call to the callback url to report instance details
+		appliance = Appliance().get()
+		callback_url = self.callback_url
+		pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
 
 		return response
 

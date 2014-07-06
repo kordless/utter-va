@@ -4,7 +4,7 @@ _basedir = os.path.abspath(os.path.dirname(__file__))
 
 class BaseConfiguration(object):
 
-	# Pool Customization
+	# pool configuration
 	POOL_NAME = "StackMonkey"
 	POOL_NAME_LOWER = ''.join(POOL_NAME.split()).lower()
 	POOL_WEBSITE = "https://www.stackmonkey.com/".strip("/")
@@ -18,44 +18,32 @@ class BaseConfiguration(object):
 	POOL_GPLUS_HANDLE = POOL_NAME_LOWER
 	POOL_GPLUS_NAME = POOL_NAME
 	POOL_TUNNEL_CONF = 'tunnel.conf'
-	POOL_DECOMMISSION_TIME = 7200 # number of seconds to wait before cleaning up instance
-	# End Pool Customization
+	POOL_DECOMMISSION_TIME = 7200
+	POOL_DYNAMIC_IMAGES_EXPIRE_TIME = 7200
 
+	# flask configuration
 	DEBUG = False
 	TESTING = False
 
 	VERSION = "0.1.0"
 	APP_NAME = "%s Virtual Appliance" % POOL_NAME
 	APP_WEBSITE = POOL_WEBSITE
-	APP_IRC_URL = "http://mibbit.com/?channel=#%s&server=irc.mibbit.net" % POOL_NAME_LOWER
-	
+
 	DATABASE = "utterio.db"
 	DATABASE_PATH = os.path.join(_basedir, DATABASE)
 	SQLALCHEMY_DATABASE_URI = 'sqlite:///' + DATABASE_PATH
-	
-	SECRET_KEY = "13afa9bb8b142d99b78bc143f754f736"
-	
-	CSRF_ENABLED = True
-	CSRF_SESSION_KEY = "d41d8cd98f00b204e9800998ecf8427e"
-	
-	THREADS_PER_PAGE = 8
-
 	BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
+	CSRF_ENABLED = True
+	SECRET_KEY = "13afa9bb8b142d99b78bc143f754f736"
+	CSRF_SESSION_KEY = "d41d8cd98f00b204e9800998ecf8427e"
+	THREADS_PER_PAGE = 8
 
-# currently not used - revise
-class TestConfiguration(BaseConfiguration):
-	TESTING = True
-	APP_WEBSITE = "http://0.0.0.0:8079/".strip("/")
-	DATABASE = 'test.db'
-	DATABASE_PATH = os.path.join(_basedir, DATABASE)
-	SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'  # + DATABASE_PATH
-	CSRF_ENABLED = False
-
-
+# debug configuration extras for dev
 class DebugConfiguration(BaseConfiguration):
 	DEBUG = True
 	DEV_PORT = 5000
 	APP_WEBSITE = "http://0.0.0.0:8079/".strip("/")
 	POOL_APPSPOT_WEBSITE = APP_WEBSITE
-	POOL_DECOMMISSION_TIME = 60
+	POOL_DECOMMISSION_TIME = 300
+	POOL_DYNAMIC_IMAGES_EXPIRE_TIME = 300

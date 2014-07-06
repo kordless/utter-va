@@ -93,6 +93,7 @@ CREATE TABLE instances (
   privateipv4 VARCHAR(100),
   publicipv4 VARCHAR(100),
   publicipv6 VARCHAR(100),
+  console VARCHAR(8192),
   ssltunnel VARCHAR(400),
   state INTEGER NOT NULL,
   callback_url VARCHAR(1024),

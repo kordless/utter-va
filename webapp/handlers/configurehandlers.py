@@ -31,6 +31,11 @@ ALLOWED_EXTENSIONS = set(['sh'])
 def allowed_file(filename):
 		return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
+# a second to minute filter for jinja2
+@app.template_filter('sec2min')
+def sec2min(value):
+	return divmod(int(value), 60)[0]
+
 # configure flavors page
 @mod.route('/configure/flavors', methods=['GET'])
 @login_required

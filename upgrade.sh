@@ -2,4 +2,4 @@
 monit stop gunicorn
 git pull
 monit start gunicorn
-chown -R ubuntu.ubuntu *
+chown -R /var/www/utterio/ubuntu.ubuntu *
