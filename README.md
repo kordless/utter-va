@@ -1,18 +1,36 @@
-## Utter.io Virtual Appliance
-This is the utter.io virtual appliance, used by providers to manage their OpenStack instances.  The appliance runs inside an OpenStack cluster and allows a provider to sell instances on a given compute pool exchange to end users for Bitcoin.  It can also be used to share compute resources between trusted entities.
+## Welcome to Utter.io and StackMonkey!
+Utter.io is like AirBnb for excess compute: It provides fast location and provisioning of compute resources within a cooperative of systems managed by [OpenStack](http://openstack.org/) operators. Resource accounting inside the network is settled with Bitcoin, and purchases of compute instances can be made by users without an account. Groups of operators can form private hybrid cloud groups, allowing fast scaling of excess compute resources between trusted entities.
 
-More information about the utter.io project works can be seen on the first compute pool running at [https://www.stackmonkey.com](https://www.stackmonkey.com).
+A set of three Open Source repositories provide this functionality: [utter-va](https://github.com/StackMonkey/utter-va), [utter-pool](https://github.com/StackMonkey/utter-pool) and [utter-exchange](https://github.com/StackMonkey/utter-exchange). The utter-va virtual appliance is an instance which runs on top of an OpenStack cluster. The appliance controls the OpenStack cluster's capabilities, advertises other instances for sale on a central pool controller (running utter-pool) and launches instances when payments are observed on the the [Bitcoin Blockchain](https://en.bitcoin.it/wiki/Block_chain) through callbacks made by [Coinbase](https://coinbase.com/).
 
-### Installation by Script
-If you don't have OpenStack installed yet, follow [StackGeek's](http://www.stackgeek.com/) [Install OpenStack in 10 Minutes](http://www.stackgeek.com/guides/gettingstarted.html) guide. Once you've gotten OpenStack running, you'll run the [openstack_stackmonkey_va.sh](https://github.com/StackGeek/openstackgeek/blob/master/grizzly/openstack_stackmonkey_va.sh) script located in the [Grizzly](https://github.com/StackGeek/openstackgeek/tree/master/grizzly) directory.
+The first compute pool is hosted on [AppEngine](https://appspot.com) and runs at [https://www.stackmonkey.com](https://www.stackmonkey.com). The expected beta launch date of the StackMonkey pool is no later than July 31, 2014.  After launch, individuals will be able to purchase instances for Bitcoin from the site. Please note you will need an account on StackMonkey if you want to sell instances, but *accounts will not be required to purchase instances*.
+
+The utter-exchange component will be completed at a later next year. The exchange will serve as a clearing house for compute put up for sale on the various pool controllers. The exchange will operate as a [DAC](https://en.bitcoin.it/wiki/Distributed_Autonomous_Community_/_Decentralized_Application) once the technologies required to create it have been completed.  You can expect a crypto currency to be launched for the project. Both the currency and compute assets managed by the network will be connected to the crypto markets.
+
+Welcome to the future.
+
+### Requirements
+The virtual appliance requires a running OpenStack cluster.  If you don't have an OpenStack cluster running, you may follow the instructions for [installing OpenStack](http://www.stackgeek.com/guides/gettingstarted.html) on the [StackGeek website](http://stackgeek.com/).
+
+You will also need to create or have the following service accounts available:
+
+  - a [Coinbase](https://coinbase.com/signup?r=52a9c6bf937ab6453a00001e&utm_campaign=user-referral&src=referral-link) account
+  - an [Ngrok](https://ngrok.com/) account
+  - a [StackMonkey](https://www.stackmonkey.com/login/) account
+
+Ideally, you have a compute rig with a minimum of 4 cores, 8GB of RAM, and a 60GB SSD drive. It is not recommended to run the appliance on a virtualized OpenStack deployment. ***Think [bare metal](http://en.wikipedia.org/wiki/Bare_machine).***
+
+### Automated Install
+If you followed StackGeek's [Install OpenStack in 10 Minutes](http://www.stackgeek.com/guides/gettingstarted.html) guide, you can run the [openstack_stackmonkey_va.sh](https://github.com/StackGeek/openstackgeek/blob/master/icehouse/openstack_stackmonkey_va.sh) script located in the [Icehouse](https://github.com/StackGeek/openstackgeek/tree/master/icehouse) directory to install the appliance:
 
     ./openstack_stackmonkey_va.sh
 
-The script installs a project, user, and security group rules for the virtual appliance.  It also starts a new instance named **StackMonkey VA** and adds a SSH keypair called **stackmonkey** to the project.
+The script automatically creates a user and project for the virtual appliance, sets the security group rules for the project, and then launches the appliance on the OpenStack cluster.  SSH keys are automatically created for accessing the appliance's console and a URL will be output at the end for accessing the web UI.  
 
+Once the script completes, you can skip to the configuration section below.
 
-### Installation by Instance Start
-If you already have OpenStack installed, you can manually start the virtual appliance by using a cloud init configuration file:
+### Manual Install
+If you already have OpenStack installed, you can manually start the virtual appliance by using a cloud init configuration:
 
     #cloud-config
     hostname: stackmonkey-va
@@ -23,7 +41,7 @@ If you already have OpenStack installed, you can manually start the virtual appl
      - /tmp/install.sh
 
 
-# Configuration
+### Configuration
 Once the instance has been started you can access the appliance's UI by entering the following into your browser (substituting the real IP address for this one):
 
     http://10.0.47.2/
@@ -31,10 +49,12 @@ Once the instance has been started you can access the appliance's UI by entering
 ### Video Guide
 The [following video](https://vimeo.com/91805503) will step you through installing the virtual appliance on your OpenStack cluster.  If you have any questions about the install, you can head over the the [StackMonkey](https://www.stackmonkey.com/) site.
 
+### Security
+
 ### Development
 If you are doing development on this project, drop a file named **DEV** in the root directory to turn on the development debug configuration.
 
-You'll also do manual starts of the service and Ngrok tunnel during devlopment:
+You'll also do manual starts of the service and Ngrok tunnel during development:
 
     ./manage.py serve
     ngrok -config tunnel.conf start utterio
