@@ -3,6 +3,8 @@ import json
 import hmac
 import hashlib
 
+from webapp import app
+
 from urllib2 import urlopen, Request, build_opener, HTTPError
 from urllib import quote
 
@@ -114,6 +116,9 @@ def coinbase_get_addresses(appliance=None):
 def coinbase_checker(appliance=None):
 	url = "https://coinbase.com/api/v1/authorization"
 	
+	# logging
+	# app.logger.info("Calling Coinbase API for auth verification.")
+
 	# create urlib2 opener and a nonce for the session
 	opener = build_opener()
 	nonce = int(time.time() * 1e6)
@@ -121,6 +126,8 @@ def coinbase_checker(appliance=None):
 	# create and sign the message
 	message = str(nonce) + url
 	signature = hmac.new(str(appliance.cbapisecret), message, hashlib.sha256).hexdigest()
+
+	# app.logger.info("secret is: %s, key is: %s" % (appliance.cbapisecret, appliance.cbapikey))
 
 	# pop parameters into the headers
 	opener.addheaders = [('ACCESS_KEY', appliance.cbapikey),
@@ -131,7 +138,8 @@ def coinbase_checker(appliance=None):
 	try:
 		result = json.loads(opener.open(Request(url), timeout=5).read())
 		return True
-	except:
+	except Exception as ex:
+		# app.logger.error("Authentication using key %s to Coinbase failed.  Check your credentials.")
 		return False
 
 

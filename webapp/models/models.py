@@ -216,6 +216,8 @@ class Status(CRUDMixin, db.Model):
 		# if the cache time has been a while, or we are on
 		# the configuration page, check settings and cache
 		if check:
+			# app.logger.info("Running full status check.")
+			
 			# openstack connected?
 			openstack_check = openstack.check()
 			status.openstack_check = openstack_check
@@ -250,6 +252,8 @@ class Status(CRUDMixin, db.Model):
 			status.update()
 		
 		else:
+			# app.logger.info("Running partial status check.")
+			
 			# stuff we check all the time
 			# openstack connected?
 			openstack_check = openstack.check()

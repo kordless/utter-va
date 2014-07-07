@@ -6,9 +6,6 @@ import sys
 import time
 import gevent.monkey; gevent.monkey.patch_thread()
 
-import logging
-logging.basicConfig()
-
 from IPy import IP
 from flask import Flask
 from flaskext.actions import Manager
@@ -441,4 +438,5 @@ manager.add_action('trashman', trashman)
 manager.add_action('salesman', salesman)
 
 if __name__ == "__main__":
+	# run the manager
 	manager.run()
