@@ -107,21 +107,32 @@ MYIP=$(/sbin/ifconfig eth0| sed -n 's/.*inet *addr:\([0-9\.]*\).*/\1/p')
 # build the database and sync with pool operator
 sudo su -c "/var/www/utterio/manage.py install $MYIP" -s /bin/sh ubuntu
 
-# install crontab for ubuntu user to run every 15 minutes
+# install crontab for ubuntu user to run every 15 minutes starting with a random minute
 MICROS=`date +%N`
-FIRST=`expr $MICROS % 15`
-SECOND=`expr $FIRST + 15`
-THIRD=`expr $FIRST + 30`
-FOURTH=`expr $FIRST + 45`
+ONE=`expr $MICROS % 5`
+TWO=`expr $ONE + 5`
+THREE=`expr $ONE + 10`
+FOUR=`expr $ONE + 15`
+FIVE=`expr $ONE + 20`
+SIX=`expr $ONE + 25`
+SEVEN=`expr $ONE + 30`
+EIGHT=`expr $ONE + 35`
+NINE=`expr $ONE + 40`
+TEN=`expr $ONE + 45`
+ELEVEN=`expr $ONE + 50`
+TWELVE=`expr $ONE + 55`
 
 sudo cat <<EOF > /var/www/utterio/crontab
 # run various manage commands every 15 minutes
-$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/utterio/manage.py images > /dev/null 2>&1
-$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/utterio/manage.py flavors > /dev/null 2>&1
-$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/utterio/manage.py trashman > /dev/null 2>&1
-$FIRST,$SECOND,$THIRD,$FOURTH * * * * /var/www/utterio/manage.py salesman > /dev/null 2>&1
+$ONE,$FOUR,$SEVEN,$TEN * * * * /var/www/utterio/manage.py images > /dev/null 2>&1
+$ONE,$FOUR,$SEVEN,$TEN * * * * /var/www/utterio/manage.py flavors > /dev/null 2>&1
+$TWO,$FIVE,$EIGHT,$ELEVEN * * * * /var/www/utterio/manage.py salesman > /dev/null 2>&1
+$THREE,$SIX,$NINE,$TWELVE * * * * /var/www/utterio/manage.py trashman > /dev/null 2>&1
 
-# run various manage commands every 15 minutes
+# run various manage commands every 5 minutes
+$ONE,$TWO,$THREE,$FOUR,$FIVE,$SIX,$SEVEN,$EIGHT,$NINE,$TEN,$ELEVEN,$TWELVE * * * * /var/www/utterio/manage.py housekeeper > /dev/null 2>&1
+
+# run various manage commands every 1 minute
 * * * * * /var/www/utterio/manage.py instances > /dev/null 2>&1
 EOF
 sudo crontab -u ubuntu /var/www/utterio/crontab

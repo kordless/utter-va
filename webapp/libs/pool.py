@@ -70,7 +70,7 @@ def pool_instance(url=None, instance=None, appliance=None):
 		response = json.loads(data)
 	except HTTPError, e:
 		response['response'] = "fail"
-		response['result'] = "Error code %s returned from server. Authorization failed." % str(e.code)
+		response['result'] = "Error code %s returned from server." % str(e.code)
 	except IOError as ex:
 		response['response'] = "fail"
 		response['result'] = "Can't contact pool server.  Try again later."
@@ -95,7 +95,8 @@ def pool_salesman(instances=None, appliance=None):
 
 	# grab the cluster's stats
 	try:
-		stats = get_stats()
+		response = get_stats()
+		stats = response['result']['stats']
 	except:
 		stats = {}
 
@@ -108,7 +109,7 @@ def pool_salesman(instances=None, appliance=None):
 				"latitude": appliance.latitude,
 				"longitude": appliance.longitude
 			},
-			"stats": stats['result']['stats']
+			"stats": stats
 		},
 		"instances": []
 	}

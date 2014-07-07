@@ -46,11 +46,11 @@ def get_stats():
 		response['response'] = "fail"
 		response['result'] = "Can't communicate with OpenStack cluster."
 		return response
-	while 1:
+	
+	try:
 		# grab the infos from openstack
-		cluster_quota = nova.quotas.get(openstack.tenantname)
-		cluster_hypervisors = nova.hypervisors.list()
-			
+		cluster_quota = nova.quotas.get(openstack.tenantid)
+		
 		# build the stats object
 		stats = {
 			"quota": {
@@ -62,6 +62,15 @@ def get_stats():
 			"hypervisors": []
 		}
 
+	except:
+		response['response'] = "fail"
+		response['result']['message'] = "OpenStack quota list unavailable."
+		return response
+
+	# try to talk to the hypervisor list function
+	try:
+		cluster_hypervisors = nova.hypervisors.list()
+			
 		# loop through hypervisors
 		for cluster_hypervisor in cluster_hypervisors:
 			hypervisor = {}
@@ -82,16 +91,15 @@ def get_stats():
 
 			stats['hypervisors'].append(hypervisor)
 
-		response['response'] = "success"
-		response['result']['message'] = "OpenStack stats detail."
-		response['result']['stats'] = stats
-		return response
+	except:
+		# nevermind then
+		pass
 
-	while 0:
-		response['response'] = "fail"
-		response['result']['message'] = "OpenStack stats not found."
-		return response
-
+	# return one or both of quota and hypervisor stats
+	response['response'] = "success"
+	response['result']['message'] = "OpenStack stats detail."
+	response['result']['stats'] = stats
+	return response		
 
 # verify image is installed or install image correctly if it's not
 def image_verify_install(image):
