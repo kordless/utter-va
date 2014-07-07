@@ -309,7 +309,7 @@ class Instances(CRUDMixin, db.Model):
 			# do nothing on various key failure
 			pass
 
-		# post creation unrolling
+		# post creation configuration handling
 		try:
 			post_creation = pool_response['result']['instance']['post_creation'] # an array
 
@@ -355,7 +355,10 @@ class Instances(CRUDMixin, db.Model):
 			response['response'] = "fail"
 			response['result']['message'] = "Failed to create flavor."
 			return response
-		
+
+		# tell openstack to start the instance
+		cluster_response = instance_start(self)
+
 		# process response
 		if cluster_response['response'] == "success":
 			server = cluster_response['result']['server']
