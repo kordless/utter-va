@@ -229,6 +229,15 @@ class Instances(CRUDMixin, db.Model):
 		# load the callback url (expected to be None)
 		callback_url = self.callback_url
 		
+		# check if instance needs to reset
+		epoch_time = int(time.time())
+		if self.expires < epoch_time:
+			# instance time expired, so don't start
+			self.state = 1
+			self.update()
+			response['response'] = "fail"
+			response['result']['message'] = "Instance payment is expired.  Now waiting on payment."
+
 		# we run a maximum of 7 callback checks
 		for loop_count in range(7):
 			# make a call to the callback url to get instance details
@@ -346,27 +355,16 @@ class Instances(CRUDMixin, db.Model):
 			response['response'] = "fail"
 			response['result']['message'] = "Failed to create flavor."
 			return response
-
-		# start the instance and set state
-		epoch_time = int(time.time())
-		if self.expires > epoch_time:
-			cluster_response = instance_start(self)
-			
-			# process response
-			if cluster_response['response'] == "success":
-				server = cluster_response['result']['server']
-				self.osid = server.id # assign openstack instance id
-				self.state = 3 # mark as starting
-				self.update()
-				response['result'] = cluster_response['result']
-			else:
-				response = cluster_response
-		else:
-			# instance time expired, so don't start
-			self.state = 1
+		
+		# process response
+		if cluster_response['response'] == "success":
+			server = cluster_response['result']['server']
+			self.osid = server.id # assign openstack instance id
+			self.state = 3 # mark as starting
 			self.update()
-			response['response'] = "fail"
-			response['result']['message'] = "Instance payment is expired.  Now waiting on payment."
+			response['result'] = cluster_response['result']
+		else:
+			response = cluster_response
 
 		return response
 
