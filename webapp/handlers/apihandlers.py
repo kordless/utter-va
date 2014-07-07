@@ -113,7 +113,7 @@ def address_handler(address_token):
 		instance_response = instance.coinop(amount)
 
 		# indicate we were paid and reload the page
-		message("Instance %s received a payment of %s μBTC." % (instance.name, int(amount*1000000)), "success", True)
+		message("Instance %s received a payment of %s micro BTC." % (instance.name, int(amount*1000000)), "success", True)
 
 		# load response
 		response['result'] = "acknowledged"
