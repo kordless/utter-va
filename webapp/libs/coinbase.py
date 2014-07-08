@@ -27,13 +27,15 @@ def coinbase_get_quote(appliance=None, currency=None):
 	except IOError as ex:
 		response['response'] = "fail"
 		response['result'] = "Can't contact quote server.  Try again later."
+		app.logger.error("Can't contact Coinbase quote server.")
 	except ValueError as ex:
 		response['response'] = "fail"
 		response['result'] = "Having issues parsing JSON from the site: %s.  Open a ticket." % type(ex).__name__
+		app.logger.error("Can't parse JSON returned from Coinbase.")
 	except Exception as ex:
 		response['response'] = "fail"
 		response['result'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
-
+		app.logger.error("An error of type %s has occured." % type(ex).__name__)
 	return response
 
 # HMAC construction and Coinbase query
@@ -72,9 +74,11 @@ def coinbase_generate_address(appliance=None, callback_url=None, label=None):
 	except HTTPError as ex:
 		response['response'] = "fail"
 		response['result'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
+		app.logger.error("An error of type %s has occured." % type(ex).__name__)
 	except CoinBaseAddressBuild as ex:
 		response['response'] = "fail"
 		response['result'] = str(ex)
+		app.logger.error("Coinbase returned mismatched parameters for callback url or label.")
 	
 	return response
 
@@ -106,10 +110,12 @@ def coinbase_get_addresses(appliance=None):
 	except HTTPError as ex:
 		response['response'] = "fail"
 		response['result'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
+		app.logger.error("An error of type %s has occured." % type(ex).__name__)
 	except CoinBaseAddressBuild as ex:
 		response['response'] = "fail"
 		response['result'] = str(ex)
-	
+		app.logger.error("Coinbase returned mismatched parameters for callback url or label.")
+
 	return response
 
 # HMAC construction and Coinbase check
@@ -139,7 +145,5 @@ def coinbase_checker(appliance=None):
 		result = json.loads(opener.open(Request(url), timeout=5).read())
 		return True
 	except Exception as ex:
-		# app.logger.error("Authentication using key %s to Coinbase failed.  Check your credentials.")
+		app.logger.error("Auth with Coinbase key=(%s) failed." % appliance.cbapikey)
 		return False
-
-

@@ -101,14 +101,15 @@ def install(app):
 	return action
 
 # DEVELOPMENT METHODS
-# serve application via dev server or gunicorn)
+# serve application for development (in production we start it from monit)
 def serve(app):
 	def action(dev=('d', 'false')):
 		if dev == 'true':
 			socketio.run(app, host=default_ip)
 		else:
 			path = os.path.dirname(os.path.abspath(__file__))
-			os.system('gunicorn --access-logfile ./logs/access-log --error-logfile ./logs/error-log -c gunicorn.conf.py webapp:app')
+			# start gunicorn for development
+			os.system('gunicorn --max-requests 1 --access-logfile ./logs/access-log --error-logfile ./logs/error-log -c gunicorn.conf.py webapp:app')
 			sys.exit()
 	
 	return action
@@ -304,7 +305,8 @@ def instances(app):
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
 		if not settings['ngrok'] or not settings['openstack']:
-			print "Appliance is not ready."
+			log = "Running instances - appliance is not ready."
+			app.logger.error(log)
 			return action
 
 		# START
@@ -336,7 +338,8 @@ def housekeeper(app):
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
 		if not settings['ngrok'] or not settings['openstack']:
-			print "Appliance is not ready."
+			log = "Running housekeeper - appliance is not ready."
+			app.logger.error(log)
 			return action
 
 		# MIXING
@@ -379,7 +382,8 @@ def trashman(app):
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
 		if not settings['ngrok'] or not settings['openstack']:
-			print "Appliance is not ready."
+			log = "Running trashman - appliance is not ready."
+			app.logger.error(log)
 			return action
 
 		instances = db.session.query(Instances).filter_by(state=7).all()
@@ -397,7 +401,8 @@ def salesman(app):
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
 		if not settings['ngrok'] or not settings['openstack']:
-			print "Appliance is not ready."
+			log = "Running salesman - appliance is not ready."
+			app.logger.error(log)
 			return action
 
 		# get the appliance
@@ -438,5 +443,19 @@ manager.add_action('trashman', trashman)
 manager.add_action('salesman', salesman)
 
 if __name__ == "__main__":
+
+	# manager logs
+	import logging
+	from logging.handlers import RotatingFileHandler
+
+	# delete existing handlers
+	del app.logger.handlers[:]
+	handler = RotatingFileHandler('logs/commands.log', maxBytes=1000000, backupCount=1)
+	handler.setLevel(logging.INFO)
+	log_format = "%(asctime)s - %(levelname)s - %(message)s"
+	formatter = logging.Formatter(log_format)
+	handler.setFormatter(formatter)
+	app.logger.addHandler(handler)
+
 	# run the manager
 	manager.run()

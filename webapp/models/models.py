@@ -72,11 +72,13 @@ class OpenStack(CRUDMixin, db.Model):
 					password = openstack.ospassword,
 					tenant_id = openstack.tenantid,
 					auth_url = openstack.authurl,
-					timeout = 5
+					timeout = 10
 				)
 			except:
+				app.logger.info("OpenStack API is not ready.")
 				return False
 		else:
+			app.logger.info("OpenStack API is not ready.")
 			return False
 		
 		return True
@@ -178,6 +180,7 @@ class Appliance(CRUDMixin, db.Model):
 			with open(tunnel_conf_file, 'w') as yaml_file:
 				yaml_file.write( yaml.dump(data, default_flow_style=False))
 
+			app.logger.info("Wrote Ngrok configuration file to %s." % tunnel_conf_file)
 
 # settings check model
 class Status(CRUDMixin, db.Model):
@@ -216,7 +219,7 @@ class Status(CRUDMixin, db.Model):
 		# if the cache time has been a while, or we are on
 		# the configuration page, check settings and cache
 		if check:
-			# app.logger.info("Running full status check.")
+			app.logger.info("Running full status check.")
 			
 			# openstack connected?
 			openstack_check = openstack.check()
@@ -252,7 +255,7 @@ class Status(CRUDMixin, db.Model):
 			status.update()
 		
 		else:
-			# app.logger.info("Running partial status check.")
+			app.logger.info("Running partial status check.")
 			
 			# stuff we check all the time
 			# openstack connected?
@@ -282,7 +285,7 @@ class Status(CRUDMixin, db.Model):
 			"ngrok": status.ngrok_check,
 			"token": status.token_check,
 		}
-			
+		
 		return settings
 
 	# delete all settings

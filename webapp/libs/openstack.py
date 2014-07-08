@@ -13,7 +13,7 @@ import glanceclient
 
 from webapp import app, db
 from webapp.models.models import OpenStack
-from webapp.libs.exceptions import OpenStackConfiguration
+from webapp.libs.exceptions import OpenStackConfiguration, OpenStackError
 from webapp.libs.utils import message, row2dict
 
 def nova_connection():
@@ -45,6 +45,7 @@ def get_stats():
 	except:
 		response['response'] = "fail"
 		response['result'] = "Can't communicate with OpenStack cluster."
+		app.logger.info("Failed to connect to the OpenStack cluster.")
 		return response
 	
 	try:
@@ -65,6 +66,7 @@ def get_stats():
 	except:
 		response['response'] = "fail"
 		response['result']['message'] = "OpenStack quota list unavailable."
+		app.logger.error("The OpenStack cluster is refusing to provide quota information.")
 		return response
 
 	# try to talk to the hypervisor list function
@@ -93,6 +95,7 @@ def get_stats():
 
 	except:
 		# nevermind then
+		app.logger.error("The OpenStack cluster is refusing to provide hypervisor information.")
 		pass
 
 	# return one or both of quota and hypervisor stats
@@ -145,6 +148,7 @@ def image_verify_install(image):
 		
 		except Exception as ex:
 			osimage = None # we're here because osimage was None
+			app.logger.info("Installing image=(%s) into the OpenStack cluster." % image.name)
 			install_image = True
 
 		if install_image:
@@ -194,6 +198,8 @@ def image_verify_install(image):
 		response['result']['image'] = row2dict(image)
 		response['result']['message'] = "%s" % ex
 
+		app.logger.error("Failed to install image=(%s) into the OpenStack cluster." % image.name)
+
 	return response
 
 # delete images
@@ -231,6 +237,8 @@ def image_delete(image):
 		# response
 		response['response'] = "fail"
 		response['result']['message'] = "Image delete failed: %s" % ex
+		
+		app.logger.error("Failed to delete image=(%s) from the OpenStack cluster." % image.name)
 
 	return response
 
@@ -291,7 +299,7 @@ def flavor_verify_install(flavor):
 					# remove the old flavor
 					nova.flavors.delete(targetflavor.id)
 				except:
-					pass
+					app.logger.info("Could not remove the old flavor=(%s) from the OpenStack cluster." % flavor.name)
 
 			# create the new flavor
 			targetflavor = nova.flavors.create(
@@ -305,10 +313,12 @@ def flavor_verify_install(flavor):
 				rxtx_factor=1.0,
 				is_public=True
 			)
-			
+
 			# set bandwidth
 			targetflavor.set_keys({"quota:inbound_average": flavor.network})
 			targetflavor.set_keys({"quota:outbound_average": flavor.network})
+
+			app.logger.info("Installed flavor=(%s) into the OpenStack cluster." % flavor.name)
 
 		# update the flavor database with id
 		flavor.osid = targetflavor.id
@@ -319,7 +329,7 @@ def flavor_verify_install(flavor):
 		response['result']['message'] = "Flavor added."
 		response['result']['flavor'] = row2dict(flavor)
 
-	except Exception, ex:
+	except Exception as ex:
 		# update our image to not be installed
 		flavor.osid = ""
 		flavor.active = 0
@@ -330,6 +340,8 @@ def flavor_verify_install(flavor):
 		response['result']['flavor'] = row2dict(flavor)
 		response['result']['message'] = "%s" % ex
 		
+		app.logger.error("Failed to install flavor=(%s) into the OpenStack cluster." % flavor.name)
+
 	return response
 
 def instance_start(instance):
@@ -342,29 +354,42 @@ def instance_start(instance):
 	except:
 		response['response'] = "fail"
 		response['result'] = "Can't communicate with OpenStack cluster."
+		app.logger.info("Failed to connect to the OpenStack cluster.")
 		return response
 
-	# check if we already have a server named this running
-	servers = nova.servers.list()
-	for server in servers:
-		if server.name == instance.name:
-			response['response'] = "success"
-			response['result']['message'] = "Server is already running."
-			response['result']['server'] = server
-			return response
+	try:
+		# check if we already have a server named this running
+		servers = nova.servers.list()
+		for server in servers:
+			if server.name == instance.name:
+				response['response'] = "success"
+				response['result']['message'] = "Server is already running."
+				response['result']['server'] = server
+				return response
 
-	# otherwise, start the server instances
-	server = nova.servers.create(
-		name=instance.name, 
-		image=instance.image.osid,
-		flavor=instance.flavor.osid,
-		userdata=instance.post_creation
-	)
+		# otherwise, start the server instances
+		server = nova.servers.create(
+			name=instance.name, 
+			image=instance.image.osid,
+			flavor=instance.flavor.osid,
+			userdata=instance.post_creation
+		)
 
-	# response
-	response['result']['message'] = "OpenStack instance started."
-	response['result']['server'] = server
+		# response
+		response['result']['message'] = "OpenStack instance started."
+		response['result']['server'] = server
+
+		app.logger.info("Started instance=(%s)." % instance.name)
+	
+	except Exception as ex:
+		# response
+		response['response'] = "fail"
+		response['result']['message'] = "OpenStack instance start failed."
+
+		app.logger.error("Failed to start instance=(%s)." % instance.name)
+
 	return response
+
 
 def instance_console(instance):
 	# default response
@@ -376,6 +401,8 @@ def instance_console(instance):
 	except:
 		response['response'] = "fail"
 		response['result'] = "Can't communicate with OpenStack cluster."
+		app.logger.error("Failed to connect to the OpenStack cluster.")
+
 		return response
 
 	try:
@@ -385,12 +412,13 @@ def instance_console(instance):
 		response['response'] = "success"
 		response['result']['message'] = "OpenStack instance console output."
 		response['result']['console'] = console
-		return response
-
+		
 	except:
 		response['response'] = "fail"
 		response['result']['message'] = "OpenStack instance not found."
-		return response
+		app.logger.error("Failed to retrieve the console log for instance=(%s)." % instance.name)	
+
+	return response
 
 def instance_info(instance):
 	# default response
@@ -402,6 +430,7 @@ def instance_info(instance):
 	except:
 		response['response'] = "fail"
 		response['result'] = "Can't communicate with OpenStack cluster."
+		app.logger.error("Failed to connect to the OpenStack cluster.")
 		return response
 
 	try:
@@ -411,12 +440,13 @@ def instance_info(instance):
 		response['response'] = "success"
 		response['result']['message'] = "OpenStack instance detail."
 		response['result']['server'] = server
-		return response
 
 	except:
 		response['response'] = "fail"
 		response['result']['message'] = "OpenStack instance not found."
-		return response
+		app.logger.error("Failed to retrieve info for instance=(%s)." % instance.name)	
+
+	return response
 
 def instance_suspend(instance):
 	# default response
@@ -428,6 +458,7 @@ def instance_suspend(instance):
 	except:
 		response['response'] = "fail"
 		response['result']['message'] = "Can't communicate with OpenStack cluster."
+		app.logger.info("Failed to connect to the OpenStack cluster.")
 		return response
 
 	# suspend the instance
@@ -436,6 +467,8 @@ def instance_suspend(instance):
 	# response
 	response['result']['message'] = "OpenStack instance suspended."
 	response['result']['server'] = server
+	app.logger.info("Suspended instance=(%s)." % instance.name)	
+	
 	return response
 
 def instance_resume(instance):

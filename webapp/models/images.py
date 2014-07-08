@@ -75,7 +75,7 @@ class Images(CRUDMixin, db.Model):
 			return image
 
 		# else make a new one
-		if instance.dynamic_image_url:
+		try:
 			image = Images()
 			epoch_time = int(time.time())
 			image.created = epoch_time
@@ -102,7 +102,9 @@ class Images(CRUDMixin, db.Model):
 
 			# return the image
 			return image
-		else:
+		
+		except:
+			app.logger.error("Failed to install image=(%s) into the OpenStack cluster." % image_name)
 			return None
 
 	def housekeeping(self):

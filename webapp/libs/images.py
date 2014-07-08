@@ -47,6 +47,7 @@ def download_images(appliance, images):
 				
 			else:
 				# basically do nothing if we already have it locally
+				app.logger.info("Local image=(%s) with size=(%s) is the current version." % (image.name, image.size))
 				image.size = on_disk_size
 				
 			# either way, write the local URL for the image
@@ -78,6 +79,8 @@ def download_images(appliance, images):
 				# do nothing
 				pass
 
+			app.logger.error("Failed to download image from URL.")
+
 # uninstall downloaded images
 def uninstall_image(image):
 	# image path for this appliance
@@ -92,6 +95,8 @@ def uninstall_image(image):
 		if os.path.isfile("%s/%s" % (image_path, filename)):
 			# delete the image
 			os.remove("%s/%s" % (image_path, filename))
+			app.logger.info("Uninstalled image from file system.")
 			return True
 	except:
+		app.logger.error("Could not find image file to uninstall.")
 		return False

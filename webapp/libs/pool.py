@@ -23,9 +23,16 @@ def pool_instance(url=None, instance=None, appliance=None):
 		# mask our apitoken on subsequent redirects
 		apitoken = None
 
-	# getting lazy load errors every once in a while on flavors.  suggested fix here:
-	# http://stackoverflow.com/questions/4253176/issue-with-sqlalchemy-parent-instance-someclass-is-not-bound-to-a-session
-	flavor = instance.flavor.get()
+	try:
+		# getting lazy load errors every once in a while on flavors.  suggested fix here:
+		# http://stackoverflow.com/questions/4253176/issue-with-sqlalchemy-parent-instance-someclass-is-not-bound-to-a-session
+		# open ticket on this issue is here: https://github.com/StackMonkey/utter-va/issues/57
+		flavor = instance.flavor.get()
+	except:
+		app.logger.error("Lazy load error encountered on getting flavor for instance=(%s)." % instance.name)
+		response['response'] = "fail"
+		response['result'] = "Lazy load error encountered."
+		return response
 
 	# build the outbound instance packet (to pool or callback service)
 	packet = { 

@@ -3,6 +3,8 @@ import socket
 from urllib import urlopen
 from csv import reader
 
+from webapp import app
+
 # simple geoip lookup to get appliance latitude/longitude
 def get_geodata():
     socket.setdefaulttimeout(5)
@@ -17,7 +19,8 @@ def get_geodata():
     
     # timeout!
     except:
+        app.logger.error("Error getting geolocation.  Using Old Faithful.")
         return {
-            "latitude": "35",
-            "longitude": "-110"
+            "latitude": "44.4605",
+            "longitude": "-110.8282"
         }

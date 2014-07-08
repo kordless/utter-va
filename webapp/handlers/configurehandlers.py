@@ -195,8 +195,8 @@ def configure():
 				# grab the first address we got from coinbase
 				address = db.session.query(Addresses).first()
 				
-				if address:
-					# overload the appliance's existing subdomain with coinbase address one
+				if address and address.subdomain:
+					# overload the appliance's existing subdomain with one from coinbase address
 					appliance.subdomain = address.subdomain
 					appliance.update()
 				else:

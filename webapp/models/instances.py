@@ -103,6 +103,7 @@ class Instances(CRUDMixin, db.Model):
 		for instance in instances:
 			instance.state = int(active)
 			instance.update()
+			app.logger.info("Instance %s toggled to %s" % (instance.name, active))
 
 		return True
 
