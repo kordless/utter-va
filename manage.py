@@ -75,6 +75,17 @@ def reset(app):
 
 	return action
 
+# reset the admin account
+def admin(app):
+	def action(force=('f', 'false')):
+		if force == 'true':
+			user = db.session.query(User).first()
+			user.delete(user)
+			print "The admin user has been deleted.  Please access the UI as soon as possible to create a new user."
+		else:
+			print "Doing nothing."
+	return action
+
 # install
 def install(app):
 	def action(ip=('i', default_ip)):
@@ -103,14 +114,17 @@ def install(app):
 # DEVELOPMENT METHODS
 # serve application for development (in production we start it from monit)
 def serve(app):
-	def action(dev=('d', 'false')):
-		if dev == 'true':
-			socketio.run(app, host=default_ip)
-		else:
+	def action(gunicorn=('g', 'false')):
+		"""
+		Starts the development server.
+		"""
+		if gunicorn == 'true':
 			path = os.path.dirname(os.path.abspath(__file__))
 			# start gunicorn for development
 			os.system('gunicorn --max-requests 1 --access-logfile ./logs/access-log --error-logfile ./logs/error-log -c gunicorn.conf.py webapp:app')
 			sys.exit()
+		else:
+			socketio.run(app, host=default_ip)
 	
 	return action
 
@@ -423,6 +437,7 @@ manager.add_action('message', messenger)
 manager.add_action('ips', ips)
 manager.add_action('stats', stats)
 manager.add_action('addressmop', addressmop)
+manager.add_action('admin', admin)
 
 # commands for user managment
 manager.add_action('reset', reset)
