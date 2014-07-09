@@ -38,7 +38,7 @@
               <div class="col-md-8">
                 {{ form.apitoken.label(class="control-label") }}
                 <div class="input-group" id="hover-api-token">
-                  {{ form.apitoken(value=appliance.apitoken, class="form-control", disabled=true, id="api-token", required=true) }}
+                  {{ form.apitoken(value=appliance.apitoken, class="form-control", disabled=true, id="api-token") }}
                   <span class="input-group-btn">
                     <button id="refresh-api-token" class="btn btn-default" type="button">
                       <span title="Refresh token." class="glyphicon glyphicon-refresh"></span>
@@ -83,7 +83,7 @@
               <div class="col-md-8">
                 {{ form.ngroktoken.label(class="control-label") }}
                 <div class="input-group" id="hover-ngrok-token">
-                  {{ form.ngroktoken(value=appliance.ngroktoken, id="ngrok-token", placeholder="W7ern1ph6Q_I-95L54", class="form-control", required=true) }}
+                  {{ form.ngroktoken(value=appliance.ngroktoken, id="ngrok-token", placeholder="W7ern1ph6Q_I-95L54", class="form-control") }}
                   <span class="input-group-btn">
                     <button id="get-ngrok-token" class="btn btn-default" type="button"><span class="glyphicon glyphicon-cog"></span></button>
                   </span>            
