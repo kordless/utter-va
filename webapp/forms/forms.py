@@ -39,10 +39,10 @@ class OpenStackForm(Form):
 
 
 class ApplianceForm(Form):
-	cbapikey = TextField("Coinbase Client ID", validators=[Required()])
-	cbapisecret = TextField("Coinbase Client Secret", validators=[Required()])
+	cbapikey = TextField("Coinbase Client ID", validators=[])
+	cbapisecret = TextField("Coinbase Client Secret", validators=[])
 	apitoken = TextField("Pool API Token") # not submitted by form
-	ngroktoken = TextField("Ngrok Token", validators=[Required("The SSL Tunnel Token is required.")])
+	ngroktoken = TextField("Ngrok Token", validators=[])
 	latitude = TextField("latitude", validators=[Required()])
 	longitude = TextField("longitude", validators=[Required()])
 

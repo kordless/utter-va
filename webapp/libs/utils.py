@@ -125,8 +125,10 @@ def ngrok_checker(appliance=None):
 
 	try:
 		response = urlopen(url, timeout=10).read()
-		return True
+
+		if appliance.ngroktoken == "" or not appliance.ngroktoken:
+			return 0
+		else:
+			return 1
 	except Exception, e:
-		return False
-
-
+		return -1

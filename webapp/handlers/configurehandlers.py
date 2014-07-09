@@ -166,14 +166,15 @@ def configure():
 	# get the form for the page
 	form = ApplianceForm(request.form)
 
+	# get existing database entries
+	appliance = db.session.query(Appliance).first()
+
 	# page is POST'ing data
 	if request.method == 'POST':
 		# clear settings cache
+		app.logger.info("flush?")
 		Status().flush()
-
-		# try to select one and only record
-		appliance = db.session.query(Appliance).first()
-		
+	
 		# load the form into the appliance object (excluding API token)
 		apitoken = appliance.apitoken
 		form.populate_obj(appliance)
@@ -183,10 +184,9 @@ def configure():
 			# our form validates, so update the database
 			appliance.update(appliance)
 
-			# at this point we know the user has entered an Ngrok token (valid form)
-			# and we test if the coinbase tokens are working.  if they are, we update
-			# the address list and parse it for subdomain information.
+			# check the settings
 			settings = Status().check_settings()
+
 			if settings['coinbase']:
 				# sync up addresses with coinbase
 				addresses = Addresses()
@@ -208,54 +208,36 @@ def configure():
 				appliance.build_tunnel_conf()
 
 			# form was valid, so say thanks	
-			response = "Setting have been saved."
-			flash(response, "success")
-
-			return redirect(url_for(".configure"))
+			flash("Setting have been saved.", "success")
 
 		else:
 			# form was not valid, so show errors	
-			response = "There were form errors. Please check your entries and try again."
-			flash(response, "error")
-	
-	# page is GET'ing data
-	else:
-		# get existing database entries
-		appliance = db.session.query(Appliance).first()
+			flash("There were form errors. Please check your entries and try again.", "error")
+		
+	# populate map
+	try:
+		lat = float(appliance.latitude)
+		lon = float(appliance.longitude)
+	except ValueError, TypeError:
+		geodata = get_geodata()
+		appliance.latitude = geodata['latitude']
+		appliance.longitude = geodata['longitude']
+		appliance.update()
 
-		# populate the new form with seed location
-		try:
-			lat = float(appliance.latitude)
-			lon = float(appliance.longitude)
-		except ValueError, TypeError:
-			try:
-				geodata = get_geodata()
-				appliance.latitude = geodata['latitude']
-				appliance.longitude = geodata['longitude']
-			except:
-				appliance.latitude = 0
-				appliance.longitude = 0		
-	
-	# run for either POST or GET
-	# check configuration and show messages
-	message("Running status check.")
+	# check configuration
 	settings = Status().check_settings()
 
 	if settings['token'] == False:
-		# show error	
-		response = "Please register the API token."
-		flash(response, "error")
+		flash("Please register the API token.", "error")
 	
 	if settings['coinbase'] == False:
-		# show error	
-		response = "Please enter valid Coinbase credentials."
-		flash(response, "error")
+		flash("Please enter valid Coinbase credentials.", "error")
 
-	if settings['ngrok'] == False:
-		# show error
-		response = "The Ngrok SSL tunnel is NOT running."
-		flash(response, "error")
-
+	if settings['ngrok'] == 0:
+		flash("Please enter a valid Ngrok token.", "error")
+	elif settings['ngrok'] == -1:
+		flash("The Ngrok tunnel is not running yet.", "error")
+		
 	# return the template
 	return render_template(
 		'configure/appliance.html', 

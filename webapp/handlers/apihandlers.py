@@ -106,7 +106,8 @@ def address_handler(address_token):
 			# bad stuff happens
 			amount = 0
 			response['response'] = "fail"
-			response['result'] = "amount not received or zero"		
+			response['result'] = "Amount not received or zero."
+			app.logger.error("A payment provider callback contains an invalid amount.")			
 			return jsonify(response), 401
 
 		# coin-op the instance
@@ -114,13 +115,14 @@ def address_handler(address_token):
 
 		# indicate we were paid and reload the page
 		message("Instance %s received a payment of %s micro BTC." % (instance.name, int(amount*1000000)), "success", True)
+		app.logger.info("Instance %s received a payment of %s micro BTC." % (instance.name, int(amount*1000000)))
 
 		# load response
 		response['result'] = "acknowledged"
 		return jsonify(response)
 		
 	else:
-		app.logger.info("A payment was recieved on an unused bitcoin address.")
+		app.logger.error("A payment was recieved on an unused bitcoin address.")
 		response['response'] = "fail"
 		response['result'] = "bitcoin address token not found"		
 		return jsonify(response), 401

@@ -292,5 +292,4 @@ class Status(CRUDMixin, db.Model):
 	def flush(self):
 		status = db.session.query(Status).first()
 		if status:
-			status.delete()
-		db.session.commit()
+			status.delete(status)
