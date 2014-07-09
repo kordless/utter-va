@@ -123,7 +123,6 @@ def configure_images():
 		# load images and appliance
 		images = db.session.query(Images).all()
 		appliance = Appliance().get()
-		print appliance.dynamicimages
 
 		return render_template(
 			'configure/images.html',
@@ -172,7 +171,6 @@ def configure():
 	# page is POST'ing data
 	if request.method == 'POST':
 		# clear settings cache
-		app.logger.info("flush?")
 		Status().flush()
 	
 		# load the form into the appliance object (excluding API token)
@@ -236,7 +234,7 @@ def configure():
 	if settings['ngrok'] == 0:
 		flash("Please enter a valid Ngrok token.", "error")
 	elif settings['ngrok'] == -1:
-		flash("The Ngrok tunnel is not running yet.", "error")
+		flash("The Ngrok tunnel is not running.", "error")
 		
 	# return the template
 	return render_template(
@@ -370,7 +368,7 @@ def configure_instance_detail(instance_id):
 
 	# load instance
 	instance = db.session.query(Instances).filter_by(id=instance_id).first()
-	print instance
+
 	if instance:
 		# page is PUT'ing data - coinop 0 mBTC
 		if request.method == 'PUT':

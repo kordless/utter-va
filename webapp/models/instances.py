@@ -144,7 +144,8 @@ class Instances(CRUDMixin, db.Model):
 			instance.update()
 
 			response['result']['message'] = "Created new instance and assigned address."
-		
+			app.logger.info("Created new instance=(%s)." % instance.name)
+
 		else:
 			# found enough instances - make sure they have addresses assigned to them
 			for instance in instances:
@@ -208,11 +209,16 @@ class Instances(CRUDMixin, db.Model):
 		# whatever callback address is set in the start() method below.
 		appliance = Appliance().get()
 		callback_url = self.callback_url
+		
 		pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
 
-		# response
-		response['result']['message'] = "Added %s seconds to %s's expire time." % (purchased_seconds, self.name)
-		response['result']['instance'] = row2dict(self)
+		if pool_response['response'] == "success":	
+			# response
+			response['result']['message'] = "Added %s seconds to %s's expire time." % (purchased_seconds, self.name)
+			response['result']['instance'] = row2dict(self)
+		else:
+			app.logger.error("Error sending instance=(%s) data to pool." % self.name)
+
 		return response
 
 	# move instances from light to warm
@@ -513,6 +519,7 @@ class Instances(CRUDMixin, db.Model):
 					response = instance_decommission(self)
 					response['result']['message'] = "Instance %s restarted." % self.name
 					self.state = 2 # set as paid and ready to start
+					app.logger.error("OpenStack says instance=(%s) isn't in the correct state.  Setting to restart." % self.name)
 				else:
 					# expired but in a weird state - destroy
 					response = instance_decommission(self)
@@ -522,9 +529,10 @@ class Instances(CRUDMixin, db.Model):
 			# openstack can't find this instance
 			if self.expires > epoch_time:
 				# set instance to restart - not expired, should be running
-				response['response'] = "fail" # technically, this shouldn't happen
+				response['response'] = "fail" # technically, someone is probably fucking with things
 				response['result']['message'] = "Setting instance %s to restart." % self.name
 				self.state = 2 # will be started shortly after this by start
+				app.logger.error("OpenStack doesn't know about instance=(%s). Setting to restart." % self.name)
 			else:
 				# no reason to be running
 				response['response'] = "fail"

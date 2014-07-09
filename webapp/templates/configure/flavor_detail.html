@@ -21,7 +21,7 @@
       </div>
       <div class="modal-body">
         <p>Enter the <strong>ask rate</strong> for the <strong>{{ flavor.name }}</strong> flavor.  The rate should be entered in μBTC/Hour, where a μBTC is defined as one millionth of a Bitcoin.</p>
-        <p>The current rate is <code>{{ flavor.ask }} μBTC/Hour</code> and the pool rate is <code>{{ flavor.rate }} μBTC/Hour</code>.
+        <p>The appliance rate is <code>{{ flavor.ask }} μBTC/Hour</code> and the pool price was <code>{{ flavor.rate }} μBTC/Hour</code>.
         <div class="row">
           <div class="col-md-5 form-padding" id="askrate-form">
             <label class="control-label" for="askrate">Ask Rate</label>
@@ -80,7 +80,7 @@
               </tr>
             </tbody>
           </table>
-          <p>The pool is advertising this flavor's price at <code>{{ flavor.rate }} μBTC/Hour</code> which is <code>~US${{ '%0.2f'| format(flavor.rate*quote*720|float) }}/Month</code> via <a href="https://coinbase.com" target="_blank">Coinbase</a>.</p>
+          <p>The pool reports the last purchase price for this flavor was <code>{{ flavor.rate }} μBTC/Hour</code> which is <code>~US${{ '%0.2f'| format(flavor.rate*quote*720|float) }}/Month</code> via <a href="https://coinbase.com" target="_blank">Coinbase</a>.</p>
           <p><button type="button" id="flavor-set-ask-button" class="btn btn-warning">Set Ask Price</button></p>
         </div>
       </div>
@@ -91,7 +91,6 @@
 {% endblock %}
 
 {% block javascript %}
-<script type="text/javascript" src="/js/toggles.js"></script>
 <script type="text/javascript">
   $().ready(function() {
     var csrf_token = "{{ csrf_token() }}";
@@ -160,4 +159,5 @@
 {% endblock %}
 
 {% block extras %}
+  <script type="text/javascript" src="/js/toggles.js"></script>
 {% endblock %}

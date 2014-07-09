@@ -123,9 +123,9 @@ class Flavors(CRUDMixin,  db.Model):
 					flavor.disk = remoteflavor['disk']
 					flavor.network = remoteflavor['network']
 					flavor.rate = remoteflavor['rate']
+					flavor.hot = remoteflavor['hot']
 					# we leave flavor.ask alone
 					# we leave flavor.active alone
-					# we leave flavor.hot alone
 					flavor.launches = remoteflavor['launches']
 					flavor.flags = remoteflavor['flags']
 					
@@ -137,9 +137,7 @@ class Flavors(CRUDMixin,  db.Model):
 			flavors = db.session.query(Flavors).all()
 			for flavor in flavors:
 				response['result']['flavors'].append(row2dict(flavor))
-			return response
+		
+		return response
 
-		# failure contacting server
-		else:
-			# lift the response from server to view
-			return response
+

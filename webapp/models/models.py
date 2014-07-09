@@ -255,7 +255,7 @@ class Status(CRUDMixin, db.Model):
 			status.update()
 		
 		else:
-			app.logger.info("Running partial status check.")
+			# app.logger.info("Running partial status check.")
 			
 			# stuff we check all the time
 			# openstack connected?

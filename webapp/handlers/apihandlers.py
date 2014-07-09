@@ -115,7 +115,7 @@ def address_handler(address_token):
 
 		# indicate we were paid and reload the page
 		message("Instance %s received a payment of %s micro BTC." % (instance.name, int(amount*1000000)), "success", True)
-		app.logger.info("Instance %s received a payment of %s micro BTC." % (instance.name, int(amount*1000000)))
+		app.logger.info("Payment of amount=(%s) micro BTC received for instance=(%s)." % (int(amount*1000000), instance.name))
 
 		# load response
 		response['result'] = "acknowledged"

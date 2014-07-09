@@ -22,7 +22,8 @@
             <h2><small>Appliance Configuration</small></h2>
             <div class="bs-callout bs-callout-info bs-callout-top">
               <h4>Getting Started</h4>
-              <p>Fill out the following form to configure your appliance. This appliance needs to have a <strong>Regsitered API Pool Token</strong>, a valid <strong><a href="https://coinbase.com/signup?r=52a9c6bf937ab6453a00001e&utm_campaign=user-referral&src=referral-link" target="_blank">Coinbase API Key and Secret</a></strong> and an <strong><a href="https://ngrok.com/">Ngrok API Token</a></strong> before it will function.  You will also need to set the map to the approximate location of your <strong>OpenStack Cluster</strong> so users can request instances by <strong>Geolocation</strong>.</p>
+              <p>Fill out the following form to configure your appliance. This appliance needs to have a <strong>Regsitered API Pool Token</strong>, a valid <strong><a href="https://coinbase.com/signup?r=52a9c6bf937ab6453a00001e&utm_campaign=user-referral&src=referral-link" target="_blank">Coinbase API Key and Secret</a></strong> and an <strong><a href="https://ngrok.com/">Ngrok API Token</a></strong> before it will function. Toggle visibility of the Coinbase API Secret with the <span class="glyphicon glyphicon-eye-open"></span> icon.  Signup for an Ngrok account by clicking on the <span class="glyphicon glyphicon-cog"></span> icon.</p>
+              <p>Set the map to the approximate location of your <strong>OpenStack Cluster</strong> so users can request instances by <strong>Geolocation</strong>.</p>
             </div>
           </div>
         </div>
@@ -122,7 +123,7 @@
   <script type="text/javascript">
     $().ready(function() {     
       // the map
-      var map = L.mapbox.map('map', 'kordless.gnm28jg1').setView([{{ appliance['latitude'] }}, {{ appliance['longitude'] }}], 12);
+      var map = L.mapbox.map('map', 'kordless.gnm28jg1', {scrollWheelZoom: false}).setView([{{ appliance['latitude'] }}, {{ appliance['longitude'] }}], 12);
 
       // get the form inputs we want to update
       var latitude = document.getElementById('latitude');
@@ -206,5 +207,4 @@
 
 {% block extras %}
     <script src='https://api.tiles.mapbox.com/mapbox.js/v1.6.2/mapbox.js'></script>
-    <script src='/js/popovers.js'></script>
 {% endblock %}

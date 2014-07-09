@@ -45,7 +45,7 @@ def get_stats():
 	except:
 		response['response'] = "fail"
 		response['result'] = "Can't communicate with OpenStack cluster."
-		app.logger.info("Failed to connect to the OpenStack cluster.")
+		app.logger.error("Can't communicate with OpenStack cluster.")
 		return response
 	
 	try:
@@ -354,7 +354,7 @@ def instance_start(instance):
 	except:
 		response['response'] = "fail"
 		response['result'] = "Can't communicate with OpenStack cluster."
-		app.logger.info("Failed to connect to the OpenStack cluster.")
+		app.logger.error("Can't communicate with OpenStack cluster.")
 		return response
 
 	try:
@@ -401,7 +401,7 @@ def instance_console(instance):
 	except:
 		response['response'] = "fail"
 		response['result'] = "Can't communicate with OpenStack cluster."
-		app.logger.error("Failed to connect to the OpenStack cluster.")
+		app.logger.error("Can't communicate with OpenStack cluster.")
 
 		return response
 
@@ -415,8 +415,7 @@ def instance_console(instance):
 		
 	except:
 		response['response'] = "fail"
-		response['result']['message'] = "OpenStack instance not found."
-		app.logger.error("Failed to retrieve the console log for instance=(%s)." % instance.name)	
+		response['result']['message'] = "OpenStack console not found."
 
 	return response
 
@@ -430,7 +429,7 @@ def instance_info(instance):
 	except:
 		response['response'] = "fail"
 		response['result'] = "Can't communicate with OpenStack cluster."
-		app.logger.error("Failed to connect to the OpenStack cluster.")
+		app.logger.error("Can't communicate with OpenStack cluster.")
 		return response
 
 	try:
@@ -458,7 +457,7 @@ def instance_suspend(instance):
 	except:
 		response['response'] = "fail"
 		response['result']['message'] = "Can't communicate with OpenStack cluster."
-		app.logger.info("Failed to connect to the OpenStack cluster.")
+		app.logger.error("Can't communicate with OpenStack cluster.")
 		return response
 
 	# suspend the instance
@@ -467,7 +466,7 @@ def instance_suspend(instance):
 	# response
 	response['result']['message'] = "OpenStack instance suspended."
 	response['result']['server'] = server
-	app.logger.info("Suspended instance=(%s)." % instance.name)	
+	app.logger.info("OpenStack instance=(%s) suspended." % instance.name)	
 	
 	return response
 
@@ -480,16 +479,18 @@ def instance_resume(instance):
 		nova = nova_connection()
 		
 		# resume the instance
-
 		server = nova.servers.resume(instance.osid)
+		app.logger.info("OpenStack instance=(%s) resumed." % instance.name)
+	
+		# response
+		response['result']['message'] = "OpenStack instance resumed."
+		response['result']['server'] = server
+	
 	except:
 		response['response'] = "fail"
 		response['result']['message'] = "Can't communicate with OpenStack cluster."
-		return response
+		app.logger.error("Can't communicate with OpenStack cluster.")
 
-	# response
-	response['result']['message'] = "OpenStack instance resumed."
-	response['result']['server'] = server
 	return response
 
 def instance_decommission(instance):
@@ -503,6 +504,7 @@ def instance_decommission(instance):
 		# get the server's info and delete
 		server = nova.servers.get(instance.osid)
 		server.delete()
+		app.logger.info("OpenStack instance=(%s) decomissioned." % instance.name)
 		
 		# search by name and delete any matches
 		# this attempts to address the observed behavior of an extra 
@@ -511,7 +513,8 @@ def instance_decommission(instance):
 		for server in servers:
 			if server.name == instance.name:
 				server.delete()
-
+				app.logger.info("OpenStack instance=(%s) decomissioned by name." % server.name)
+		
 		# build response
 		response['result']['message'] = "Server stopped."
 		response['result']['server'] = server

@@ -96,6 +96,7 @@ class Addresses(CRUDMixin, db.Model):
 
 		# failure contacting server
 		else:
+			app.logger.error("Error contacting Coinbase during sync.")
 			# lift respose from server call to view
 			return response
 
@@ -145,6 +146,7 @@ class Addresses(CRUDMixin, db.Model):
 					address.subdomain = appliance.subdomain
 					address.update()
 
+					app.logger.info("Allocated new Coinbase address=(%s) to an instance." % address.address)
 					return address
 				else:
 					# something went wrong with coinbase
@@ -156,4 +158,5 @@ class Addresses(CRUDMixin, db.Model):
 		# now change the instance to indicate it's available
 		self.instance_id = 0
 		self.update(self)
+		app.logger.info("Released address=(%s) from instance." % self.address)
 		return self

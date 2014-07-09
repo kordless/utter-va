@@ -125,7 +125,7 @@ def serve(app):
 			sys.exit()
 		else:
 			socketio.run(app, host=default_ip)
-	
+
 	return action
 
 # coinop command
@@ -311,37 +311,46 @@ def images(app):
 			image.housekeeping()		
 
 	return action
-	
-# warmup and start instances
-# runs every minute via cron
-def instances(app):
+
+# cleans up decomissioned and errant instances
+# runs every 15 minutes via cron
+def trashman(app):
+	def action():
+
+		# check appliance is ready to go - exit if not
+		settings = Status().check_settings()
+		if not settings['ngrok'] or not settings['openstack']:
+			log = "Trashman found appliance is not ready."
+			app.logger.error(log)
+			return action
+
+		instances = db.session.query(Instances).filter_by(state=7).all()
+
+		for instance in instances:
+			response = instance.trashman()
+			message(response['result']['message'], "success", True)
+
+	return action
+
+# salesman puts up instances for sale on pool
+# runs every 15 minutes via cron
+def salesman(app):
 	def action():
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
 		if not settings['ngrok'] or not settings['openstack']:
-			log = "Running instances - appliance is not ready."
+			log = "Salesman found appliance is not ready."
 			app.logger.error(log)
 			return action
 
-		# START
-		# instances which have received payment are moved to starting
-		instances = db.session.query(Instances).filter_by(state=2).all()
-		for instance in instances:
-			response = instance.start()
+		# get the appliance
+		appliance = db.session.query(Appliance).first()
 
-			if response['response'] == "success":
-				message("Instance %s launched." % instance.name, "success", True)
-			else:
-				message(response['result']['message'], "error", True)
+		# instances for sale, get 'em while they're hot
+		instances = db.session.query(Instances).filter_by(state=1).all()
 
-		# NUDGE
-		# instances in the process of starting are monitored and updated
-		instances = db.session.query(Instances).filter_by(state=3).all()
-		for instance in instances:
-			response = instance.nudge()
-
-			if response['response'] == "success":
-				message("Instance %s is now running." % instance.name, "success", True)
+		# call the pool with instances for sale
+		response = pool_salesman(instances, appliance)
 
 	return action
 
@@ -388,46 +397,37 @@ def housekeeper(app):
 
 	return action
 
-# cleans up decomissioned and errant instances
-# runs every 10 minutes via cron
-def trashman(app):
+# warmup and start instances
+# runs every minute via cron
+def instances(app):
 	def action():
-
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
 		if not settings['ngrok'] or not settings['openstack']:
-			log = "Running trashman - appliance is not ready."
+			log = "Running instances - appliance is not ready."
 			app.logger.error(log)
 			return action
 
-		instances = db.session.query(Instances).filter_by(state=7).all()
-
+		# START
+		# instances which have received payment are moved to starting
+		instances = db.session.query(Instances).filter_by(state=2).all()
 		for instance in instances:
-			response = instance.trashman()
-			message(response['result']['message'], "success", True)
+			response = instance.start()
 
-	return action
+			if response['response'] == "success":
+				message("Instance %s launched." % instance.name, "success", True)
+			else:
+				message(response['result']['message'], "error", True)
 
-# salesman puts up instances for sale on pool
-# runs every 5 minutes via cron
-def salesman(app):
-	def action():
-		# check appliance is ready to go - exit if not
-		settings = Status().check_settings()
-		if not settings['ngrok'] or not settings['openstack']:
-			log = "Running salesman - appliance is not ready."
-			app.logger.error(log)
-			return action
+		# NUDGE
+		# instances in the process of starting are monitored and updated
+		instances = db.session.query(Instances).filter_by(state=3).all()
+		for instance in instances:
+			response = instance.nudge()
 
-		# get the appliance
-		appliance = db.session.query(Appliance).first()
+			if response['response'] == "success":
+				message("Instance %s is now running." % instance.name, "success", True)
 
-		# instances for sale, get 'em while they're hot
-		instances = db.session.query(Instances).filter_by(state=1).all()
-
-		# call the pool with instances for sale
-		response = pool_salesman(instances, appliance)
-		
 	return action
 
 # for development
@@ -445,17 +445,17 @@ manager.add_action('install', install)
 manager.add_action('tunnel', tunnel)
 manager.add_action('checkauth', checkauth)
 
-# run from cron every 1 minute
-manager.add_action('instances', instances)
-
-# run from cron every 5 mintues
-manager.add_action('housekeeper', housekeeper)
-
 # run from cron every 15 minutes
 manager.add_action('images', images)
 manager.add_action('flavors', flavors)
 manager.add_action('trashman', trashman)
 manager.add_action('salesman', salesman)
+
+# run from cron every 5 mintues
+manager.add_action('housekeeper', housekeeper)
+
+# run from cron every 1 minute
+manager.add_action('instances', instances)
 
 if __name__ == "__main__":
 
@@ -465,7 +465,7 @@ if __name__ == "__main__":
 
 	# delete existing handlers
 	del app.logger.handlers[:]
-	handler = RotatingFileHandler('logs/commands.log', maxBytes=1000000, backupCount=1)
+	handler = RotatingFileHandler('logs/commands.log', maxBytes=1000000, backupCount=7)
 	handler.setLevel(logging.INFO)
 	log_format = "%(asctime)s - %(levelname)s - %(message)s"
 	formatter = logging.Formatter(log_format)

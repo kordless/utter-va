@@ -111,8 +111,6 @@
 {% endblock %}
 
 {% block javascript %}
-<script type="text/javascript" src="/js/jquery.qrcode.js"></script>
-<script type="text/javascript" src="/js/qrcode.js"></script>
 <script type="text/javascript">
   $().ready(function() {
     var csrf_token = "{{ csrf_token() }}";
@@ -212,5 +210,7 @@
 {% endblock %}
 
 {% block extras %}
-    <script src='/js/popovers.js'></script>
+  <script type="text/javascript" src='/js/popovers.js'></script>
+  <script type="text/javascript" src="/js/jquery.qrcode.js"></script>
+  <script type="text/javascript" src="/js/qrcode.js"></script>
 {% endblock %}

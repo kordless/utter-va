@@ -5,6 +5,5 @@ DEV
 .DS_Store
 *.img
 logs/*.log
+logs/*log*
 *.log
-access-log
-error-log

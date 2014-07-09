@@ -23,6 +23,9 @@ def pool_instance(url=None, instance=None, appliance=None):
 		# mask our apitoken on subsequent redirects
 		apitoken = None
 
+	# response template for if things go wrong
+	response = {"response": "success", "result": {"message": ""}}
+	
 	try:
 		# getting lazy load errors every once in a while on flavors.  suggested fix here:
 		# http://stackoverflow.com/questions/4253176/issue-with-sqlalchemy-parent-instance-someclass-is-not-bound-to-a-session
@@ -67,9 +70,6 @@ def pool_instance(url=None, instance=None, appliance=None):
 		for line in iter(instance.console.splitlines()):
 			packet['instance']['console_output'].append(escape(line))
 
-	# response template for if things go wrong
-	response = {"response": "success", "result": {"message": ""}}
-
 	try:
 		request = Request(url)
 		request.add_header('Content-Type', 'application/json')
@@ -91,7 +91,7 @@ def pool_instance(url=None, instance=None, appliance=None):
 	return response
 
 # put instances up for sale
-# we're a salesman (provider) talking to the broker (pool) to hopefully sell stuff
+# we're a salesman (provider) talking to the broker (pool) to sell instances
 def pool_salesman(instances=None, appliance=None):
 	from webapp.libs.openstack import get_stats
 
@@ -143,6 +143,8 @@ def pool_salesman(instances=None, appliance=None):
 		request = Request(url)
 		request.add_header('Content-Type', 'application/json')
 		response = json.loads(urlopen(request, json.dumps(packet), timeout=10).read())
+		app.logger.info("Appliance has placed quantity=(%s) instances up for sale." % len(instances))
+
 	except HTTPError as ex:
 		response['response'] = "fail"
 		response['result'] = "Error code %s returned from server." % ex.code

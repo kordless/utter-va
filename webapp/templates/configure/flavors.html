@@ -73,8 +73,6 @@
 {% endblock %}
 
 {% block javascript %}
-<script type="text/javascript" src="/js/toggles.js"></script>
-<script type="text/javascript" src="/js/popovers.js"></script>
 <script type="text/javascript">
   $().ready(function() {
     var csrf_token = "{{ csrf_token() }}";
@@ -143,4 +141,6 @@
 {% endblock %}
 
 {% block extras %}
+  <script type="text/javascript" src="/js/toggles.js"></script>
+  <script type="text/javascript" src="/js/popovers.js"></script>
 {% endblock %}
