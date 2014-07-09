@@ -1,25 +1,25 @@
 ## Welcome to Utter.io and StackMonkey!
-Utter.io is like AirBnb for excess compute: It provides fast location and provisioning of compute resources within a cooperative of systems managed by [OpenStack](http://openstack.org/) operators. Resource accounting inside the network is settled with Bitcoin, and purchases of compute instances can be made by users without an account. Additionally, groups of operators can form private hybrid clouds, allowing fast scaling and sharing of excess compute resources between trusted entities.
+Utter.io is like AirBnb for excess compute: The utter.io project provides fast location and provisioning of compute resources within a cooperative set of systems managed by [OpenStack](http://openstack.org/) operators. Resource accounting inside the network is settled with Bitcoin and purchases of compute instances can be made by users without an account. Additionally, groups of operators can form adhoc hybrid clouds, allowing fast scaling and sharing of excess compute resources between trusted entities.
 
-The future of commodity compute can been seen by visiting the [StackMonkey Compute Pool](https://www.stackmonkey.com/).
+The future of commodity compute can been seen by visiting the [StackMonkey compute pool](https://www.stackmonkey.com/). StackMonkey is the Wild West of compute pools and is intended for use by hackers, crackers, devs, and do-it-yourselfers.  This is where it all starts.
 
 ### Project Components
-A set of three Open Source repositories provide the projects functionality: [utter-va](https://github.com/StackMonkey/utter-va), [utter-pool](https://github.com/StackMonkey/utter-pool) and [utter-exchange](https://github.com/StackMonkey/utter-exchange). The utter-va virtual appliance is an instance which runs on top of an OpenStack cluster. The appliance controls the OpenStack cluster's capabilities, advertises other instances for sale on a central pool controller (running utter-pool) and launches instances when payments are observed on the the [Bitcoin Blockchain](https://en.bitcoin.it/wiki/Block_chain) through callbacks made by [Coinbase](https://coinbase.com/).
+A set of three Open Source repositories provide the projects functionality: [utter-va](https://github.com/StackMonkey/utter-va), [utter-pool](https://github.com/StackMonkey/utter-pool) and [utter-exchange](https://github.com/StackMonkey/utter-exchange). The utter-va virtual appliance provided by this repository builds an instance which runs on top of an OpenStack cluster. The appliance controls the OpenStack cluster's capabilities, advertises other instances for sale on a central pool controller running utter-pool and launches instances when payments are observed on the the [Bitcoin Blockchain](https://en.bitcoin.it/wiki/Block_chain) through callbacks made by [Coinbase](https://coinbase.com/).
 
-The first compute pool is hosted on [AppEngine](https://appspot.com) and runs at [https://www.stackmonkey.com](https://www.stackmonkey.com). The expected beta launch date of the StackMonkey pool is no later than July 31, 2014.  After launch, individuals will be able to purchase instances for Bitcoin from the site. Please note you will need an account on StackMonkey if you want to sell instances.
+The first compute pool is hosted on [AppEngine](https://appspot.com) and runs at [StackMonkey](https://www.stackmonkey.com). The expected beta launch date of the StackMonkey pool is no later than July 31, 2014.  After launch, individuals will be able to purchase instances for Bitcoin from the site. Please note you will need an account on StackMonkey if you want to sell instances.
 
-The utter-exchange component will be completed at a later next year. The exchange will serve as a clearing house for compute put up for sale on the various pool controllers. The exchange will operate as a [DAC](https://en.bitcoin.it/wiki/Distributed_Autonomous_Community_/_Decentralized_Application) once the technologies required to create it have been completed.  You can expect a crypto currency to be launched for the project. Both the currency and compute assets managed by the network will be connected to the crypto markets.
+The utter-exchange component will be completed at a later date. The exchange will serve as a clearing house for compute put up for sale on the various pool controllers. The exchange will operate as a [DAC](https://en.bitcoin.it/wiki/Distributed_Autonomous_Community_/_Decentralized_Application) once the technologies required to create it have been completed.  You can expect a crypto currency to be launched for the project. Both the currency and compute assets managed by the network will be connected to the crypto markets.
 
 ### Requirements
-The virtual appliance requires a running OpenStack cluster.  If you don't have an OpenStack cluster running, you may follow the instructions for [Installing OpenStack in 10 Minutes](http://www.stackgeek.com/guides/gettingstarted.html) on the [StackGeek website](http://stackgeek.com/).
+The virtual appliance requires a running OpenStack cluster.  If you don't have an OpenStack cluster already running, fear not!  You may follow the instructions for [Installing OpenStack in 10 Minutes](http://www.stackgeek.com/guides/gettingstarted.html) on the [StackGeek website](http://stackgeek.com/).
 
-You will also need to create or have the following service accounts available:
+Once you have OpenStack installed, you'll need to create or have the following service accounts available:
 
   - a [StackMonkey](https://www.stackmonkey.com/login/) account (signup takes 1 minute)
   - a [Coinbase](https://coinbase.com/signup?r=52a9c6bf937ab6453a00001e&utm_campaign=user-referral&src=referral-link) account (signup takes 2 minutes)
   - an [Ngrok](https://ngrok.com/) account (signup takes 1 minute)
 
-Ideally, you'll have a compute rig with a minimum of 4 cores, 8GB of RAM, and a 60GB SSD drive for providing useful services to the system. ***It is STRONGLY recommended you run the appliance on a [baremetal-based](http://en.wikipedia.org/wiki/Bare_machine) OpenStack deployment.***
+
 
 ### Automated Install
 If you followed StackGeek's [Installing OpenStack in 10 Minutes](http://www.stackgeek.com/guides/gettingstarted.html) guide, you can run the [openstack_stackmonkey_va.sh](https://github.com/StackGeek/openstackgeek/blob/master/icehouse/openstack_stackmonkey_va.sh) script located in the [Icehouse](https://github.com/StackGeek/openstackgeek/tree/master/icehouse) directory to install the appliance:

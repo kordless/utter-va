@@ -4,6 +4,7 @@ tunnel.conf*
 DEV
 .DS_Store
 *.img
+logs/*.log
 *.log
 access-log
 error-log
