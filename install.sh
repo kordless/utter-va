@@ -1,11 +1,9 @@
 #!/bin/bash
 
 # name: install.sh
-# description: install script for utter.io controller vm
-# author: info@utter.io 
+# description: install script for utter.io appliance
+# author: kordless@utter.io
 # github: https://github.com/stackmonkey/utter-va
-
-# overwrite the existing index.html file
 
 # update repos
 sudo apt-get update -y
@@ -105,7 +103,17 @@ MYIP=$(/sbin/ifconfig eth0| sed -n 's/.*inet *addr:\([0-9\.]*\).*/\1/p')
 # create random tokens for the config file
 
 # build the database and sync with pool operator
-sudo su -c "/var/www/utterio/manage.py install $MYIP" -s /bin/sh ubuntu
+sudo su -c "/var/www/utterio/manage.py install -i $MYIP" -s /bin/sh ubuntu
+
+# generate tokens for config file
+cp /var/www/utterio/config.py.template /var/www/utterio/config.py
+SECRET_KEY = `date +%N | md5sum | cut -d' ' -f1`
+sleep 1
+CSRF_SESSION_KEY = `date +%N | md5sum | cut -d' ' -f1`
+sed -e "
+s,%SECRET_KEY%,$SECRET_KEY,g;
+s,%CSRF_SESSION_KEY%,$CSRF_SESSION_KEY,g;
+" -i /var/www/utterio/config.py
 
 # install crontab for ubuntu user to run every 15 minutes starting with a random minute
 MICROS=`date +%N`

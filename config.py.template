@@ -32,16 +32,17 @@ class BaseConfiguration(object):
 	SQLALCHEMY_DATABASE_URI = 'sqlite:///' + DATABASE_PATH
 	BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
-	# secure csrf
+	# secure csrf'ing
+	SECRET_KEY = "%SECRET_KEY%"
 	CSRF_ENABLED = True
-	SECRET_KEY = "13afa9bb8b142d99b78bc143f754f736"
-	CSRF_SESSION_KEY = "d41d8cd98f00b204e9800998ecf8427e"
+	CSRF_SESSION_KEY = "%CSRF_SESSION_KEY%"
 	THREADS_PER_PAGE = 8
 
 	# flask configuration
 	DEBUG = False
 	
 # debug configuration extras for dev
+# note: enable dev environment by doing a 'touch DEV' in this directory
 class DebugConfiguration(BaseConfiguration):
 	DEBUG = True
 	DEV_PORT = 5000
