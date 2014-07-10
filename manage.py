@@ -33,6 +33,12 @@ else:
 # manager handler
 manager = Manager(app, default_help_actions=False)
 
+# user, what to do?
+def configure_blurb():
+	# get the appliance configuration
+	appliance = db.session.query(Appliance).first()
+	print "Visit http://%s/ to setup your appliance." % appliance.local_ip
+
 # USERLAND METHODS
 # reset the entire system
 default_ip = "0.0.0.0"
