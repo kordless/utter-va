@@ -130,8 +130,7 @@ Click on the **Launch** button to launch the appliance.  You can monitor the ins
 ### Configuration
 The takes about 10 minutes to build.  Once the appliance is running, you can access it by its IP address.  This can be found in the Horizon UI of OpenStack, next to the instance.  Here's an example:
 
-
-
+[![Appliance IPs](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/appliance_ip.png =512x)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/appliance_ip.png)
 
 Type a similar URL in your browser to bring up the StackMonkey VA:
 
