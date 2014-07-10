@@ -105,11 +105,11 @@ MYIP=$(/sbin/ifconfig eth0| sed -n 's/.*inet *addr:\([0-9\.]*\).*/\1/p')
 # build the database and sync with pool operator
 sudo su -c "/var/www/utterio/manage.py install -i $MYIP" -s /bin/sh ubuntu
 
-# generate tokens for config file
+# generate tokens and write into new config.py file
 cp /var/www/utterio/config.py.template /var/www/utterio/config.py
-SECRET_KEY = `date +%N | md5sum | cut -d' ' -f1`
+SECRET_KEY=`date +%N | md5sum | cut -d' ' -f1`
 sleep 1
-CSRF_SESSION_KEY = `date +%N | md5sum | cut -d' ' -f1`
+CSRF_SESSION_KEY=`date +%N | md5sum | cut -d' ' -f1`
 sed -e "
 s,%SECRET_KEY%,$SECRET_KEY,g;
 s,%CSRF_SESSION_KEY%,$CSRF_SESSION_KEY,g;
