@@ -20,7 +20,7 @@
         <h4 class="modal-title">Set Instance Ask Price</h4>
       </div>
       <div class="modal-body">
-        <p>This appliance has an ask price of <code>{{ instance.flavor.get().ask }} μBTC/Hour</code> for the <strong>{{ instance.flavor.get().name }}</strong> flavor.  Less than 15 minutes ago, the pool reported an average ask price of <code>{{ instance.flavor.get().rate }} μBTC/Hour</code>.</p>
+        <p>This appliance is advertising an ask price of <code>{{ instance.flavor.get().ask }} μBTC/Hour</code> for the <strong>{{ instance.flavor.get().name }}</strong> flavor. The pool reported an average ask price of <code>{{ instance.flavor.get().rate }} μBTC/Hour</code> less than 15 minutes ago.</p>
         <p>Enter an amount below and then click on <strong>Set Ask Price</strong> to set it as the new ask price.</p>
         <div class="row">
           <div class="col-md-5 form-padding" id="askrate-form">
@@ -63,7 +63,7 @@
                 <div class="text-center" id="address"><a href="https://blockchain.info/address/{{ instance.address.address }}" target="_blank">{{ instance.address.address }}</a></div>
               </div>
             </div>
-            <div class="row instance-detail-row">
+            <div class="row {% if instance.callback_url or instance.dynamic_image_url %}instance-detail-row{% endif %}">
               <div class="col-md-6">
                 <div><h3><small>Instance Attributes</small></h3></div>
                 <div>
@@ -116,23 +116,29 @@
                 </table>
               </div>
             </div>
-            <div class="row instance-detail-row">
+            {% if instance.callback_url or instance.dynamic_image_url %}
+            <div class="row">
               <div class="col-md-12">
                 <div><h3><small>External Instance Resources</small></h3></div>
                 <div>
                   <table class="table table-striped table-responsive">
+                    {% if instance.callback_url %}
                     <tr>
                       <td><strong>Callback URL</strong></td>
-                      <td>{{ instance.callback_url }}</td>
+                      <td>{{ instance.callback_url|safe }}</td>
                     </tr>
+                    {% endif %}
+                    {% if instance.dynamic_image_url %}
                     <tr>
                       <td><strong>Dynamic Image</strong></td>
-                      <td><a href="{{ instance.dynamic_image_url }}">{{ instance.dynamic_image_url }}</a></td>
+                      <td class="text-left"><a href="{{ instance.dynamic_image_url|safe }}">{{ instance.dynamic_image_url|safe }}</a></td>
                     </tr>
+                    {% endif %}
                   </table>
                 </div>
               </div>
             </div>
+            {% endif %}
           </div>
         </div>
       </div>
@@ -150,7 +156,7 @@
 {% block javascript %}
 <script type="text/javascript">
   $().ready(function() {
-    var csrf_token = "{{ csrf_token }}";
+    var csrf_token = "{{ csrf_token() }}";
 
     // back to instances
     $('#back-to-instances').click( function() {
@@ -174,6 +180,25 @@
         $('#timer').val(0).trigger("change");
       }
     }, 1000);
+
+    // when clicking set rate button send rate to server
+    $('#set-ask-confirm-button').click(function() {
+      $.ajax({
+        url: '/configure/flavors/'+{{ instance.flavor.get().id }}+'?_csrf_token='+csrf_token,
+        type: 'PUT',
+        data: {_csrf_token: csrf_token, ask: $('#askrate').val()},
+        success: function() {
+          // reload the page
+          location.reload();
+        },
+        error: function() {
+          // code failed, clear value and alert
+          $('#askrate').val('');
+          $('#askrate-form').addClass('has-error');
+          alertify.log("The ask rate is invalid.", "error");
+        }
+      });
+    });
 
     // build the QR code for the instance address
     var qrcode_string = "bitcoin:{{instance.address.address}}?amount="+(parseInt({{instance.flavor.ask}})/1000000);

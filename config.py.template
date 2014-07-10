@@ -45,7 +45,7 @@ class BaseConfiguration(object):
 # note: enable dev environment by doing a 'touch DEV' in this directory
 class DebugConfiguration(BaseConfiguration):
 	DEBUG = True
-	DEV_PORT = 5000
+	DEV_PORT = 5000 # because flask
 	APP_WEBSITE = "http://0.0.0.0:8079/".strip("/")
 	POOL_APPSPOT_WEBSITE = APP_WEBSITE
 	POOL_DECOMMISSION_TIME = 300

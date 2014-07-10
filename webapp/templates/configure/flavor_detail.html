@@ -20,7 +20,7 @@
         <h4 class="modal-title">Set Ask Price</h4>
       </div>
       <div class="modal-body">
-        <p>This appliance has an ask price of <code>{{ flavor.ask }} μBTC/Hour</code> for the <strong>{{ flavor.name }}</strong> flavor. Less than 15 minutes ago, the pool reported an average ask price of <code>{{ flavor.rate }} μBTC/Hour</code>.</p>
+        <p>This appliance is advertising an ask price of <code>{{ flavor.ask }} μBTC/Hour</code> for the <strong>{{ flavor.name }}</strong> flavor. The pool reported an average ask price of <code>{{ flavor.rate }} μBTC/Hour</code> less than 15 minutes ago.</p>
         <p>Enter an amount below and then click on <strong>Set Ask Price</strong> to set it as the new ask price.</p>
         <div class="row">
           <div class="col-md-5 form-padding" id="askrate-form">
@@ -131,7 +131,7 @@
     // when clicking set rate button send rate to server
     $('#set-ask-confirm-button').click(function() {
       $.ajax({
-        url: '/configure/flavors/'+{{ flavor.id }},
+        url: '/configure/flavors/'+{{ flavor.id }}+'?_csrf_token='+csrf_token,
         type: 'PUT',
         data: {_csrf_token: csrf_token, ask: $('#askrate').val()},
         success: function() {

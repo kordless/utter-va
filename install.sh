@@ -65,6 +65,12 @@ sudo git clone https://github.com/StackMonkey/utter-va.git /var/www/utterio
 sudo chown -R ubuntu:ubuntu /var/www/
 sudo chmod -R g+w /var/www/
 
+# set vim tabs
+sudo cat <<EOF > /home/ubuntu/.vimrc
+set tabstop=4
+EOF
+chown ubuntu.ubuntu /home/ubuntu/.vimrc
+
 # configure monit
 sudo cat <<EOF > /etc/monit/conf.d/ngrok
 set httpd port 5150 and
@@ -99,8 +105,6 @@ sudo monit monitor all
 
 # grab the IP address of the box
 MYIP=$(/sbin/ifconfig eth0| sed -n 's/.*inet *addr:\([0-9\.]*\).*/\1/p')
-
-# create random tokens for the config file
 
 # build the database and sync with pool operator
 sudo su -c "/var/www/utterio/manage.py install -i $MYIP" -s /bin/sh ubuntu

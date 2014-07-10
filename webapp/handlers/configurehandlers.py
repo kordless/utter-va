@@ -36,6 +36,17 @@ def allowed_file(filename):
 def sec2min(value):
 	return divmod(int(value), 60)[0]
 
+# configure twitter bot
+@mod.route('/configure/twitter', methods=['GET', 'POST'])
+@login_required
+def configure_twitter():
+	# check configuration
+	settings = Status().check_settings()
+
+	return render_template(
+		'configure/twitter.html'
+	)
+
 # configure flavors page
 @mod.route('/configure/flavors', methods=['GET'])
 @login_required

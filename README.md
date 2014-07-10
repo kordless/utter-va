@@ -1,17 +1,21 @@
 ## Welcome to Utter.io and StackMonkey!
-Utter.io is like AirBnb for excess compute: The utter.io project provides fast location and provisioning of compute resources within a cooperative set of systems managed by [OpenStack](http://openstack.org/) operators. Resource accounting inside the network is settled with Bitcoin and purchases of compute instances can be made by users without an account. Additionally, groups of operators can form adhoc hybrid clouds, allowing fast scaling and sharing of excess compute resources between trusted entities.
+Hello and welcome. I'm @kordless on HackerNews, Twitter, Gmail, and just about everything else. I spent a bit of extra time writing up as much as I could here so you can quickly digest it now, while at work, and then maybe you'll come play with it later, in your spare time.  I'm work on this 100% of my working hours now and would love to hear from anyone who is interested in helping out with it: I currently need more people running compute rigs.
 
-The future of commodity compute can been seen by visiting the [StackMonkey compute pool](https://www.stackmonkey.com/). StackMonkey is intended to be the Wild West of Utter.io compute pools and is intended for use by hackers, crackers, devs, and do-it-yourselfers.  This is where it all starts.
+Utter.io is like AirBnb for excess compute: The utter.io project provides fast location and provisioning of compute resources within a cooperative set of systems managed by [OpenStack](http://openstack.org/) operators. Resource accounting inside the network is settled with Bitcoin and purchases of compute instances can be made by users without an account. Additionally, groups of operators can form adhoc hybrid clouds, allowing fast scaling and sharing of excess compute resources between trusted entities.  If you are familiar with cloud terminology/slang, it's may be one possible solution to the challenges of cloud federation.
+
+In many ways, crypto currency technologies can bring a new knob to the existing cloud offerings: **compute**, **storage**, **network** and now **trust**.
+
+This peek into the future of commodity compute can be seen by visiting the [StackMonkey compute pool](https://www.stackmonkey.com/). StackMonkey is a demonstrative cooperative intended to be the Wild West of compute pools (given it's the first one) and is intended for use by hackers, crackers, security researchers, devs, do-it-yourselfers, and the communities they form around it.
 
 ### Project Components
-A set of three Open Source repositories provide the project's functionality: [utter-va](https://github.com/StackMonkey/utter-va), [utter-pool](https://github.com/StackMonkey/utter-pool) and [utter-exchange](https://github.com/StackMonkey/utter-exchange). The utter-va virtual appliance provided by this repository builds an instance which runs on top of an OpenStack cluster. The appliance controls the OpenStack cluster's capabilities, advertises other instances for sale on a central pool controller running utter-pool and launches instances when payments are observed on the the [Bitcoin Blockchain](https://en.bitcoin.it/wiki/Block_chain) through callbacks made by [Coinbase](https://coinbase.com/).
+A set of three Open Source repositories provide the project's functionality: [utter-va](https://github.com/StackMonkey/utter-va), [utter-pool](https://github.com/StackMonkey/utter-pool) and [utter-exchange](https://github.com/StackMonkey/utter-exchange). The utter-va virtual appliance provided by this repository builds an instance which runs on top of an OpenStack cluster. The appliance controls the OpenStack cluster's capabilities, advertises other instances for sale on a central pool controller running utter-pool and launches instances when payments are observed on the [Bitcoin Blockchain](https://en.bitcoin.it/wiki/Block_chain) through callbacks made by [Coinbase](https://coinbase.com/).
 
-The first compute pool is hosted on [AppEngine](https://appspot.com) and runs at [StackMonkey](https://www.stackmonkey.com). The expected beta launch date of the StackMonkey pool is no later than **July 31, 2014**.  After launch, individuals will be able to purchase instances for Bitcoin from the site. Please note you will need an account on StackMonkey if you want to sell instances.
+The first compute pool is hosted on [AppEngine](https://appspot.com) and runs the [StackMonkey pool](https://www.stackmonkey.com). The expected beta launch date of the StackMonkey pool is no later than **July 31, 2014**.  After launch, individuals will be able to purchase instances for Bitcoin from the site. Please note you will need [register an account](https://www.stackmonkey.com/login/) on StackMonkey if you want to sell instances, but buying them doesn't require one.
 
 The utter-exchange component will be completed at a later date. The exchange will serve as a clearing house for compute put up for sale on the various pool controllers. The exchange will operate as a [DAC](https://en.bitcoin.it/wiki/Distributed_Autonomous_Community_/_Decentralized_Application) once the technologies required to create it have been completed.  You can expect a crypto currency to be launched for the project. Both the currency and compute assets managed by the network will be connected to the crypto markets.
 
 ### Requirements
-The virtual appliance requires a running OpenStack cluster.  If you don't have an OpenStack cluster already running, fear not!  You may follow the instructions for [Installing OpenStack in 10 Minutes](http://www.stackgeek.com/guides/gettingstarted.html) on the [StackGeek website](http://stackgeek.com/).
+The virtual appliance requires a running OpenStack cluster.  If you don't have an OpenStack cluster already running, fear not!  You may follow the instructions for [Installing OpenStack in 10 Minutes](http://www.stackgeek.com/guides/gettingstarted.html) on the [StackGeek website](http://stackgeek.com/). The guy wears a cowboy hat in the video.
 
 Once you have OpenStack installed, you'll need to create or have the following service accounts available:
 
@@ -21,10 +25,13 @@ Once you have OpenStack installed, you'll need to create or have the following s
 
 
 ### Watch the Video
-The [following video](https://vimeo.com/91805503) will step you through installing the virtual appliance on your OpenStack cluster.  If you have any questions about the install, you can head over the the [StackMonkey](https://www.stackmonkey.com/) site.
+The [following video](https://vimeo.com/91805503) will step you through installing the virtual appliance on your OpenStack cluster.  If you have any questions about the install, you can head over the the [StackMonkey documentation](https://www.stackmonkey.com/docs/).
+
+[![OpenStack Video](https://raw.github.com/StackGeek/openstackgeek/master/icehouse/openstack_icehouse.png)](https://vimeo.com/97757352)
+
 
 ### Automated Install
-If you followed StackGeek's [Installing OpenStack in 10 Minutes](http://www.stackgeek.com/guides/gettingstarted.html) guide, you can run the [openstack_stackmonkey_va.sh](https://github.com/StackGeek/openstackgeek/blob/master/icehouse/openstack_stackmonkey_va.sh) script located in the [Icehouse](https://github.com/StackGeek/openstackgeek/tree/master/icehouse) directory to install the appliance:
+If you've previously followed StackGeek's [Installing OpenStack in 10 Minutes](http://www.stackgeek.com/guides/gettingstarted.html) guide, you can run the install script located in the [Icehouse](https://github.com/StackGeek/openstackgeek/tree/master/icehouse) directory to install the appliance:
 
     ./openstack_stackmonkey_va.sh
 
@@ -33,24 +40,65 @@ The script automatically creates a user and project for the virtual appliance, s
 Once the script completes, you can skip to the configuration section below.
 
 ### Manual Install
-If you have previously installed OpenStack, you can manually start a virtual appliance from the Horizon UI.  Begin by logging into OpenStack with an administrative account and then following these steps:
+If you have previously installed OpenStack, you can manually start a virtual appliance from the **Horizon UI**.  Begin by logging into OpenStack with an administrative account and then following these steps:
 
-  - Click on the **Admin** tab to the far left and then click on **Identity..Projects**. To the right, click on the **Create Project** button and then create a new project called **StackMonkey**.
-  - Back in the **Admin** panel, click on **Users**.  To the right, click on the **Create User** button and then create a new user called **stackmonkey** and set the user's password.  Set the role of the new user account to **admin**.
-  - Back in the **Admin** panel, click on **Identity..Projects** again.  Click on **Modify Users** next to the StackMonkey project and then assign the **stackmonkey** user to the **StackMonkey** project.
+  - Click on the **Admin** tab to the far left and then click on **Identity Panel..Projects**. To the right, click on the **Create Project** button and then enter a new project name called **stackmonkey** in the name field.  Click on **Create Project** below to create the new project.
+  - Back in the **Admin** panel, click on **Users**.  To the right, click on the **Create User** button and then create a new user called **stackmonkey** and set the user's password.  Set the primary project to **stackmonkey** and set role of the new user account to **admin**.
   - Log out of the system and then log back in as the **stackmonkey** user.  You should still see the **Admin** tab to the left and the **StackMonkey** project should be highlighted in the pulldown at the top left.
 
-*Note: The StackMonkey user requires admin access to OpenStack so it can gather the capabilities and load of the hypervisors.  If you are concerned about this, you may disable the admin role for the StackMonkey user.*
+*Note: The StackMonkey user requires admin access to OpenStack so it can gather the capabilities and current load on the hypervisors.  If you are concerned about this from a security standpoint, you may disable the admin role for the StackMonkey user.*
 
+#### Install an Ubuntu Image
 Next, you'll need to launch an Ubuntu backed instance. If you don't have an Ubuntu image installed on your OpenStack cluster, follow these steps:
 
-  - this
-  - that
-  - other
-  
-Now prepare to launch the instance by following these steps:
+  - Click on the **Admin** tab to the far left and then click on **System Panel..Images**. Click on the **Create Image** button to the top right.
+  - Name the image **Ubuntu 14.04LTS** and then paste **[http://goo.gl/u2IBP9](http://goo.gl/u2IBP9)** into the location field.
+  - Select the **QCOW2** format in the pulldown and make the image public if you want to share it with other OpenStack users.
+  - Click **Create Image** to create the new boot image.
 
-  - Create a key pair for ssh access to the instance.
+#### Create a Keypair
+You need to create a key pair that you can use to access the virtual appliance's command line console.  Follow these steps to create the key:
+
+  - Click on the **Project** tab to the far left and then click on **Compute..Instances**. Click on **Access & Security** and then click on the **Key Pairs** tab at the top.
+  - Click **Create Key Pair** and name the key pair **stackmonkey**.  Click **Create Key Pair** to create the key pair.  The private key will be downloaded to your local machine.
+
+You need to move the private key into your **.ssh directory** (or similar for Windows) and then change the permissions on it:
+
+	cd ~/Downloads/
+	mv stackmonkey.pem ~/.ssh/
+    chmod 600 ~/.ssh/stackmonkey.pem
+
+We'll use the key in a minute to ssh into the appliance for maintenance tasks and viewing logs.
+
+#### Set the Access Rules
+The instances being sold by the appliance will need unrestricted access from the Internet if they have publicly accessible addresses. For now, the appliance does not manage the security groups, so you need to open up the default group to allow all access to the instances you will be starting.  Follow these steps to setup your access rules for the appliance:
+
+  - Click on the **Project** tab to the far left and then click on **Compute..Access & Security**. To the right, click on the **Create Security Group** button.  Name the security group **'appliance'**, enter a short description and then click **Create Security Group** to create.
+  - Click the **Manage Rules** button to the right in the **appliance** security group row.  Click **Add Rule** and then enter the number **'22'** (ssh) in the port field.  Click **Add**.  Repeat this step and enter the number **'80'** (http) in the port field instead.  Click **Add** again.
+  - Click the **Manage Rules** button again, but this time click on the **Rule** pulldown and select **Custom ICPMP Rule**.  Enter the number '-1' in **both** the **Type** and **Code** fields.  Click **Add** to add the rule.
+
+Your **appliance** security group rules should now look like this:
+
+[![OpenStack Video](https://raw.github.com/StackGeek/openstackgeek/master/icehouse/openstack_icehouse.png)](https://vimeo.com/97757352)
+  
+Now follow these steps to set up the access rules for the instances that will be started on the cluster by the appliance:
+
+  - Click on the **Project** tab to the far left and then click on **Compute..Access & Security**.
+  - Click the **Manage Rules** button to the right in the **default** security group row.  
+  - Delete any existing rules for the default group by clicking on **Delete Rule** in any of the existing rule's rows.
+  - Click **Add Rule** and then select **Custom TCP Rule** from the **Rule** pulldown and **Port Range** from the **Open Port** pulldown.
+  - Enter the number **'1'** in the **From Port** field. Enter the number **'65535'** in the **To Port** field. Click **Add**.
+  - Repeat the previous two steps, but this time select **Custom UDP Rule** from the **Rule** pulldown.  Enter the same numbers for the range.
+  - Click **Add Rule** and then select **Custom ICPMP Rule** from the **Rule** pulldown.  
+  - Enter the number **'-1'** in **both** the **Type** and **Code** fields.  Click **Add** to add the rule.
+
+Your **default** security group rules should now look like this:
+
+[![OpenStack Video](https://raw.github.com/StackGeek/openstackgeek/master/icehouse/openstack_icehouse.png)](https://vimeo.com/97757352)
+
+#### Start the Instance
+Finally, you can start the instance:
+
   - Click on the **Project** tab to the far left and then click on **Compute..Instances**. To the right, click on the **Create Instance** button.  The create instance dialog should appear.
   - Name the instance **StackMonkey VA** and then click on **Boot From** and select the Ubuntu image you just installed.
 
@@ -94,19 +142,23 @@ Note: If you lose the login information to the appliance, you can use the comman
 
 
 ### Security
-From a security standpoint, the system should be reasonably secure against bad actors.  It's also reasonable to expect there are holes in that logic. Here is a short list of security features that have been built into the system:
+From a security standpoint, the system management portions of the project should be reasonably secure against bad actors.  It's also reasonable to expect there are holes in that logic. Here is a short list of security features that have been built into the system:
 
-  - Pool controllers use Google federated auth, store no passwords and can utilize two factor authentication.
-  - The pool DOES NOT receive or store credentials related to an appliance's SSL tunnel or Coinbase account.
-  - The  appliance's Coinbase API tokens use method level permissions and should be set to address creation only.
-  - SSL tunnels are provided by the Ngrok service at [https://ngrok.com/](https://ngrok.com/). Ngrok is Open Source.
+  - Pool controllers use Google federated auth, store no passwords and provide two factor authentication.
+  - The pool DOES NOT know about or store credentials related to an appliance's SSL tunnel or Coinbase account.
+  - The  appliance's Coinbase API tokens use method level permissions and are suppose to be set to address creation only.
+  - SSL tunnels are provided by the Open Source based Ngrok service at [https://ngrok.com/](https://ngrok.com/).
   - SSL tunnels DO NOT relay or store information related to logins, pool tokens or Coinbase credentials.
   - Bitcoin payment callbacks are handled exclusively between the appliance and Coinbase using tokens.
-  - Instances can only be started by callbacks from Coinbase carrying those coin specific tokens.
+  - Instances can only be started by callbacks from Coinbase to the appliance carrying those coin specific tokens.
   - Custom callback addresses can be used to slightly increase anonymization when provisioning servers for users.
-  - Private appliance groups provide increased trust between entities and keep bad actors off certain appliances.
+  - Private appliance groups provide a way to leverage trust between entities helping keep bad actors off your appliances.
 
-Obviously, certain aspects of system security can be adversely affected when considering the fact strangers are providing infrastructure services to other strangers.  Weird shit is going to happen and is expected on the StackMonkey pool.  Consider this your fair warning!
+Obviously, certain aspects of system security can be adversely affected when considering the fact strangers are providing infrastructure services to other strangers.  Weird shit is going to happen, and is expected on the StackMonkey pool.  If you don't like the idea of that, then don't use it.
+
+To mitigate harm to the system and users, the plan is allow the community to provide security services for itself. White lists, black lists, voting buttons, voting addresses, karma on payment addresses, bitcoin contracted bounties, and anything and everything we need to do to ensure we get a good night's rest will be explored and tested. Expect data feeds of all server starts or callbacks, ask prices, bids, URLs used for boots, and general appliance statistics.  All this data can (and will)be used in an open and transparent way to provide reliable and trustworthy infrastructure.
+
+Remember, infrastructure is meant to be [open and transparent](http://www.stackgeek.com/blog/kordless/post/a-code-of-trust). This project makes that a priority.
 
 ### Development
 If you are doing development on this project, touch a file named **DEV** in the root directory to turn on the development debug configuration:
