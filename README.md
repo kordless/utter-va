@@ -27,7 +27,7 @@ Once you have OpenStack installed, you'll need to create or have the following s
 ### Watch the Video
 The [following video](https://vimeo.com/91805503) will step you through installing the virtual appliance on your OpenStack cluster.  If you have any questions about the install, you can head over the the [StackMonkey documentation](https://www.stackmonkey.com/docs/) for a list of resources.
 
-[![OpenStack Video](https://raw.github.com/StackGeek/openstackgeek/master/icehouse/openstack_icehouse.png)](https://vimeo.com/97757352)
+[![Appliance Video](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/video_thumb.png)](https://vimeo.com/97757352)
 
 
 ### Automated Install
@@ -81,7 +81,7 @@ The instances being sold by the appliance will need unrestricted access from the
 
 Your **appliance** security group rules should now look like this:
 
-[![OpenStack Groups](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/appliance_groups.png =512x)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/appliance_groups.png)
+[![OpenStack Groups](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/appliance_groups_thumb.png =512x)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/appliance_groups.png)
   
 Now follow these steps to set up the access rules for the instances that will be started on the cluster by the appliance:
 
@@ -96,7 +96,7 @@ Now follow these steps to set up the access rules for the instances that will be
 
 Your **default** security group rules should now look like this:
 
-[![OpenStack Groups](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/default_groups.png =512x)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/default_groups.png)
+[![OpenStack Groups](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/default_groups_thumb.png =512x)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/default_groups.png)
 
 #### Create a Flavor for the Appliance
 The appliance needs about 8GB of drive space for caching boot images. To create a new flavor that is the right size for for the appliance, do the following:
@@ -104,7 +104,7 @@ The appliance needs about 8GB of drive space for caching boot images. To create 
   - Click on the **Admin** tab to the far left and then click on **System Panel..Flavors**.  Click the **Create Flavor** button at the top right.
   - Name the flavor **'m512.v1.d8'**. For **VCPUs** put the number **'1'**.  For **RAM** put **'512'**.  For **Root Disk GB** put **'8'** and then click **Create Flavor** to create the new flavor.
  
-[![OpenStack Flavor](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/flavor.png =512x)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/flavor.png)
+[![OpenStack Flavor](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/flavor_thumb.png =512x)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/flavor.png)
 
 #### Start the Instance
 Now all the components of the instance have been created, you can launch an instance which will configure itself into a StackMonkey virtual appliance.  Follow these instructions to launch the instance:
@@ -130,7 +130,7 @@ Click on the **Launch** button to launch the appliance.  You can monitor the ins
 ### Configuration
 The takes about 10 minutes to build.  Once the appliance is running, you can access it by its IP address.  This can be found in the Horizon UI of OpenStack, next to the instance.  Here's an example:
 
-[![Appliance IPs](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/appliance_ip.png =512x)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/appliance_ip.png)
+[![Appliance IPs](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/appliance_ip_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/appliance_ip.png)
 
 Type a similar URL in your browser to bring up the StackMonkey VA:
 
