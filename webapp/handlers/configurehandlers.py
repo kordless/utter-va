@@ -205,6 +205,9 @@ def configure():
 				# build the tunnel config file - ngrok will start after it's built
 				appliance.build_tunnel_conf()
 
+				# not ideal, but whatever
+				os.system('monit restart ngrok')
+
 			# form was valid, so say thanks	
 			flash("Setting have been saved.", "success")
 
