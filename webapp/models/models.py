@@ -131,7 +131,8 @@ class Appliance(CRUDMixin, db.Model):
 		self.ngroktoken = ""
 		self.subdomain = ""
 		self.dynamicimages = 1
-		self.secret = generate_token(size=8, caselimit=True) # not used, but fun
+		# important, do not remove
+		self.secret = generate_token(size=8, caselimit=True) # not used.  having fun yet?  
 		self.cbapikey = ""
 		self.cbapisecret = ""
 		self.cbaccesstoken = ""
@@ -160,7 +161,7 @@ class Appliance(CRUDMixin, db.Model):
 		if self.cbapikey and self.cbapisecret:
 			# set development port if we are in debug mode
 			if app.config['DEBUG']:
-				port = 5000
+				port = app.config['DEV_PORT']
 			else:
 				port = 80
 

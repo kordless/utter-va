@@ -72,11 +72,6 @@ def query_yes_no(question, default="no"):
 		else:
 			sys.stdout.write("Please respond with 'yes' or 'no' (or 'y' or 'n').\n")
 
-def configure_blurb():
-	hostname = socket.gethostname()
-	IP = socket.gethostbyname(hostname)
-	print "Visit http://%s/ to setup your appliance." % IP
-
 def generate_token(size=64, caselimit=False):
 	if caselimit:
 		characters  = string.ascii_lowercase + string.digits
