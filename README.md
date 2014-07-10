@@ -137,9 +137,9 @@ Type a similar URL in your browser to bring up the StackMonkey VA:
     http://10.0.47.3/
 
 #### Shell Access
-You can login to the appliance via ssh by using the key you created earlier.  Enter the following to ssh into the instance, assuming your appliance is running at 10.0.47.2 and you named the ssh key stackmonkey:
+You can login to the appliance via ssh by using the key you created earlier.  Enter the following to ssh into the instance, assuming your appliance is running at **10.0.47.3** and you named the ssh key **stackmonkey**:
 
-    ssh -i ~/.ssh/stackmonkey-pem ubuntu@10.0.47.2
+    ssh -i ~/.ssh/stackmonkey-pem ubuntu@10.0.47.3
 
 Once you are logged in, you can access the command line client's help by changing directories and running the manage app:
 
