@@ -35,8 +35,7 @@
                 <div class="text-center" id="address"><a href="https://blockchain.info/address/{{ instance.address.address }}" target="_blank">{{ instance.address.address }}</a></div>
               </div>
             </div>
-
-            <div class="row">
+            <div class="row instance-detail-row">
               <div class="col-md-6">
                 <div><h3><small>Instance Attributes</small></h3></div>
                 <div>
@@ -64,7 +63,7 @@
                     </tr>
                     <tr>
                       <td><strong>Image</strong></td>
-                      <td colspan="2"><a href="{{ instance.image.url }}">{{ instance.image.name }}</a></td>
+                      <td colspan="2">{% if instance.image.name %}<a href="{{ instance.image.url }}">{{ instance.image.name }}</a>{% else %}Dynamic{% endif %}</td>
                     </tr>
                   </table>
                 </div>
@@ -87,6 +86,23 @@
                     </tr>
                   </tbody>
                 </table>
+              </div>
+            </div>
+            <div class="row instance-detail-row">
+              <div class="col-md-12">
+                <div><h3><small>External Instance Resources</small></h3></div>
+                <div>
+                  <table class="table table-striped table-responsive">
+                    <tr>
+                      <td><strong>Callback URL</strong></td>
+                      <td>{{ instance.callback_url }}</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Dynamic Image</strong></td>
+                      <td><a href="{{ instance.dynamic_image_url }}">{{ instance.dynamic_image_url }}</a></td>
+                    </tr>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
