@@ -1,6 +1,7 @@
 *.pyc
 *.db
 tunnel.conf*
+config.py
 DEV
 .DS_Store
 *.img
