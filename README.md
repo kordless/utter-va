@@ -44,7 +44,7 @@ If you have previously installed OpenStack, you can manually start a virtual app
 
   - Click on the **Admin** tab to the far left and then click on **Identity Panel..Projects**. To the right, click on the **Create Project** button and then enter a new project name called **stackmonkey** in the name field.  Click on **Create Project** below to create the new project.
   - Back in the **Admin** panel, click on **Users**.  To the right, click on the **Create User** button and then create a new user called **stackmonkey** and set the user's password.  Set the primary project to **stackmonkey** and set role of the new user account to **admin**.
-  - Log out of the system and then log back in as the **stackmonkey** user.  You should still see the **Admin** tab to the left and the **StackMonkey** project should be highlighted in the pulldown at the top left.
+  - Log out of the system and then log back in as the **stackmonkey** user.  You should still see the **Admin** tab to the left and the **stackmonkey** project should be highlighted in the pulldown at the top left.
 
 *Note: The StackMonkey user requires admin access to OpenStack so it can gather the capabilities and current load on the hypervisors.  If you are concerned about this from a security standpoint, you may disable the admin role for the StackMonkey user.*
 
@@ -73,9 +73,11 @@ We'll use the key in a minute to ssh into the appliance for maintenance tasks an
 #### Set the Access Rules
 The instances being sold by the appliance will need unrestricted access from the Internet if they have publicly accessible addresses. For now, the appliance does not manage the security groups, so you need to open up the default group to allow all access to the instances you will be starting.  Follow these steps to setup your access rules for the appliance:
 
-  - Click on the **Project** tab to the far left and then click on **Compute..Access & Security**. To the right, click on the **Create Security Group** button.  Name the security group **'appliance'**, enter a short description and then click **Create Security Group** to create.
+  - Click on the **Project** tab to the far left and then click on **Compute..Access & Security**. 
+  - Click on the **Security Groups** tab at the top.  To the right, click on the **Create Security Group** button.  
+  - Name the security group **'appliance'** and enter a short description.  Click **Create Security Group** to create the group.
   - Click the **Manage Rules** button to the right in the **appliance** security group row.  Click **Add Rule** and then enter the number **'22'** (ssh) in the port field.  Click **Add**.  Repeat this step and enter the number **'80'** (http) in the port field instead.  Click **Add** again.
-  - Click the **Manage Rules** button again, but this time click on the **Rule** pulldown and select **Custom ICPMP Rule**.  Enter the number '-1' in **both** the **Type** and **Code** fields.  Click **Add** to add the rule.
+  - Click the **Manage Rules** button again, but this time click on the **Rule** pulldown and select **Custom ICMP Rule**.  Enter the number '-1' in **both** the **Type** and **Code** fields.  Click **Add** to add the rule.
 
 Your **appliance** security group rules should now look like this:
 
@@ -108,7 +110,7 @@ The appliance needs about 8GB of drive space for caching boot images. To create 
 Now all the components of the instance have been created, you can launch an instance which will configure itself into a StackMonkey virtual appliance.  Follow these instructions to launch the instance:
 
   - Click on the **Project** tab to the far left and then click on **Compute..Instances**. To the right, click on the **Launch Instance** button.
-  - Name the instance **StackMonkey VA** and then click on the **Flavor** pulldown and select the **m512.v1.d8** flavor.
+  - Name the instance **'StackMonkey VA'** and then click on the **Flavor** pulldown and select the **m512.v1.d8** flavor.
   - Click on the **Instance Boot Source** pulldown at the bottom and select **Boot from image**.  Under **Image Name**, select the **Ubuntu 14.04LTS** image you installed earlier.
   - Click on the **Access & Security** tab at the top.  Use the **Key Pair** pulldown to select the **stackmonkey** key pair you generated earlier.  Check the **appliance** security group, and uncheck the **default** group.
   - Click on the **Post-Creation** tab at the top.  
@@ -126,11 +128,14 @@ In the Customization Script text area that appears in the modal, paste the follo
 Click on the **Launch** button to launch the appliance.  You can monitor the instance's build state by refreshing the console log tab viewable by clicking on the instance name in the instance list. 
 
 ### Configuration
-The takes about 10 minutes to build.  Once the appliance is running, you can access it by its IP address.  This can be found in the Horizon UI of OpenStack, next to the instance.  Here's an example
+The takes about 10 minutes to build.  Once the appliance is running, you can access it by its IP address.  This can be found in the Horizon UI of OpenStack, next to the instance.  Here's an example:
 
-    http://10.0.47.2/
 
-Type that into your browser to bring up the StackMonkey VA.
+
+
+Type a similar URL in your browser to bring up the StackMonkey VA:
+
+    http://10.0.47.3/
 
 #### Shell Access
 You can login to the appliance via ssh by using the key you created earlier.  Enter the following to ssh into the instance, assuming your appliance is running at 10.0.47.2 and you named the ssh key stackmonkey:
