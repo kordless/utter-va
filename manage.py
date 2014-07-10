@@ -19,7 +19,7 @@ from webapp.models.flavors import Flavors
 from webapp.models.instances import Instances 
 from webapp.models.addresses import Addresses
 
-from webapp.libs.utils import configure_blurb, query_yes_no, pprinttable, message
+from webapp.libs.utils import query_yes_no, pprinttable, message
 from webapp.libs.coinbase import coinbase_get_addresses, coinbase_checker
 from webapp.libs.images import download_images
 from webapp.libs.pool import pool_salesman, pool_connect
