@@ -12,6 +12,8 @@ It is my belief that crypto currency technologies can bring a new knob to the ex
 
 This peek into the future of [commodity compute](http://en.wikipedia.org/wiki/Commodity_computing) can be seen by visiting the [StackMonkey compute pool](https://www.stackmonkey.com/). StackMonkey is a demonstrative cooperative intended to be the Wild West of compute pools (given it's the first one) and built for use by hackers, crackers, security researchers, devs, do-it-yourselfers, and the communities and technologies they develop from it.
 
+All code providing basic infrastructure services to the project will be Open Source and will be licensed under the [MIT License](http://opensource.org/licenses/MIT).
+
 ### Project Components
 A set of three Open Source repositories provide the project's functionality: [utter-va](https://github.com/StackMonkey/utter-va), [utter-pool](https://github.com/StackMonkey/utter-pool) and [utter-exchange](https://github.com/StackMonkey/utter-exchange). The utter-va virtual appliance provided by this repository builds an instance which runs on top of an OpenStack cluster. The appliance controls the OpenStack cluster's capabilities, advertises instances for sale on a central pool controller running utter-pool and launches instances when payments are observed on the [Bitcoin Blockchain](https://en.bitcoin.it/wiki/Block_chain) through callbacks made by [Coinbase](https://coinbase.com/).
 
