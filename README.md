@@ -1,7 +1,7 @@
 ## Welcome to Utter.io and StackMonkey!
 Hello and welcome. I'm [kordless](https://www.google.com/?q=kordless#q=kordless&spell=0) on [HackerNews](https://news.ycombinator.com/user?id=kordless), [Twitter](https://twitter.com/kordless/), and [Github](https://github.com/kordless). I currently need individuals familiar with [OpenStack](http://openstack.org/) to [install and run the appliance](https://www.stackmonkey.com/appliances/new/) for the beta test.
 
-This piece of Open Source software allows you to sell virtual instances for Bitcoin:
+This software allows you to sell virtual instances for Bitcoin:
 
 [![Instance Payment](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/start_instance_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/start_instance.png) 
 
