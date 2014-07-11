@@ -34,12 +34,6 @@
         Bitcoin Addresses
       </a>
     </li>
-    <li {% if active=="twitter" %}class="active"{% endif %}>
-      <a href="{{ url_for('configure.configure_twitter') }}">
-        Twitter Bot
-      </a>
-    </li>
-    
     <li {% if active=="instances" %}class="active"{% endif %}>
       <a href="{{ url_for('configure.configure_instances') }}">
         Instances
