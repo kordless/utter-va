@@ -181,8 +181,7 @@ Once you've logged into the appliance, click on the **Appliance** tab at the top
 
 Click the **Register API Token** button to register the appliance with the pool.  If you haven't signed up for the **StackMonkey pool** yet, you will be prompted by Google to allow access to your account from the site.  Once you have authenticated with the site, you'll be presented with a new appliance form:
 
-[![Create an admin account.](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/new_appliance_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/new_appliance.png)
-  
+![Create an admin account.](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/new_appliance.png)  
   
   
 ### Security
