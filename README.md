@@ -134,7 +134,7 @@ Click on the **Launch** button to launch the appliance.  You can monitor the ins
 
 The appliance takes about 10 minutes to build.  
 
-### Configuration
+### Accessing the Appliance
 Once the appliance is running, you can access it by its IP address.  This can be found in the Horizon UI of OpenStack, next to the instance.  Here's an example:
 
 [![Appliance IPs](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/appliance_ip_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/appliance_ip.png)
@@ -179,11 +179,27 @@ Once you've logged into the appliance, click on the **Appliance** tab at the top
 
 [![Create an admin account.](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/appliance_configuration_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/appliance_configuration.png)
 
+#### Pool API Token
 Click the **Register API Token** button to register the appliance with the pool.  If you haven't signed up for the **StackMonkey pool** yet, you will be prompted by Google to allow access to your account from the site.  Once you have authenticated with the site, you'll be presented with a new appliance form:
 
 ![Create an admin account.](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/new_appliance.png)  
   
-  
+Enter a name for the appliance and leave it in the **Public** group for now.  Click on **Create Appliance** to add it to your account.  You may also want to take a moment and [setup two factor authentication](https://www.stackmonkey.com/settings/) on StackMonkey.
+
+#### Coinbase Tokens
+Navigate to [Coinbase](https://coinbase.com/signup?r=52a9c6bf937ab6453a00001e&utm_campaign=user-referral&src=referral-link) and sign up for a new account. Coinbase will email you a confirmation link which you will need to click to complete your login.
+
+  - To create an API key, click on the **login pulldown** at the top right, then click on **settings**.
+  - Click on the **API** tab at the top and then click on the **New API Key** button to the right.
+  - You'll be prompted for a password or two factor auth key.  Enter whichever is applicable and click **Verify** to continue.
+
+When you create a new API key on Coinbase, you can specify what actions it can perform on your account.  Given Bitcoin is like money, you'll want to be very careful about the permissions you give external applications.  The StackMonkey appliance only needs access to **creating new Bitcoin addresses** for your account.  This allows it to create new addresses for instances, and watch payments to those addresses by individuals.
+
+Proceed by ensuring **HMAC (Key + Secret)** is selected at the top.  Check the **My Wallet** checkbox and then check the **addresses** checkbox under permissions.  Verify there are no other method permissions checked, other than addresses:
+
+[![Create an admin account.](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/coinbase_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/coinbase.png) 
+
+
 ### Security
 From a security standpoint, the ***system management portions*** of the project should be reasonably secure against bad actors.  It's also reasonable to expect there are holes in that logic at this early stage of the project. Here is a short list of security features that have been built into the system:
 
