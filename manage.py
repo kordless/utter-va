@@ -88,6 +88,7 @@ def admin(app):
 			user = db.session.query(User).first()
 			user.delete(user)
 			print "The admin user has been deleted.  Please access the UI as soon as possible to create a new user."
+			configure_blurb()
 		else:
 			print "Doing nothing."
 	return action
