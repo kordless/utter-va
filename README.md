@@ -24,8 +24,8 @@ Once you have OpenStack installed, you'll need to create or have the following s
   - an [Ngrok](https://ngrok.com/) account (signup takes 1 minute)
 
 
-### Watch the Video
-The [following video](https://vimeo.com/91805503) will step you through installing the virtual appliance on your OpenStack cluster.  If you have any questions about the install, you can head over the the [StackMonkey documentation](https://www.stackmonkey.com/docs/) for a list of resources.
+### Watch the Install Video
+The [following video](https://vimeo.com/91805503) will step you through installing the virtual appliance on your OpenStack cluster.  If you have any questions about the install, you can head over to [StackMonkey's Gitter](https://gitter.im/StackMonkey/utter-va) for the group chat.
 
 [![Appliance Video](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/video_thumb.png)](https://vimeo.com/97757352)
 
@@ -150,11 +150,12 @@ Once you are logged in, you can access the command line client's help by changin
 #### Admin Account
 Start by creating an administrator account.  Enter the username and password (twice) to use for the admin account and then click the **Create Admin Account** button to create the account.
 
-![Create an admin account.](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/photo.png)
+[![Create an admin account.](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/admin_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/admin_thumb.png)
 
 **Note**: If you lose the login information to the appliance, you can use the command line to reset the admin account:
 
      ./manage.py admin -f true
+
 
 
 ### Security
