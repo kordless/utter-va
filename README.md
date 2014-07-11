@@ -251,6 +251,8 @@ Here's a screenshot of a completed OpenStack setup for reference:
 ### Using the Appliance
 Using the appliance is fairly self explanatory.  Click on the **Instances** tab to the left and then click on the **Start** or **Payment** buttons to the right of an instance for instructions on starting them.  You'll need to [configure a wisp on StackMonkey](https://www.stackmonkey.com/wisps) for the appliance to use to boot your instances.  There will be more information forthcoming on using the appliance to start and sell instances, so stay tuned to the [blog on StackMonkey](https://www.stackmonkey.com/blog/)!
 
+[![Openstack Setup](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/start_instance_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/start_instance.png) 
+
 ### Security
 From a security standpoint, the ***system management portions*** of the project should be reasonably secure against bad actors.  It's also reasonable to expect there are holes in that logic at this early stage of the project. Here is a short list of security features that have been built into the system:
 
