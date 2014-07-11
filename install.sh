@@ -103,12 +103,6 @@ sudo service monit restart
 sleep 2
 sudo monit monitor all
 
-# grab the IP address of the box
-MYIP=$(/sbin/ifconfig eth0| sed -n 's/.*inet *addr:\([0-9\.]*\).*/\1/p')
-
-# build the database and sync with pool operator
-sudo su -c "/var/www/utterio/manage.py install -i $MYIP" -s /bin/sh ubuntu
-
 # generate tokens and write into new config.py file
 cp /var/www/utterio/config.py.template /var/www/utterio/config.py
 SECRET_KEY=`date +%N | md5sum | cut -d' ' -f1`
@@ -118,6 +112,16 @@ sed -e "
 s,%SECRET_KEY%,$SECRET_KEY,g;
 s,%CSRF_SESSION_KEY%,$CSRF_SESSION_KEY,g;
 " -i /var/www/utterio/config.py
+
+# change ownership of www directory
+sudo chown -R ubuntu:ubuntu /var/www/
+sudo chmod -R g+w /var/www/
+
+# grab the IP address of the box
+MYIP=$(/sbin/ifconfig eth0| sed -n 's/.*inet *addr:\([0-9\.]*\).*/\1/p')
+
+# build the database and sync with pool operator
+sudo su -c "/var/www/utterio/manage.py install -i $MYIP" -s /bin/sh ubuntu
 
 # install crontab for ubuntu user to run every 15 minutes starting with a random minute
 MICROS=`date +%N`
