@@ -148,9 +148,9 @@ Once you are logged in, you can access the command line client's help by changin
     
 
 #### Admin Account
-Start by creating an administrator account.  Enter the username and password (twice) to use for the admin account and then click the **Create Admin Account** button to create the account.
+Start by creating an administrator account.  Enter the username, password, and same password again to create an account. Click the **Create Admin Account** button to create the account and automatically sign in.
 
-[![Create an admin account.](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/admin_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/admin_thumb.png)
+[![Create an admin account.](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/admin_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/admin.png)
 
 **Note**: If you lose the login information to the appliance, you can use the command line to reset the admin account:
 

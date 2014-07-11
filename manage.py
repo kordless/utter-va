@@ -472,7 +472,7 @@ if __name__ == "__main__":
 
 	# delete existing handlers
 	del app.logger.handlers[:]
-	handler = RotatingFileHandler('logs/commands.log', maxBytes=1000000, backupCount=7)
+	handler = RotatingFileHandler('/var/www/utterio/logs/commands.log', maxBytes=1000000, backupCount=7)
 	handler.setLevel(logging.INFO)
 	log_format = "%(asctime)s - %(levelname)s - %(message)s"
 	formatter = logging.Formatter(log_format)
