@@ -175,9 +175,16 @@ If you lose the login information to the appliance, you can use a command to res
 ***Note:*** Keep in mind that the appliance URL is not intended to be shared with others.  While connections from the outside are encrypted over the SSL tunnel, and the URL of the appliance is never publicly shared, your local access to the UI via IP address is neither secured nor encrypted.  This will be addressed in later version.  More information about appliance security is located at the bottom of this document.
 
 ### Appliance Configuration
-Once you've logged into the appliance, click on the **Appliance** tab at the top left.  You'll see a few warning messages pop up and go away in the bottom right corner.  Follow these steps to configure the appliance for operations:
+Once you've logged into the appliance, click on the **Appliance** tab at the top left.  You'll see a few warning messages pop up and go away in the bottom right corner.  There should be some notifications next to a few of the tabs to the left, indicating the appliance isn't functional yet. Here's a view of that configuration screen with warnings:
 
-  - 
+[![Create an admin account.](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/appliance_configuration_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/appliance_configuration.png)
+
+Click the **Register API Token** button to register the appliance with the pool.  If you haven't signed up for the **StackMonkey pool** yet, you will be prompted by Google to allow access to your account from the site.  Once you have authenticated with the site, you'll be presented with a new appliance form:
+
+[![Create an admin account.](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/new_appliance_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/new_appliance.png)
+  
+  
+  
 ### Security
 From a security standpoint, the ***system management portions*** of the project should be reasonably secure against bad actors.  It's also reasonable to expect there are holes in that logic at this early stage of the project. Here is a short list of security features that have been built into the system:
 
