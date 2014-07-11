@@ -1,5 +1,10 @@
 ## Welcome to Utter.io and StackMonkey!
-Hello and welcome. I'm [kordless](https://www.google.com/?q=kordless#q=kordless&spell=0) on [HackerNews](https://news.ycombinator.com/user?id=kordless), [Twitter](https://twitter.com/kordless/), [Github](https://github.com/kordless), and just about everything else. I've spent a bit of extra time summarizing here so you can quickly digest the project concept without having to read through all of it. I currently need individuals familiar with [OpenStack](http://openstack.org/) to [install and run the appliance](https://www.stackmonkey.com/appliances/new/) for the beta test.  If you have 5 minutes, watch the video.
+Hello and welcome. I'm [kordless](https://www.google.com/?q=kordless#q=kordless&spell=0) on [HackerNews](https://news.ycombinator.com/user?id=kordless), [Twitter](https://twitter.com/kordless/), and [Github](https://github.com/kordless). I currently need individuals familiar with [OpenStack](http://openstack.org/) to [install and run the appliance](https://www.stackmonkey.com/appliances/new/) for the beta test.
+
+This OpenStack appliance allows you to sell virtual instances for Bitcoin:
+
+[![Instance Payment](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/start_instance_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/start_instance.png) 
+
 
 Utter.io is like AirBnb for excess compute: The utter.io project provides fast location and provisioning of compute resources within a cooperative set of systems managed by [OpenStack operators](http://superuser.openstack.org/). Resource accounting inside the network is settled with [Bitcoin](https://bitcoin.org/) and purchases of compute instances can be made by users without an account. Additionally, groups of operators can form adhoc [hybrid clouds](http://en.wikipedia.org/wiki/Cloud_computing#Hybrid_cloud), allowing fast scaling and sharing of excess compute resources between trusted entities.  If you are familiar with cloud terminology, this idea may be one possible solution to some of the challenges in achieving a global [cloud federation](http://www.datacenterknowledge.com/archives/2012/09/17/federation-is-the-future-of-the-cloud/).
 
@@ -251,7 +256,7 @@ Here's a screenshot of a completed OpenStack setup for reference:
 ### Using the Appliance
 Using the appliance is fairly self explanatory.  Click on the **Instances** tab to the left and then click on the **Start** or **Payment** buttons to the right of an instance for instructions on starting them.  You'll need to [configure a wisp on StackMonkey](https://www.stackmonkey.com/wisps) for the appliance to use to boot your instances.  There will be more information forthcoming on using the appliance to start and sell instances, so stay tuned to the [blog on StackMonkey](https://www.stackmonkey.com/blog/)!
 
-[![Openstack Setup](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/start_instance_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/start_instance.png) 
+[![Start Instances](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/start_instance_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/start_instance.png) 
 
 ### Security
 From a security standpoint, the ***system management portions*** of the project should be reasonably secure against bad actors.  It's also reasonable to expect there are holes in that logic at this early stage of the project. Here is a short list of security features that have been built into the system:
