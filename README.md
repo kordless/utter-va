@@ -226,7 +226,7 @@ The Ngrok SSL tunnel will be established as soon as you've completed the rest of
 #### Service Location
 Use the map to set the physical location of the OpenStack cluster on top of which the appliance is running. If you want to be somewhat private about your exact location that's not a problem, but you should try to set the location to something reasonably close to where you live.  If you live in the country, set it to a few miles from your home.  If you live in the city, set it to a few blocks away.
 
-[![Create an admin account.](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/service_location_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/service_location.png) 
+[![Service Location](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/service_location_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/service_location.png) 
 
 Click on **Save Configuration** at any time to save the current service location.
 
@@ -246,7 +246,10 @@ Switch back to the appliance's page and do the following:
   
 Here's a screenshot of a completed OpenStack setup for reference:
 
+[![Openstack Setup](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/openstack_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/openstack.png) 
 
+### Using the Appliance
+Using the appliance is fairly self explanatory.  Click on the **Instances** tab to the left and then click on the **Start** or **Payment** buttons to the right of an instance for instructions on starting them.  You'll need to [configure a wisp on StackMonkey](https://www.stackmonkey.com/wisps) for the appliance to use to boot your instances.  There will be more information forthcoming on using the appliance to start and sell instances, so stay tuned to the [blog on StackMonkey](https://www.stackmonkey.com/blog/)!
 
 ### Security
 From a security standpoint, the ***system management portions*** of the project should be reasonably secure against bad actors.  It's also reasonable to expect there are holes in that logic at this early stage of the project. Here is a short list of security features that have been built into the system:
