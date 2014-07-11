@@ -1,44 +1,5 @@
 $().ready(function() {
   // help popovers for appliance setup
-  $("#hover-cb-api-secret").popover({ 
-    title: '<strong>Coinbase Client Secret</strong>', 
-    content: '<p>Enter your Coinbase <strong>API secret</strong> here.</p>', 
-    html: true, 
-    trigger: "hover",
-    placement: "top"
-  }).blur(function () {
-    $(this).popover('hide');
-  });
-  $("#hover-cb-api-key").popover({ 
-    title: '<strong>Coinbase Client ID</strong>', 
-    content: '<p>Enter your Coinbase <strong>API Key</strong>. Toggle visibility of the ' +
-              '<strong>API Secret</strong> with the <span class="glyphicon glyphicon-eye-open"></span> icon.</p>', 
-    html: true, 
-    trigger: "hover",
-    placement: "top"
-  }).blur(function () {
-    $(this).popover('hide');
-  });
-  $("#hover-ngrok-token").popover({ 
-    title: '<strong>Ngrok Tunnel Token</strong>', 
-    content: "<p>Use the <span class='glyphicon glyphicon-cog'></span> button to access the ngrok.com website to get a token.</p>", 
-    html: true,
-    trigger: "hover",
-    placement: "top"
-  }).blur(function () {
-    $(this).popover('hide');
-  });
-  $("#hover-api-token").popover({ 
-    title: '<strong>API Token</strong>', 
-    content: '<p>Click the <span class="glyphicon glyphicon-refresh"></span> button to the right to generate a new ' +
-              'API token.  If the <strong>Register API Token</strong> button is orange, click it to link ' +
-              'the current API token to your account.</p>', 
-    html: true,
-    trigger: "hover",
-    placement: "top"
-  }).blur(function () {
-    $(this).popover('hide');
-  });
   $("#map").popover({ 
     title: '<strong>Service Location</strong>', 
     content: 'Use the map to drag the pin to indicate the geo location of the OpenStack cluster this appliance ' +
