@@ -230,7 +230,23 @@ Use the map to set the physical location of the OpenStack cluster on top of whic
 
 Click on **Save Configuration** at any time to save the current service location.
 
-The location you set in the appliance will be used by the system to provide geolocation based instances to users.  Setting your location to something a large distance from your location will eventually be detected by users.  The lesson is, be honest about your location or don't use the appliance to sell instances!
+The location you set in the appliance will be used by the system to provide geolocation based instances to users.  Setting your location to something a large distance from your location will eventually be detected by the pool and its users.  The lesson here is, be mostly honest about your location or simply don't use the appliance to sell instances!
+
+#### OpenStack Setup
+To set up the appliance's OpenStack connection, you'll need to download a configuration file from the OpenStack interface:
+
+  - Log into your OpenStack cluster using the **stackmonkey** user you created earlier.
+  - Click on the **Project** tab to the far left and then click on **Compute..Access & Security**.
+  - Click on the **API Access** tab at the top.  Click on the **Download OpenStack RC File** button to the right.
+
+Switch back to the appliance's page and do the following:
+
+  - Click on the **Click or drag here to upload your RC file** button at the top. Select the file you just downloaded, and then click on the system dialog's **Open** button at the bottom right.
+  - Enter the password you used earlier creating the **stackmonkey** user and then click **Save Configuration**.
+  
+Here's a screenshot of a completed OpenStack setup for reference:
+
+
 
 ### Security
 From a security standpoint, the ***system management portions*** of the project should be reasonably secure against bad actors.  It's also reasonable to expect there are holes in that logic at this early stage of the project. Here is a short list of security features that have been built into the system:
