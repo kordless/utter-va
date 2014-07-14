@@ -58,7 +58,7 @@ If you have previously installed OpenStack, you can manually start a virtual app
 The appliance requires an Ubuntu backed instance. If you don't have an Ubuntu image installed on your OpenStack cluster, follow these steps:
 
   - Click on the **Admin** tab to the far left and then click on **System Panel..Images**. Click on the **Create Image** button to the top right.
-  - Name the image **Ubuntu 14.04LTS** and then paste **[http://goo.gl/u2IBP9](http://goo.gl/u2IBP9)** into the location field.
+  - Name the image **Ubuntu Trusty 14.04LTS** and then paste **[http://goo.gl/u2IBP9](http://goo.gl/u2IBP9)** into the location field.
   - Select the **QCOW2** format in the pulldown and make the image public if you want to share it with other OpenStack users.
   - Click **Create Image** to create the new boot image.
 
@@ -117,7 +117,7 @@ Now all the components of the instance have been created, you can launch an inst
 
   - Click on the **Project** tab to the far left and then click on **Compute..Instances**. To the right, click on the **Launch Instance** button.
   - Name the instance **'StackMonkey VA'** and then click on the **Flavor** pulldown and select the **m512.v1.d8** flavor.
-  - Click on the **Instance Boot Source** pulldown at the bottom and select **Boot from image**.  Under **Image Name**, select the **Ubuntu 14.04LTS** image you installed earlier.
+  - Click on the **Instance Boot Source** pulldown at the bottom and select **Boot from image**.  Under **Image Name**, select the **Ubuntu Trusty 14.04LTS** image you installed earlier.
   - Click on the **Access & Security** tab at the top.  Use the **Key Pair** pulldown to select the **stackmonkey** key pair you generated earlier.  
   - In the same tab, check the **appliance** security group, and uncheck the **default** group.
   - Click on the **Post-Creation** tab at the top.  
