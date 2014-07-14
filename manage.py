@@ -85,10 +85,14 @@ def reset(app):
 def admin(app):
 	def action(force=('f', 'false')):
 		if force == 'true':
-			user = db.session.query(User).first()
-			user.delete(user)
-			print "The admin user has been deleted.  Please access the UI as soon as possible to create a new user."
-			configure_blurb()
+			try:
+				user = db.session.query(User).first()
+				user.delete(user)
+				print "The admin user has been deleted.  Please access the UI as soon as possible to create a new user."
+				configure_blurb()
+			except:
+				print "Appliance currently has no users."
+				configure_blurb()
 		else:
 			print "Doing nothing."
 	return action
