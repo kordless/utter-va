@@ -105,3 +105,5 @@ if __name__ == "__main__":
 
 		# print result
 		print response
+	else:
+		print "Credentials are not working."
