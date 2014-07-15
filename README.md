@@ -32,7 +32,7 @@ Once you have OpenStack installed, you'll need to create or have the following s
 ### Watch the Install Video
 The [following video](https://vimeo.com/91805503) will step you through installing the virtual appliance on your OpenStack cluster.  If you have any questions about the install, you can head over to [StackMonkey's Appliance Gitter](https://gitter.im/StackMonkey/utter-va) for the group chat.
 
-(Video not done yet.)
+[![Instance Payment](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/video_thumb.png)](https://raw.githubusercontent.com/StackMonkey/utter-va/master/webapp/static/img/readme/start_instance.png) 
 
 ### Automated Install
 This is by far the easiest way to install an appliance.  If you've previously followed StackGeek's [Installing OpenStack in 10 Minutes](http://www.stackgeek.com/guides/gettingstarted.html) guide, you can run the appliance install script located in the [Icehouse](https://github.com/StackGeek/openstackgeek/tree/master/icehouse) directory:
