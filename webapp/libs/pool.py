@@ -50,6 +50,7 @@ def pool_instance(url=None, instance=None, appliance=None):
 		"instance": {
 			"name": instance.name,
 			"flavor": flavor.name,
+			"image": instance.image.name,
 			"ask": flavor.ask,
 			"address": instance.address.address,
 			"console_output": [],
@@ -77,16 +78,16 @@ def pool_instance(url=None, instance=None, appliance=None):
 		response = json.loads(data)
 	except HTTPError, e:
 		response['response'] = "fail"
-		response['result'] = "Error code %s returned from server." % str(e.code)
+		response['result']['message'] = "Error code %s returned from server." % str(e.code)
 	except IOError as ex:
 		response['response'] = "fail"
-		response['result'] = "Can't contact pool server.  Try again later."
+		response['result']['message'] = "Can't contact pool server.  Try again later."
 	except ValueError as ex:
 		response['response'] = "fail"
-		response['result'] = "Having issues parsing JSON from the site: %s.  Open a ticket." % type(ex).__name__
+		response['result']['message'] = "Having issues parsing JSON from the site: %s.  Open a ticket." % type(ex).__name__
 	except Exception as ex:
 		response['response'] = "fail"
-		response['result'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
+		response['result']['message'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
 
 	return response
 
@@ -147,16 +148,16 @@ def pool_salesman(instances=None, appliance=None):
 
 	except HTTPError as ex:
 		response['response'] = "fail"
-		response['result'] = "Error code %s returned from server." % ex.code
+		response['result']['message'] = "Error code %s returned from server." % ex.code
 	except IOError as ex:
 		response['response'] = "fail"
-		response['result'] = "Can't contact pool server.  Try again later."
+		response['result']['message'] = "Can't contact pool server.  Try again later."
 	except ValueError as ex:
 		response['response'] = "fail"
-		response['result'] = "Having issues parsing JSON from the site: %s.  Open a ticket." % type(ex).__name__
+		response['result']['message'] = "Having issues parsing JSON from the site: %s.  Open a ticket." % type(ex).__name__
 	except Exception as ex:
 		response['response'] = "fail"
-		response['result'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
+		response['result']['message'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
 
 	return response
 
@@ -188,15 +189,15 @@ def pool_connect(method="authorization", appliance=None):
 		response = json.loads(urlopen(request, json.dumps(packet), timeout=10).read())
 	except HTTPError, e:
 		response['response'] = "fail"
-		response['result'] = "Error code %s returned from server: %s" % (str(e.code), type(e).__name__)
+		response['result']['message'] = "Error code %s returned from server: %s" % (str(e.code), type(e).__name__)
 	except IOError as ex:
 		response['response'] = "fail"
-		response['result'] = "Can't contact pool server.  Try again later."
+		response['result']['message'] = "Can't contact pool server.  Try again later."
 	except ValueError as ex:
 		response['response'] = "fail"
-		response['result'] = "Having issues parsing JSON from the site: %s.  Open a ticket." % type(ex).__name__
+		response['result']['message'] = "Having issues parsing JSON from the site: %s.  Open a ticket." % type(ex).__name__
 	except Exception as ex:
 		response['response'] = "fail"
-		response['result'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
+		response['result']['message'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
 
 	return response

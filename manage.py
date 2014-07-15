@@ -391,15 +391,14 @@ def housekeeper(app):
 		# runs on all currently running and suspended instances
 		instances = db.session.query(Instances).filter(or_(
 			Instances.state == 4,
-			Instances.state == 5,
-			Instances.state == 6
+			Instances.state == 5
 		)).all()
 
 		# loop through them and do housekeeping
 		for instance in instances:
 			response = instance.housekeeping()
 
-			# if instance ins't running
+			# if instance isn't running
 			if response['response'] == "fail":
 				message(response['result']['message'], "error", True)
 			else:
@@ -428,7 +427,13 @@ def instances(app):
 			if response['response'] == "success":
 				message("Instance %s launched." % instance.name, "success", True)
 			else:
-				message(response['result']['message'], "error", True)
+				message("%s Unable to launch instance %s." % (
+						response['result']['message'],
+						instance.name
+					), 
+					"error", 
+					True
+				)
 
 		# NUDGE
 		# instances in the process of starting are monitored and updated
@@ -438,6 +443,21 @@ def instances(app):
 
 			if response['response'] == "success":
 				message("Instance %s is now running." % instance.name, "success", True)
+
+		# RELIGHT
+		# instances which have unpaused via payment
+		instances = db.session.query(Instances).filter_by(state=6).all()
+		
+		# loop through them and do housekeeping
+		for instance in instances:
+			response = instance.housekeeping()
+
+			# if instance isn't running
+			if response['response'] == "fail":
+				message(response['result']['message'], "error", True)
+			else:
+				if response['result']['message'] != "":
+					message(response['result']['message'], "success", True)
 
 	return action
 

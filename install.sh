@@ -57,9 +57,10 @@ sudo pip install python-glanceclient
 sudo pip install python-cinderclient
 sudo pip install python-novaclient
 
-# check out utter-va repo
+# check out the current release of utter-va
 sudo mkdir /var/log/utterio/
 sudo git clone https://github.com/StackMonkey/utter-va.git /var/www/utterio
+git checkout tags/v0.7-beta.2
 
 # configure www directory
 sudo chown -R ubuntu:ubuntu /var/www/

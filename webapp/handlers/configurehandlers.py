@@ -388,7 +388,6 @@ def configure_instance_detail(instance_id):
 		if request.method == 'PUT':
 			response = instance.coinop(0)
 			return jsonify(response)
-
 		else:
 			# GET
 			return render_template(

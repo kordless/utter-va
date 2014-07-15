@@ -213,10 +213,11 @@ class Instances(CRUDMixin, db.Model):
 		pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
 
 		if pool_response['response'] == "success":	
-			# response
+			# overload response
 			response['result']['message'] = "Added %s seconds to %s's expire time." % (purchased_seconds, self.name)
 			response['result']['instance'] = row2dict(self)
 		else:
+			response = pool_response
 			app.logger.error("Error sending instance=(%s) data to pool." % self.name)
 
 		return response
@@ -252,9 +253,7 @@ class Instances(CRUDMixin, db.Model):
 
 			# check for a failure to contact the callback server
 			if pool_response['response'] == "fail":
-				response['result']['message'] = pool_response['result']
-				# probably should call the pool up and tell them...
-				return response
+				return pool_response
 
 			# look and see if we have a callback_url in the response
 			try:
@@ -426,10 +425,10 @@ class Instances(CRUDMixin, db.Model):
 			elif server.status == "ERROR":
 				# instance failed to start
 				response['response'] = "fail"
-				response['message'] = "Server isn't in active state yet."
+				response['result']['message'] = "Server isn't in active state yet."
 			else:
 				response['response'] = "fail"
-				response['message'] = "Server isn't in a known state."
+				response['result']['message'] = "Server isn't in a known state."
 
 		# openstack can't find this instance	
 		else:

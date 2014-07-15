@@ -80,7 +80,7 @@
                 <th>State</th>
                 <th>Instance ID</th>
                 <th>Flavor</th>
-                <th>Pending Actions</th>
+                <th>Instance Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -173,7 +173,14 @@
         type: 'PUT',
         data: {_csrf_token: csrf_token, action: 'start', flavor: flavor_id, image: image_id},
         success: function(data) {
-          alertify.log(data.result.message, "success");
+          // convert to alerify terms
+          console.log(data.response)
+          if (data.response == "fail") {
+            alert_type = "error";
+          } else {
+            alert_type = "success";
+          }
+          alertify.log(data.result.message, alert_type);
           setTimeout(function(){
             location.reload();
           }, 3000)
