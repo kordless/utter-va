@@ -18,6 +18,11 @@
         {% endif %}
       </a>
     </li>
+    <li {% if active=="twitter" %}class="active"{% endif %}>
+      <a href="{{ url_for('configure.configure_twitter') }}">
+        Twitter Sales
+      </a>
+    </li>
     <li {% if active=="systems" %}class="active"{% endif %}>
       <a href="{{ url_for('configure.configure_flavors') }}">
         Flavors & Ask Prices

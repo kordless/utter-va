@@ -1,1 +1,52 @@
-twitter.html
+{% extends "base.html" %}
+{% import "macros.html" as macros %}
+
+{% block page_styles %}
+    <link href="/css/configure.css" rel="stylesheet">
+    <link href="/css/docs.css" rel="stylesheet">
+{% endblock %}
+
+{% block navbar %}
+  {% include 'navbar.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container content">
+  <div class="row">
+    {{ macros.nav_pills("twitter", settings) }}
+    <!-- form on right side -->
+    <div class="col-md-9">
+      <!-- form header -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="section-header">
+            <h2><small>Configure Twitter Sales</small></h2>
+            <div class="bs-callout bs-callout-info bs-callout-top">
+              <h4>Twitter Sales Bot</h4>
+              <p>The <strong>Twitter Sales Bot</strong> is a proof-of-concept feature which provides a way for an <strong>Appliance</strong> to advertise <strong>Instances</strong> for sale on <strong>Twitter</strong>. Users interact with the configured Twitter account to purchase instances.  This requires the use of a custom callback URL passed in the initial <strong>Instance Tweet Request</strong> passed to the bot by a user on Twitter.</p>
+              <p>More information about <strong>Custom Callbacks</strong> can be found in the <strong><a href="">StackMonkey Documentation</a></strong>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12 table-responsive">
+        </div>
+      </div>
+    </div>
+    <!-- end right side -->
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script type="text/javascript">
+  $().ready(function() {
+    var csrf_token = "{{ csrf_token() }}";
+
+  });
+</script>
+{% endblock %}
+
+{% block extras %}
+{% endblock %}

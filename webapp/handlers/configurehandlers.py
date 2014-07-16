@@ -44,7 +44,8 @@ def configure_twitter():
 	settings = Status().check_settings()
 
 	return render_template(
-		'configure/twitter.html'
+		'configure/twitter.html',
+		settings=settings
 	)
 
 # configure flavors page
