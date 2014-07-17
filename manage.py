@@ -331,7 +331,7 @@ def trashman(app):
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
 		if not settings['ngrok'] or not settings['openstack']:
-			log = "Trashman found appliance is not ready."
+			log = "Running trashman - appliance is not ready."
 			app.logger.error(log)
 			return action
 
@@ -350,7 +350,7 @@ def salesman(app):
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
 		if not settings['ngrok'] or not settings['openstack']:
-			log = "Salesman found appliance is not ready."
+			log = "Running salesman - appliance is not ready."
 			app.logger.error(log)
 			return action
 

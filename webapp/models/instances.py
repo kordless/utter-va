@@ -421,33 +421,83 @@ class Instances(CRUDMixin, db.Model):
 
 				# update the instance
 				self.update()
-			
-			elif server.status == "ERROR":
-				# instance failed to start
-				response['response'] = "fail"
-				response['result']['message'] = "Server isn't in active state yet."
-			else:
-				response['response'] = "fail"
-				response['result']['message'] = "Server isn't in a known state."
 
-		# openstack can't find this instance	
+			# ERROR status from openstack
+			elif server.status == "ERROR":
+				# instance failed to start, so delete and reset to paid
+				from webapp.libs.openstack import instance_decommission
+				response = instance_decommission(self)
+
+				self.state = 2 # will be started again shortly
+				self.update()
+
+				response['response'] = "fail"
+				response['result']['message'] = "OpenStack errored on instance start."
+				
+				app.logger.error("OpenStack error on starting instance=(%s).  Setting to restart." % self.name)
+
+			# SPAWNING status from openstack
+			else:
+				# we all have limited time in this reality
+				epoch_time = int(time.time())			
+
+				# wait_timer is 5 minutes after the last update
+				wait_timer = self.updated + 300
+
+				# test to see if we are 'hung' on SPAWNING for more than wait_timer
+				if epoch_time > wait_timer:
+					# we're now  past when the instance needed to move to RUNNING
+					from webapp.libs.openstack import instance_decommission
+					response = instance_decommission(self)
+
+					response['response'] = "fail"
+					response['result']['message'] = "Setting instance %s to restart." % self.name
+					
+					self.state = 2 # will be started shortly after this by start
+					self.update()
+
+					"""
+					of anyplace, this is where you *might* want to add some time to the instance
+					because a time based payment has been made on it.  however, this could lead to 
+					a situation where an instance gets stuck in a circular state of erroring, getting
+					more time, erroring again, rinse and repeat.  instead of embracing this eventuality, 
+					we choose to short the customer her measly few cents instead, and let it serve as a 
+					as an excuse to add 'karma hits' on bad starts from providers as a feature later
+					"""
+
+					app.logger.error("OpenStack hung starting instance=(%s).  Setting to restart." % self.name)
+					
+				else:
+					# this is a 'soft' fail
+					response['response'] = "fail"
+					response['result']['message'] = "Still starting instance=(%s)." % self.name
+
+
+		# OpenStack reports instance NOT FOUND	
 		else:
 			# we all have limited time in this reality
 			epoch_time = int(time.time())			
-			
-			if self.expires > epoch_time:
-				# set instance to restart - not expired, should be running
-				response['response'] = "fail" # technically, this shouldn't happen
-				response['result']['message'] = "Setting instance %s to restart." % self.name
-				self.state = 2 # will be started shortly after this by start
-			else:
-				# no reason to be running
+
+			# we first check if we're outright expired (shouldn't happen)
+			if self.expires < epoch_time:
+				# no reason to be running as we're expired
+				self.state = 7 # will be deleted shortly after this by trashman
+				self.update()
+
 				response['response'] = "fail"
 				response['result']['message'] = "Instance %s decommissioned." % self.name
-				self.state = 7 # will be deleted shortly after this by trashman
 
-			# write to the db
-			self.update()
+				app.logger.error("OpenStack couldn't find expired instance=(%s). Decomissioning." % self.name)
+
+			else:
+				# we didn't find the instance in openstack, yet we should be running
+				self.state = 2 # set to be started again
+				self.update()
+
+				response['response'] = "fail"
+				response['result']['message'] = "OpenStack couldn't find instance.  Restarting."
+				
+				app.logger.error("OpenStack couldn't find instance=(%s). Setting to restart." % self.name)
 
 		# make a call to the callback url to report instance details on state change
 		if self.state != start_state:

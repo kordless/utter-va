@@ -183,6 +183,9 @@ class Appliance(CRUDMixin, db.Model):
 
 			app.logger.info("Wrote Ngrok configuration file to %s." % tunnel_conf_file)
 
+# twitter settings model
+
+
 # settings check model
 class Status(CRUDMixin, db.Model):
 	__tablename__ = 'status'
