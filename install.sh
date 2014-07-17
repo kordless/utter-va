@@ -60,7 +60,7 @@ sudo pip install python-novaclient
 # check out the current release of utter-va
 sudo mkdir /var/log/utterio/
 sudo git clone https://github.com/StackMonkey/utter-va.git /var/www/utterio
-git checkout tags/v0.7-beta.2
+git checkout tags/v0.7-beta.5
 
 # configure www directory
 sudo chown -R ubuntu:ubuntu /var/www/
