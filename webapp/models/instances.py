@@ -446,10 +446,8 @@ class Instances(CRUDMixin, db.Model):
 				response['result']['message'] = "Instance %s decommissioned." % self.name
 				self.state = 7 # will be deleted shortly after this by trashman
 
-			# notify the pool server of update
-			updated = False
-			if updated:
-				pass
+			# write to the db
+			self.update()
 
 		# make a call to the callback url to report instance details on state change
 		if self.state != start_state:
