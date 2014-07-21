@@ -1,4 +1,17 @@
+#!/Library/Frameworks/Python.framework/Versions/Current/bin/python
 from webapp.libs.twitter import *
+import os
 
-t = Twitter(auth=OAuth("7718322-iYWHXzw50yLuhf7juvwrGhx4JN512sqvToRdNJlSM9", "rFp1aVsSuqa24Wuhf2zufw34taGC2IVA8tWcm5kXfuaeF", "sJUxn3o0qVBaFviJXIAArrLj0", "WmU2c0v78zGqjYXpVEWcNwi4uCE3wdp4p5xnjuuLP6zXkVxq6c"))
-print t.statuses.home_timeline(count=5)
+CONSUMER_KEY = "cCRlvQYV8tG9Pj9xboggaWyQG"
+CONSUMER_SECRET = "nawc4XD1J1RhwUIiVjAUqCcTVYZ5R74wD3NrcM89pAEuQBL5TJ"
+MY_TWITTER_CREDS = os.path.expanduser('~/.my_app_credentials')
+
+if not os.path.exists(MY_TWITTER_CREDS):
+    oauth_dance("OpenStack Instance Sales Bot", CONSUMER_KEY, CONSUMER_SECRET, MY_TWITTER_CREDS)
+
+oauth_token, oauth_secret = read_token_file(MY_TWITTER_CREDS)
+
+twitter = Twitter(auth=OAuth(oauth_token, oauth_secret, CONSUMER_KEY, CONSUMER_SECRET))
+
+twitter.statuses.update(status='Hello, world!')
+

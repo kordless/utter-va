@@ -75,11 +75,14 @@
         // socket notifications
         var socket = io.connect(window.location.protocol+ '//' + document.domain + ':' + location.port + '/utterio');
         socket.on('message', function(msg) {
-          alertify.log(msg.data.result.message, msg.data.response);
-          if (msg.data.result.reload) {
-            setTimeout(function() {
-              location.reload();
-            }, 3000);
+          if (msg.data.result) {
+            alertify.log(msg.data.result.message, msg.data.response);
+      
+            if (msg.data.result.reload) {
+              setTimeout(function() {
+                location.reload();
+              }, 3000);
+            }
           }
         });
       });

@@ -81,7 +81,7 @@ def generate_token(size=64, caselimit=False):
 	return token
 	
 # message bus - sending messages to ourselves
-def message(text=None, status="Success", reloader=False):
+def message(text=None, status="success", reloader=False):
 	from webapp.models.models import Appliance
 	apitoken = Appliance().get().apitoken
 

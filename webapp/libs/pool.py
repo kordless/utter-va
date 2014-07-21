@@ -37,6 +37,11 @@ def pool_instance(url=None, instance=None, appliance=None):
 		response['result'] = "Lazy load error encountered."
 		return response
 
+	if instance.image:
+		image_name = instance.image.name
+	else:
+		image_name = "dynamic_image"
+
 	# build the outbound instance packet (to pool or callback service)
 	packet = { 
 		"appliance": {
@@ -50,7 +55,7 @@ def pool_instance(url=None, instance=None, appliance=None):
 		"instance": {
 			"name": instance.name,
 			"flavor": flavor.name,
-			"image": instance.image.name,
+			"image": image_name,
 			"ask": flavor.ask,
 			"address": instance.address.address,
 			"console_output": [],
@@ -75,7 +80,21 @@ def pool_instance(url=None, instance=None, appliance=None):
 		request = Request(url)
 		request.add_header('Content-Type', 'application/json')
 		data = urlopen(request, json.dumps(packet), timeout=10).read()
-		response = json.loads(data)
+		pool_response = json.loads(data)
+		
+		# massage the reply a bit for simple callback servers
+		if 'response' not in pool_response:
+			# no response key, so check if we have an instance key
+			if 'instance' in pool_response:
+				# overload that into the response object
+				response['result']['message'] = "Loaded instance object into response."
+				response['result']['instance'] = pool_response['instance']
+			else:
+				# we don't have a response or an instance
+				raise ValueError
+		else:
+			response = pool_response
+				
 	except HTTPError, e:
 		response['response'] = "fail"
 		response['result']['message'] = "Error code %s returned from server." % str(e.code)

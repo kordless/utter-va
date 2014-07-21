@@ -1,9 +1,11 @@
 #!/usr/bin/python
-# manage.py
 # -*- encoding:utf-8 -*-
+# manage.py
+
 import os
 import sys
 import time
+import re
 import gevent.monkey; gevent.monkey.patch_thread()
 
 from IPy import IP
@@ -14,6 +16,7 @@ from sqlalchemy import or_
 from webapp import app, socketio, db
 
 from webapp.models.models import User, Appliance, OpenStack, Status
+from webapp.models.twitter import TwitterBot, TweetCommands
 from webapp.models.images import Images 
 from webapp.models.flavors import Flavors
 from webapp.models.instances import Instances 
@@ -23,6 +26,7 @@ from webapp.libs.utils import query_yes_no, pprinttable, message
 from webapp.libs.coinbase import coinbase_get_addresses, coinbase_checker
 from webapp.libs.images import download_images
 from webapp.libs.pool import pool_salesman, pool_connect
+from webapp.libs.twitterbot import get_stream, tweet_status
 
 # configuration file
 if os.path.isfile('./DEV'): 
@@ -461,6 +465,143 @@ def instances(app):
 
 	return action
 
+# handle the request queue from the twitter stream process
+def falconer(app):
+	def action():
+		# get bot settings
+		bot = TwitterBot.get()
+		
+		# exit if we're not enabled
+		if not bot.enabled:
+			return action
+
+		# get unhandled commands
+		commands = db.session.query(TweetCommands).filter_by(state=1).all()
+
+		for command in commands:
+			if command.command == "instance":
+				# check the user doesn't have another instance already
+				ic = db.session.query(TweetCommands).filter_by(command="instance", user=command.user).count()
+				if ic > 1 and command.user != "kordless":
+					tweet_status("Sorry, I only do one instance per user.", command.user)
+					command.delete(command)
+					continue
+
+				# grab an instance to reserve
+				instance = Instances()
+				response = instance.reserve(command.url, bot.flavor_id)
+				message(response['result']['message'], response['response'], True)
+
+				if response['response'] == "error":
+					# tweet_status("Sorry, having system difficulties.  Please wait until human assisted notice.")
+					print response['result']['message']
+					continue		
+
+				# update the command to reflect the new instance status
+				instance = response['result']['instance']
+				command.state = 10
+				command.updated = int(time.time())
+				command.instance_id = instance['id']
+				command.update()
+				
+				# tweet bits
+				ask = "%0.6f" % (float(response['result']['ask'])/1000000)
+				address = response['result']['address']
+				name = instance['name']
+				
+				# tell the user the bitcoin address
+				tweet = "send %s BTC/hour to https://blockchain.info/address/%s in next 5 mins to start ~%s." % (ask, address, name)
+				tweet_status(tweet, command.user)
+
+			elif command.command.lower() == "status":
+				# get instance in question
+				if command.instance:
+					# get the time left in seconds
+					epoch_time = int(time.time())
+					expires = command.instance.expires
+					timer = expires - epoch_time
+					if timer < 0:
+						timer = 0
+
+					tweet_status("~%s | ipv6: %s | ipv4: %s | ipv4: %s | exp: %ss" %
+						(
+							command.instance.name,
+							command.instance.publicipv6,
+							command.instance.privateipv4,
+							command.instance.publicipv4,
+							timer
+						),
+						command.user
+					)
+				else:
+					pass
+
+				command.delete(command)
+
+		# update status of commands carrying an instance_id and update
+		commands = db.session.query(TweetCommands).filter_by().all()
+
+		for command in commands:
+			if command.instance_id > 0:
+				instance = db.session.query(Instances).filter_by(id=command.instance_id).first()
+
+				# check if instance changed state
+				if instance.state != command.state:
+					# check if instance is in run state so we can tweet about it
+					if instance.state == "4":
+						tweet_status("~%s | ipv6: %s | ipv4: %s | ipv4: %s" %
+							(
+								instance.name,
+								instance.publicipv6,
+								instance.privateipv4,
+								instance.publicipv4
+							)
+						)
+				
+				# now sync the states
+				command.state = instance.state
+				command.update()
+
+		# get reserved instance commands
+		commands = db.session.query(TweetCommands).filter_by(state=10).all()
+
+		for command in commands:
+			if command.command == "instance":
+				# check if timeout
+				epoch_time = int(time.time())
+
+				# cancel reservation if older than 7 minutes (we fudge this in the tweet)
+				if (command.updated + 420) < epoch_time:
+					instance = db.session.query(Instances).filter_by(id=command.instance_id).first()
+					instance.callback_url = ""
+					instance.state = 1
+					instance.update()
+
+					command.delete(command)
+					message("Canceled reservation on %s." % instance.name, "warning", True)
+
+	return action
+
+# twitter stream + db storage
+# uses a forever BLOCKING call to get_stream()
+# runs from monit
+def tweetstream(app):
+	def action():
+		# bot settings
+		bot = TwitterBot.get()
+
+		if bot.enabled:
+			get_stream()
+		else:
+			# we're going to exit, and monit will try to restart
+			# delay that a bit so monit doesn't freak out
+			time.sleep(60)
+
+	return action
+
+# advertising agent
+# http://pastebin.com/raw.php?i=zX5fD6HY
+
 # for development
 manager.add_action('serve', serve)
 manager.add_action('coinop', coinop)
@@ -487,6 +628,10 @@ manager.add_action('housekeeper', housekeeper)
 
 # run from cron every 1 minute
 manager.add_action('instances', instances)
+manager.add_action('falconer', falconer)
+
+# twitter commands run from monit in prod
+manager.add_action('tweetstream', tweetstream)
 
 if __name__ == "__main__":
 
@@ -496,7 +641,7 @@ if __name__ == "__main__":
 
 	# delete existing handlers
 	del app.logger.handlers[:]
-	handler = RotatingFileHandler('%s/logs/commands.log' % os.path.dirname(os.path.realpath(__file__)), maxBytes=1000000, backupCount=7)
+	handler = RotatingFileHandler('%s/logs/utter.log' % os.path.dirname(os.path.realpath(__file__)), maxBytes=1000000, backupCount=7)
 	handler.setLevel(logging.INFO)
 	log_format = "%(asctime)s - %(levelname)s - %(message)s"
 	formatter = logging.Formatter(log_format)

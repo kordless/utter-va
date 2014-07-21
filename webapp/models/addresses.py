@@ -42,7 +42,7 @@ class Addresses(CRUDMixin, db.Model):
 		return address
 
 	def sync(self, appliance):
-		# grab image list from pool server
+		# grab addresses from coinbase
 		response = coinbase_get_addresses(appliance=appliance)
 
 		if response['response'] == "success":
@@ -56,7 +56,7 @@ class Addresses(CRUDMixin, db.Model):
 				# check if address label is the md5 of our coinbase api key
 				if remoteaddress['label'] == md5.new(appliance.cbapikey).hexdigest():
 
-					# see if we have a matching image
+					# see if we have a matching address
 					address = db.session.query(Addresses).filter_by(address=remoteaddress['address']).first()
 					
 					# we don't have the address at coinbase in database

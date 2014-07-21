@@ -99,6 +99,19 @@ check process gunicorn with pidfile /tmp/gunicorn.pid
     stop program = "/var/www/utterio/gunistop.sh"
 EOF
 
+sudo cat <<EOF > /etc/monit/conf.d/twitterbot
+set httpd port 5150 and
+    use address localhost
+    allow localhost
+
+set daemon 30
+with start delay 5
+
+check process twitterbot matching "manage.py tweetstream"
+		start program = "/var/www/utterio/tweetstream.sh"
+		stop program = "true"
+EOF
+
 # restart monit service
 sudo service monit restart
 sleep 2

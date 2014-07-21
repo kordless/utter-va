@@ -16,7 +16,7 @@ from webapp.libs.geoip import get_geodata
 from webapp.models.images import Images
 from webapp.models.flavors import Flavors
 
-# includes user, openstack, appliance, status models
+# includes user, twitterbot, openstack, appliance, status models
 
 # user model
 class User(UserMixin, CRUDMixin,  db.Model):

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import re
 import os
 from urllib2 import urlopen
@@ -8,16 +9,18 @@ from flask.ext.login import login_user, logout_user, current_user, login_require
 from webapp import app, db, bcrypt, login_manager
 
 from webapp.models.models import User, Appliance, OpenStack, Status
-from webapp.models.images import Images 
+from webapp.models.images import Images
 from webapp.models.flavors import Flavors
 from webapp.models.instances import Instances 
 from webapp.models.addresses import Addresses
+from webapp.models.twitter import TwitterBot
 
-from webapp.forms.forms import OpenStackForm, ApplianceForm, InstanceForm
+from webapp.forms.forms import OpenStackForm, ApplianceForm, TwitterForm, BotForm
 
 from webapp.libs.geoip import get_geodata
 from webapp.libs.utils import row2dict, generate_token, message
 from webapp.libs.coinbase import coinbase_generate_address, coinbase_get_quote
+from webapp.libs.twitterbot import oauth_initialize, oauth_complete, tweet_status
 
 mod = Blueprint('configure', __name__)
 
@@ -35,18 +38,6 @@ def allowed_file(filename):
 @app.template_filter('sec2min')
 def sec2min(value):
 	return divmod(int(value), 60)[0]
-
-# configure twitter bot
-@mod.route('/configure/twitter', methods=['GET', 'POST'])
-@login_required
-def configure_twitter():
-	# check configuration
-	settings = Status().check_settings()
-
-	return render_template(
-		'configure/twitter.html',
-		settings=settings
-	)
 
 # configure flavors page
 @mod.route('/configure/flavors', methods=['GET'])
@@ -373,7 +364,6 @@ def configure_instances():
 		images=images
 	)
 
-
 # configure instances page
 @mod.route('/configure/instances/<int:instance_id>', methods=['GET', 'PUT'])
 @login_required
@@ -398,3 +388,122 @@ def configure_instance_detail(instance_id):
 			)
 	else:
 		return redirect("/configure/instances")
+
+# configure twitter bot (tweet, disconnect, disable/enable)
+@mod.route('/configure/twitter/bot', methods=['POST'])
+@login_required
+def configure_twitter_tweet():
+	# build response
+	response = {"response": "success", "result": {"message": "Message goes here."}}
+
+	# what are we suppose to do? (TODO convert to JSON POST, that's what)
+	action = request.form.getlist('action')[0]
+	
+	# bot settings
+	bot = TwitterBot.get()
+
+	# tweet that shit
+	if action == "tweet":
+		ask = "%0.6f" % (float(bot.flavor.ask)/1000000)
+		response = tweet_status(
+			u"Up to (%s) %s instances are now on sale for %s μBTC/hour via '@obitcoin !status'." % (
+				bot.max_instances,
+				bot.flavor.name, 
+				ask
+			)
+		)
+
+	# disconnect twitter creds
+	elif action == "disconnect":
+		# this MUST say 'settings' for stream restart
+		tweet_status("Appliance settings dropping bot credentials.")
+		bot.delete(bot)
+		response['result']['message'] = "Twitter credentials have been removed."
+
+	# enable/disable bot
+	elif action == "enabled":
+		# this MUST say 'settings' for stream restart
+		tweet_status("Appliance settings enabling instance bot.")
+		bot.enabled = True
+		bot.update()
+		response['result']['message'] = "Twitter bot has been enabled."
+
+	elif action == "disabled":
+		# this MUST say 'settings' for stream restart
+		tweet_status("Appliance settings disabling bot temporarily.  I'll be back.")
+		bot.enabled = False
+		bot.update()
+		response['result']['message'] = "Twitter bot has been disabled."
+
+	return jsonify(response)
+
+# configure twitter bot auth
+@mod.route('/configure/twitter', methods=['GET', 'POST'])
+@login_required
+def configure_twitter():
+	# check configuration
+	settings = Status().check_settings()
+
+	# get the forms for the page
+	form = TwitterForm(request.form)
+	mrof = BotForm(request.form)
+
+	# twitter bot credentials
+	bot = TwitterBot.get()
+
+	# initialize the bot if it's not
+	if not bot:
+		bot = oauth_initialize()
+	else:
+		if bot.complete == 0:
+			bot = oauth_initialize()
+
+		if bot.complete == 1 and request.method == 'POST':
+			if form.validate_on_submit():
+				pin = request.form['pin']
+				bot = oauth_complete(pin)
+				if bot:
+					flash("Authentication with Twitter complete.", "success")
+				else:
+					flash("Authentication with Twitter failed.", "error")
+					bot = TwitterBot.get()
+					bot.delete(bot)
+					return redirect(url_for(".configure_twitter"))	
+			else:
+				# form was not valid, so show errors	
+				flash("There were form errors. Please check your entries and try again.", "error")
+				
+		elif request.method == 'POST':
+			if mrof.validate_on_submit():
+				bot.flavor_id = mrof.flavor.data
+				bot.announce = mrof.announce.data
+				bot.max_instances = mrof.max_instances.data
+				bot.update()
+
+				# announce (requires 'settings' in comment to reload stream bot)
+				tweet_status("Appliance settings updated. Now serving up to (%s) %s instances via '@obitcoin !status'" % (
+						bot.max_instances,
+						bot.flavor.name
+					)
+				)
+				flash("Bot settings updated.", "success")
+			else:
+				# form was not valid, so show errors	
+				flash("There were form errors. Please check your entries and try again.", "error")	
+
+	# no bot not hot
+	if not bot:
+		flash("Twitterbot failed to contact Twitter or get credentials.", "error")
+		bot = None
+
+	# set default form values
+	mrof.flavor.data = bot.flavor_id
+	mrof.announce.data = bot.announce
+
+	return render_template(
+		'configure/twitter.html',
+		bot=bot,
+		settings=settings,
+		form=form,
+		mrof=mrof
+	)

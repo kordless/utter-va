@@ -107,6 +107,35 @@ class Instances(CRUDMixin, db.Model):
 
 		return True
 
+	# instance reservations
+	def reserve(self, callback_url, flavor_id):
+		# build response
+		response = {"response": "success", "result": {"message": ""}}
+
+		# find a willing instance
+		instance = db.session.query(Instances).filter_by(state=1, flavor_id=flavor_id).first()
+
+		if instance:
+			# set that instance to reserved (active == 10)
+			instance.state = 10
+			instance.callback_url = callback_url
+			instance.update()
+
+			# tell the pool we're using it (url must be empty string to tell pool)
+			appliance = Appliance().get()
+			pool_response = pool_instance(url="", instance=self, appliance=appliance)
+			
+			# response
+			response['result']['message'] = "Instance %s marked as reserved." % instance.name
+			response['result']['instance'] = row2dict(instance)
+			response['result']['ask'] = instance.flavor.ask
+			response['result']['address'] = instance.address.address
+		else:
+			response['response'] = "error"
+			response['result']['message'] = "No available instances."
+		
+		return response
+
 	# whip up a nice instance for receiving payments
 	def mix(self, flavor):
 		# build response
@@ -176,11 +205,11 @@ class Instances(CRUDMixin, db.Model):
 		# current UTC time in seconds since epoch
 		epoch_time = int(time.time())
 
-		# if we're not running (state==1), set the run state to light (to be started)
+		# if we're not running (state==1 or 10), set the run state to light (to be started)
 		# if we're suspended (state==5), set the run state to relight (to be unsuspended)
 		# cron jobs will take care of the rest of the job of starting/unsuspending
 		# NOTE: We're getting paid pennies for doing nothing until cronjob runs!
-		if self.state == 1: 
+		if self.state == 1 or self.state == 10: 
 			self.state = 2
 			self.expires = epoch_time + purchased_seconds # starting from now
 			self.updated = epoch_time
@@ -207,8 +236,8 @@ class Instances(CRUDMixin, db.Model):
 		# make a call to the callback url to report instance details
 		# this will call the pool on initial payment.  subsequent payment calls go to 
 		# whatever callback address is set in the start() method below.
-		appliance = Appliance().get()
 		callback_url = self.callback_url
+		appliance = Appliance().get()
 		
 		pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
 

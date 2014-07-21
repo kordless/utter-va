@@ -86,7 +86,7 @@
             </thead>
             <tbody>
               {% for instance in instances %}
-                <td>{% if instance.state == 0 %}<span title="Inactive" class="glyphicon glyphicon-remove-sign"></span>{% elif instance.state == 1 %}<span title="Waiting on payment." class="glyphicon glyphicon-time"></span>{% elif instance.state == 2 %}<span title="Payment Received" class="glyphicon glyphicon-usd"></span>{% elif instance.state == 3 %}<span title="Starting" class="glyphicon glyphicon-off"></span>{% elif instance.state == 4 %}<span title="Running" class="glyphicon glyphicon-play"></span>{% elif instance.state == 5 %}<span title="Suspended" class="glyphicon glyphicon-pause"></span>{% elif instance.state == 6 %}<span title="Unsuspend" class="glyphicon glyphicon-fire"></span>{% elif instance.state == 7 %}<span title="Decommission" class="glyphicon glyphicon-fullscreen"></span>{% endif %}</td>
+                <td>{% if instance.state == 0 %}<span title="Inactive" class="glyphicon glyphicon-remove-sign"></span>{% elif instance.state == 1 %}<span title="Waiting on payment." class="glyphicon glyphicon-time"></span>{% elif instance.state == 2 %}<span title="Payment Received" class="glyphicon glyphicon-usd"></span>{% elif instance.state == 3 %}<span title="Starting" class="glyphicon glyphicon-off"></span>{% elif instance.state == 4 %}<span title="Running" class="glyphicon glyphicon-play"></span>{% elif instance.state == 5 %}<span title="Suspended" class="glyphicon glyphicon-pause"></span>{% elif instance.state == 6 %}<span title="Unsuspend" class="glyphicon glyphicon-fire"></span>{% elif instance.state == 7 %}<span title="Decommission" class="glyphicon glyphicon-fullscreen"></span>{% elif instance.state == 10 %}<span title="Reserved" class="glyphicon glyphicon-tag"></span>{% endif %}</td>
                 <td><a href="/configure/instances/{{ instance.id }}">{{ instance.name }}</a></td>
                 <td><a href="/configure/flavors/{{ instance.flavor.id }}">{{ instance.flavor.name }}</a></td>                
                 <td id="instance-timer-{{instance.id}}" data-state="{{ instance.state }}" data-expires="{{ instance.expires }}"><img src="/img/loading.gif"/></td>
@@ -98,7 +98,7 @@
               {% endfor %}
             </tbody>
           </table>
-          <p><span class="glyphicon glyphicon-remove-sign"></span> inactive, <span class="glyphicon glyphicon-time"></span> waiting payment, <span class="glyphicon glyphicon-usd"></span> payment received, <span class="glyphicon glyphicon-off"></span> starting, <span class="glyphicon glyphicon-play"></span> running, <span class="glyphicon glyphicon-pause"></span> suspended, <span class="glyphicon glyphicon-fire"></span> unsuspend, <span class="glyphicon glyphicon-fullscreen"></span> decommissioned.</p>
+          <p><span class="glyphicon glyphicon-remove-sign"></span> inactive, <span class="glyphicon glyphicon-time"></span> waiting payment, <span class="glyphicon glyphicon-tag"></span> reserved, <span class="glyphicon glyphicon-usd"></span> payment received, <span class="glyphicon glyphicon-off"></span> starting, <span class="glyphicon glyphicon-play"></span> running, <span class="glyphicon glyphicon-pause"></span> suspended, <span class="glyphicon glyphicon-fire"></span> unsuspend, <span class="glyphicon glyphicon-fullscreen"></span> decommissioned.</p>
           {% else %}
           <button id="reload" class="btn btn-danger"><span class="glyphicon glyphicon-time"></span> Please wait while instances are generated.</button>
           {% endif %}
@@ -131,7 +131,7 @@
         var state = parseInt($('#'+this.id).attr('data-state'));
         var timer = expires - epoch_time;
         if (timer < 0) {
-          if (state == 1) {
+          if (state == 1 || state == 10) {
             $('#'+this.id).html('Waiting on payment.');
           } else {
             $('#'+this.id).html('Payment expired.');

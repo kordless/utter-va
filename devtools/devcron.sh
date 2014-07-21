@@ -9,6 +9,7 @@ do
   ./manage.py housekeeper
   ./manage.py trashman
   ./manage.py salesman
+  ./manage.py falconer
   echo "Running in 60"
   sleep 30
   echo "Running in 30"

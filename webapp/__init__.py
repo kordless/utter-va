@@ -68,7 +68,6 @@ login_manager.login_view = "users.login"
 def favicon():
 	return send_from_directory(os.path.join(app.root_path, 'static'), 'img/favicon.ico')
 
-
 @app.route("/", methods=['GET'])
 def index():
 	return render_template('index.html')
@@ -77,44 +76,40 @@ def index():
 def page_not_found(e):
 	return render_template('404.html'), 404
 
-
 @app.errorhandler(400)
 def key_error(e):
 	app.logger.warning('Invalid request resulted in KeyError.', exc_info=e)
 	return render_template('400.html'), 400
-
 
 @app.errorhandler(500)
 def internal_server_error(e):
 	app.logger.warning('An unhandled exception is being displayed to the end user.', exc_info=e)
 	return render_template('generic.html'), 500
 
-
 @app.errorhandler(Exception)
 def unhandled_exception(e):
 	app.logger.error('An unhandled exception is being displayed to the end user.', exc_info=e)
 	return render_template('generic.html'), 500
 
-
 @app.before_request
 def log_entry():
 	app.logger.debug("Handling request.")
-
 
 @app.teardown_request
 def log_exit(exc):
 	app.logger.debug("Finished handling request.", exc_info=exc)
 
-
-# logging
+# manager logs
 import logging
 from logging.handlers import RotatingFileHandler
 
 # delete existing handlers
 del app.logger.handlers[:]
 handler = RotatingFileHandler('%s/../logs/utter.log' % os.path.dirname(os.path.realpath(__file__)), maxBytes=1000000, backupCount=7)
-handler.setLevel(logging.DEBUG)
+handler.setLevel(logging.INFO)
 log_format = "%(asctime)s - %(levelname)s - %(message)s"
 formatter = logging.Formatter(log_format)
 handler.setFormatter(formatter)
 app.logger.addHandler(handler)
+
+

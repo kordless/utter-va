@@ -20,19 +20,84 @@
       <div class="row">
         <div class="col-md-12">
           <div class="section-header">
-            <h2><small>Configure Twitter Sales</small></h2>
+            <h2><small>Marketing Bot Settings</small></h2>
             <div class="bs-callout bs-callout-info bs-callout-top">
-              <h4>Twitter Sales Bot</h4>
-              <p>The <strong>Twitter Sales Bot</strong> is a proof-of-concept feature which provides a way for an <strong>Appliance</strong> to advertise <strong>Instances</strong> for sale on <strong>Twitter</strong>. Users interact with the configured Twitter account to purchase instances.  This requires the use of a custom callback URL passed in the initial <strong>Instance Tweet Request</strong> passed to the bot by a user on Twitter.</p>
-              <p>More information about <strong>Custom Callbacks</strong> can be found in the <strong><a href="">StackMonkey Documentation</a></strong>.</p>
+              <h4>Marketing Bot</h4>
+              <p>The <strong>Twitter Marketing Bot</strong> is a feature which provides a way for an <strong>Appliance</strong> to advertise <strong>Instances</strong> for sale on <strong>Twitter</strong>. Users interact with the configured Twitter account using a custom callback URL sent in the <strong>Instance Tweet Request</strong>. More information about <strong>Custom Callbacks</strong> can be found in the <strong><a href="">StackMonkey Documentation</a></strong>.</p>
+              {% if bot.complete < 2 %}
+              <p><strong>Note</strong>: The Twitter authentication used by the appliance requires copying and pasting a code displayed by Twitter after you authorize the application. This is due to the fact the appliance URL can not be made callable by the Twitter application authorization flow.</p>
+              {% endif %} 
+            </div>
+            <div class="row">
+              <div class="col-md-12">
+                {% if bot.complete == 0 %}
+                <button id="reload" class="btn btn-danger"><span class="glyphicon glyphicon-ban-circle"></span> Unable to contact Twitter.</button>
+                {% elif bot.complete == 1 %}
+                <button id="twitter-auth" class="btn btn-success">Connect Twitter Account</button>
+                <form id="twitter-form" action="{{ url_for("configure.configure_twitter") }}" method="post" class="form-horizontal hidden" role="form">
+                  <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                  {{ form.csrf_token }}          
+                  <div class="row form-group {% if form.pin.errors %}has-error{% endif %}">
+                    <div class="col-md-2">
+                      {{ form.pin.label(class="control-label") }}
+                      <div class="input-group">
+                        {{ form.pin(value=bot.pin, id="bot-pin", placeholder="5719265", class="form-control") }}
+                      </div>
+                    </div>
+                  </div>
+                  <button type="submit" class="btn btn-success">Complete Authorization</button>
+                </form>
+                {% else %}
+                <form id="bot-form" action="{{ url_for("configure.configure_twitter") }}" method="post" class="form-horizontal" role="form">
+                  <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                  {{ form.csrf_token }}          
+                  <div class="row form-group {% if form.pin.errors %}has-error{% endif %}">
+                    <div class="col-md-10">
+                      {{ mrof.flavor.label(class="control-label") }}
+                      <div class="input-group">
+                        {{ mrof.flavor(value=2, id="bot-flavor", class="form-control") }}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row form-group {% if form.pin.errors %}has-error{% endif %}">
+                    <div class="col-md-8">
+                      {{ mrof.announce.label(class="control-label") }}
+                      <div class="input-group">
+                        {{ mrof.announce(value=1, id="bot-announce", class="form-control") }}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row form-group {% if form.pin.errors %}has-error{% endif %}">
+                    <div class="col-md-6">
+                      {{ mrof.max_instances.label(class="control-label") }}
+                      <div class="input-group">
+                        {{ mrof.max_instances(value=bot.max_instances, id="bot-max-instances", placeholder="4", class="form-control") }}
+                      </div>
+                    </div>
+                  </div>
+                  <button type="submit" class="btn btn-success">Save Settings</button>
+                  <button type="button" id="tweet-button" class="btn btn-info">Announce Now</button>
+                  <button type="button" id="twitter-disconnect" class="btn btn-danger">Disconnect Twitter</button>
+                </form>
+                {% endif %}
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="row">
-        <div class="col-md-12 table-responsive">
+      {% if bot.complete == 2 %}
+      <div class="row">  
+        <div class="col-md-6">
+          <div class="section-header">
+            <h2><small>Enable/Disable Bot</small></h2>
+            <p>The bot is currently <span class="not"><strong>not</strong></span> advertising instances for sale.</p>
+            <div class="toggle-modern">
+              <div id="bot-toggle" class="toggle{% if bot.enabled %} enabled{% endif %}"></div>
+            </div>
+          </div>
         </div>
       </div>
+      {% endif %}
     </div>
     <!-- end right side -->
   </div>
@@ -44,9 +109,82 @@
   $().ready(function() {
     var csrf_token = "{{ csrf_token() }}";
 
+    // tweet announcment
+    $('#tweet-button').click(function() {
+      $.ajax({
+        url: '/configure/twitter/bot',
+        type: 'POST',
+        data: {_csrf_token: csrf_token, action: 'tweet'},
+        success: function(data) {
+          if (data.response == "fail") {
+            alertify.error(data.result.message);
+          } else {
+            alertify.log(data.result.message);
+          }
+        }
+      });
+    });
+
+    // twitter disconnect
+    $('#twitter-disconnect').click(function() {
+      $.ajax({
+        url: '/configure/twitter/bot',
+        type: 'POST',
+        data: {_csrf_token: csrf_token, action: 'disconnect'},
+        success: function(data) {
+          alertify.error(data.result.message);
+          setTimeout(function(){
+            location.reload();
+          }, 3000)
+        }
+      });
+    });
+
+    // open twitter auth page
+    $('#twitter-auth').click(function() {
+      window.open('{{ bot.oauth_url }}');
+      $('#twitter-form').removeClass('hidden');
+      $('#twitter-auth').addClass('hidden');
+    });
+
+    // dynamic images toggle
+    $('#bot-toggle').toggles({
+      text: {
+        on: 'ON',
+        off:'OFF',
+      },
+      on: $('#bot-toggle').hasClass('enabled')
+    });
+
+    // toggle the message
+    if ($('#bot-toggle').hasClass('enabled')) {
+      $('.not').hide();
+    }
+
+    $('#bot-toggle').click(function() {
+      // handle slider state and do ajax put
+      state = $('#bot-toggle').children('.active').length;
+      if (state == 1) {
+        $('.not').hide();
+        var state_out = "enabled";
+      } else {
+        $('.not').show();
+        var state_out = "disabled";
+      }
+      $.ajax({
+        url: '/configure/twitter/bot',
+        type: 'POST',
+        data: {_csrf_token: csrf_token, action: state_out},
+        success: function() {
+          alertify.log("Bot has been "+state_out+".", "success");
+        }
+      });
+
+    });
   });
 </script>
 {% endblock %}
 
 {% block extras %}
+  <script type="text/javascript" src="/js/toggles.js"></script>
 {% endblock %}

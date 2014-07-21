@@ -1,10 +1,12 @@
 from flask.ext.wtf import Form, fields, validators
-from wtforms import TextField, PasswordField, BooleanField, IntegerField, DecimalField, ValidationError
+from wtforms import TextField, PasswordField, BooleanField, IntegerField, DecimalField, SelectField, ValidationError
 from wtforms.validators import Required, Email, EqualTo
 
 from webapp import db, bcrypt
 
-from webapp.models.models import User
+from webapp.models.models import User 
+from webapp.models.flavors import Flavors
+from webapp.models.twitter import TwitterBot
 
 def validate_login(form, field):
 	user = form.get_user()
@@ -15,6 +17,20 @@ def validate_login(form, field):
 	if not bcrypt.check_password_hash(user.password, form.password.data):
 		raise validators.ValidationError('Login failed, yo.')
 
+def get_flavors():
+	select_list = []
+	flavors = Flavors.get_all()
+	for flavor in flavors:
+		select_list.append((flavor.id, flavor.description))
+	return select_list
+
+def bot_flavor():
+	bot = TwitterBot.get()
+	return bot.flavor_id
+
+def bot_announce():
+	bot = TwitterBot.get()
+	return bot.announce
 
 class LoginForm(Form):
 	username = TextField("Username", validators=[Required()])
@@ -47,8 +63,12 @@ class ApplianceForm(Form):
 	longitude = TextField("longitude", validators=[Required()])
 
 
-class InstanceForm(Form):
-	name = TextField(validators=[Required()])
-	osflavorid = TextField(validators=[Required()])
-	osimageid = TextField(validators=[Required()])
-	hourlyrate = IntegerField(validators=[Required()])
+class TwitterForm(Form):
+	pin = IntegerField("Twitter Pin", validators=[Required()])
+
+
+class BotForm(Form):
+	flavor = SelectField("Flavor to Market", coerce=int, choices=get_flavors())
+	max_instances = IntegerField("Max Instances to Advertise", validators=[Required()])
+	announce = SelectField("Announce Offering", coerce=int, choices=[(0, "None"),(6, "Every 6 Hours"),(24, "Daily")])
+

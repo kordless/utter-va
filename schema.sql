@@ -108,6 +108,37 @@ CREATE TABLE instances (
   FOREIGN KEY(address_id) REFERENCES addresses(id)
 );
 
+DROP TABLE IF EXISTS twitterbot;
+CREATE TABLE twitterbot (
+  id INTEGER NOT NULL,
+  oauth_url VARCHAR(400),
+  oauth_token VARCHAR(100),
+  oauth_token_secret VARCHAR(100),
+  consumer_key VARCHAR(100),
+  consumer_secret VARCHAR(100),
+  complete INTEGER NOT NULL,
+  enabled INTEGER NOT NULL,
+  flavor_id INTEGER NOT NULL,
+  max_instances INTEGER NOT NULL,
+  announce INTEGER NOT NULL,
+  PRIMARY KEY (id),
+  FOREIGN KEY(flavor_id) REFERENCES flavors(id)
+);
+
+DROP TABLE IF EXISTS tweetcommands;
+CREATE TABLE tweetcommands (
+  id INTEGER NOT NULL,
+  created INTEGER NOT NULL,
+  updated INTEGER NOT NULL,
+  user VARCHAR(100),
+  command VARCHAR(100),
+  url VARCHAR(400),
+  instance_id INTEGER NOT NULL,
+  state INTEGER NOT NULL,
+  PRIMARY KEY (id),
+  FOREIGN KEY(instance_id) REFERENCES instances(id)
+);
+
 DROP TABLE IF EXISTS status;
 CREATE TABLE status (
   id INTEGER NOT NULL,
