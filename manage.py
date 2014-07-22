@@ -581,6 +581,9 @@ def falconer(app):
 							),
 							command.user
 						)
+					elif instance.state == 7:
+						# decomissioned
+						command.delete(command)
 				
 				# now sync the states
 				command.state = instance.state
