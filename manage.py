@@ -572,7 +572,6 @@ def falconer(app):
 				if instance.state != command.state:
 					# check if instance is in run state so we can tweet about it
 					if instance.state == 4:
-						print "tweeting"
 						tweet_status("~%s | ipv6: %s | ipv4: %s | ipv4: %s" %
 							(
 								instance.name,

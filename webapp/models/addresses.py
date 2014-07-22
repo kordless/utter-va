@@ -53,8 +53,6 @@ class Addresses(CRUDMixin, db.Model):
 				# work around coinbase's strange address:address thing
 				remoteaddress = remoteaddress_address['address']
 
-				print remoteaddress
-
 				# check if address label is the md5 of our coinbase api key
 				if remoteaddress['label'] == md5.new(appliance.cbapikey).hexdigest():
 
