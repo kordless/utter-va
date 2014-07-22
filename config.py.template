@@ -21,10 +21,11 @@ class BaseConfiguration(object):
 	POOL_DECOMMISSION_TIME = 7200
 	POOL_DYNAMIC_IMAGES_EXPIRE_TIME = 7200
 
-	# twitterbot
+	# twitterbot sample app keys
 	CONSUMER_KEY = "cCRlvQYV8tG9Pj9xboggaWyQG"
 	CONSUMER_SECRET = "nawc4XD1J1RhwUIiVjAUqCcTVYZ5R74wD3NrcM89pAEuQBL5TJ"
-
+	MAX_INSTANCES_DEFAULT = 4
+	
 	# app version and name
 	VERSION = "0.7"
 	APP_NAME = "%s Virtual Appliance" % POOL_NAME
