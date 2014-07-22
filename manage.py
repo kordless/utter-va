@@ -549,8 +549,9 @@ def falconer(app):
 						tweet = "do a '@obitcoin !status ~%s'" % user_command.instance.name
 						tweet_status(tweet, command.user)
 					else:
+						available = int(bot.max_instance) - int(command_count)
 						tweet_status("%s of %s slots available to serve %s instances." % (
-								bot.max_instance - command_count,
+								available,
 								bot.max_instances,
 								bot.flavor.name
 							), 
