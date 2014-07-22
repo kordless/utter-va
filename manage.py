@@ -550,7 +550,7 @@ def falconer(app):
 						tweet_status(tweet, command.user)
 					else:
 						tweet_status("%s of %s slots available to serve %s instances." % (
-								command_count,
+								bot.max_instance - command_count,
 								bot.max_instances,
 								bot.flavor.name
 							), 
