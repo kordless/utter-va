@@ -170,8 +170,13 @@ class Instances(CRUDMixin, db.Model):
 
 				# finally, assign a bitcoin address
 				addresses = Addresses()
-				instance.address = addresses.assign(instance.id)	
-				instance.update()
+				address = addresses.assign(instance.id)
+				if address:
+					instance.address = address	
+					instance.update()
+				else:
+					# we have no address, so delete what we made
+					instance.delete(instance)
 
 			response['result']['message'] = "Created new instance and assigned address."
 			app.logger.info("Created new instance=(%s)." % instance.name)
