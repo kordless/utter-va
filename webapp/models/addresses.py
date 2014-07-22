@@ -9,7 +9,7 @@ from webapp.models.mixins import CRUDMixin
 from webapp.libs.coinbase import coinbase_generate_address, coinbase_get_addresses, coinbase_checker
 
 from webapp.libs.utils import generate_token, row2dict
-from webapp.models.models import Appliance
+from webapp.models.models import Appliance, Status
 
 # address model
 class Addresses(CRUDMixin, db.Model):
@@ -52,6 +52,8 @@ class Addresses(CRUDMixin, db.Model):
 			for remoteaddress_address in remoteaddresses:
 				# work around coinbase's strange address:address thing
 				remoteaddress = remoteaddress_address['address']
+
+				print remoteaddress
 
 				# check if address label is the md5 of our coinbase api key
 				if remoteaddress['label'] == md5.new(appliance.cbapikey).hexdigest():
@@ -113,21 +115,30 @@ class Addresses(CRUDMixin, db.Model):
 			address.instance_id = instance_id
 			address.update(address)
 			return address
+
 		else:
 			# check if we have an empty address to assign
 			address = db.session.query(Addresses).filter_by(instance_id=0).first()		
-			
-			# we found one, so assign instance_id, appliance subdomain
+
+			# we found one, so assign instance_id
 			if address:
 				# assign the instance id to the address
 				address.instance_id = instance_id
-				# leave the subdomain alone from the sync
-				# address.subdomain
 				address.update(address)
 				return address
 
 			else:
-				# ask coinbase for new address and set callback
+				# need a new address at this point
+				# check if coinbase connection is live
+				settings = Status().check_settings()
+				if not settings['coinbase']:
+					return None
+
+				# check if appliance has a subdomain assigned
+				if not appliance.subdomain:
+					return None
+
+				# now ask coinbase for new address and set callback
 				token = generate_token(size=16, caselimit=True)
 				callback_url = "https://%s.%s/api/address/%s" % (
 					appliance.subdomain, 

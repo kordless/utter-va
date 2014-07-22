@@ -146,31 +146,32 @@ class Instances(CRUDMixin, db.Model):
 
 		# create a minimum number of instances based on hot amount for flavor
 		if len(instances) < flavor.hot:
-			# create a new instance		
-			instance = Instances()
-			instance.name = "smi-%s" % generate_token(size=8, caselimit=True)
-			instance.flavor_id = flavor.id
+			for x in range(len(instances), flavor.hot):		
+				# create a new instance		
+				instance = Instances()
+				instance.name = "smi-%s" % generate_token(size=8, caselimit=True)
+				instance.flavor_id = flavor.id
 
-			# grab the first available image for a holder for the warm instance
-			image = db.session.query(Images).first()
-			instance.image_id = image.id
+				# grab the first available image for a holder for the warm instance
+				image = db.session.query(Images).first()
+				instance.image_id = image.id
 
-			# timestamps
-			epoch_time = int(time.time())
-			instance.created = epoch_time
-			instance.updated = epoch_time
-			instance.expires = epoch_time # already expired
+				# timestamps
+				epoch_time = int(time.time())
+				instance.created = epoch_time
+				instance.updated = epoch_time
+				instance.expires = epoch_time # already expired
 
-			# set state
-			instance.state = 1 # has address, but no payments/not started (warm)
+				# set state
+				instance.state = 1 # has address, but no payments/not started (warm)
 
-			# update - provides instance.id to us
-			instance.update()
+				# update - provides instance.id to us
+				instance.update()
 
-			# finally, assign a bitcoin address
-			addresses = Addresses()
-			instance.address = addresses.assign(instance.id)	
-			instance.update()
+				# finally, assign a bitcoin address
+				addresses = Addresses()
+				instance.address = addresses.assign(instance.id)	
+				instance.update()
 
 			response['result']['message'] = "Created new instance and assigned address."
 			app.logger.info("Created new instance=(%s)." % instance.name)

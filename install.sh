@@ -60,7 +60,8 @@ sudo pip install python-novaclient
 # check out the current release of utter-va
 sudo mkdir /var/log/utterio/
 sudo git clone https://github.com/StackMonkey/utter-va.git /var/www/utterio
-git checkout tags/v0.7-beta.5
+cd /var/www/utterio
+sudo git checkout tags/v0.7-beta.5
 
 # configure www directory
 sudo chown -R ubuntu:ubuntu /var/www/
@@ -164,6 +165,7 @@ $ONE,$TWO,$THREE,$FOUR,$FIVE,$SIX,$SEVEN,$EIGHT,$NINE,$TEN,$ELEVEN,$TWELVE * * *
 
 # run various manage commands every 1 minute
 * * * * * /var/www/utterio/manage.py instances > /dev/null 2>&1
+* * * * * /var/www/utterio/manage.py falconer > /dev/null 2>&1
 EOF
 sudo crontab -u ubuntu /var/www/utterio/crontab
 

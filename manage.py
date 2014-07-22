@@ -465,6 +465,7 @@ def instances(app):
 
 	return action
 
+# THIS IS A HUGE MESS
 # handle the request queue from the twitter stream process
 def falconer(app):
 	def action():
@@ -472,6 +473,8 @@ def falconer(app):
 		bot = TwitterBot.get()
 		
 		# exit if we're not enabled
+		if not bot:
+			return action
 		if not bot.enabled:
 			return action
 
@@ -514,26 +517,45 @@ def falconer(app):
 				tweet_status(tweet, command.user)
 
 			elif command.command.lower() == "status":
-				# get instance in question
+				
+				# if instance is set, we use it
 				if command.instance:
-					# get the time left in seconds
-					epoch_time = int(time.time())
-					expires = command.instance.expires
-					timer = expires - epoch_time
-					if timer < 0:
-						timer = 0
+					if command.state == 10:
+						# haven't paid for it, silly gooses
+						tweet = "send %s BTC/hour to https://blockchain.info/address/%s to start ~%s." % (ask, address, name)
+						tweet_status(tweet, command.user)					
+					else:
+						# get the time left in seconds
+						epoch_time = int(time.time())
+						expires = command.instance.expires
+						timer = expires - epoch_time
+						if timer < 0:
+							timer = 0
 
-					tweet_status("~%s | ipv6: %s | ipv4: %s | ipv4: %s | exp: %ss" %
-						(
-							command.instance.name,
-							command.instance.publicipv6,
-							command.instance.privateipv4,
-							command.instance.publicipv4,
-							timer
-						),
-						command.user
-					)
+						tweet_status("~%s | ipv6: %s | ipv4: %s | ipv4: %s | exp: %ss" % (
+								command.instance.name,
+								command.instance.publicipv6,
+								command.instance.privateipv4,
+								command.instance.publicipv4,
+								timer
+							),
+							command.user
+						)
 				else:
+					# no instance, so look up if they have an instance
+					user_command = db.session.query(TweetCommands).filter_by(user=command.user, command="instance").first()
+					command_count = db.session.query(TweetCommands).filter_by(command="instance").count()
+					if user_command:
+						tweet = "do a '@obitcoin !status ~%s'" % user_command.instance.name
+						tweet_status(tweet, command.user)
+					else:
+						tweet_status("%s of %s slots available to serve %s instances." % (
+								command_count,
+								bot.max_instances,
+								bot.flavor.name
+							), 
+							command.user
+						)
 					pass
 
 				command.delete(command)
@@ -548,14 +570,16 @@ def falconer(app):
 				# check if instance changed state
 				if instance.state != command.state:
 					# check if instance is in run state so we can tweet about it
-					if instance.state == "4":
+					if instance.state == 4:
+						print "tweeting"
 						tweet_status("~%s | ipv6: %s | ipv4: %s | ipv4: %s" %
 							(
 								instance.name,
 								instance.publicipv6,
 								instance.privateipv4,
 								instance.publicipv4
-							)
+							),
+							command.user
 						)
 				
 				# now sync the states
@@ -590,11 +614,14 @@ def tweetstream(app):
 		# bot settings
 		bot = TwitterBot.get()
 
-		if bot.enabled:
-			get_stream()
+		if bot:
+			if bot.enabled:
+				get_stream()
+			else:
+				# we're going to exit, and monit will try to restart
+				# delay that a bit so monit doesn't freak out
+				time.sleep(60)
 		else:
-			# we're going to exit, and monit will try to restart
-			# delay that a bit so monit doesn't freak out
 			time.sleep(60)
 
 	return action

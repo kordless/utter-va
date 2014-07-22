@@ -188,7 +188,7 @@ def configure():
 			# check the settings
 			settings = Status().check_settings()
 
-			if settings['coinbase']:
+			if settings['coinbase']:				
 				# sync up addresses with coinbase
 				addresses = Addresses()
 				addresses.sync(appliance)
@@ -447,6 +447,14 @@ def configure_twitter():
 	# get the forms for the page
 	form = TwitterForm(request.form)
 	mrof = BotForm(request.form)
+
+	# blow the flavors into a list
+	flavor_list = []
+	flavors = Flavors.get_all()
+	for flavor in flavors:
+		flavor_list.append((flavor.id, flavor.description))
+	
+	mrof.flavor.choices = flavor_list
 
 	# twitter bot credentials
 	bot = TwitterBot.get()
