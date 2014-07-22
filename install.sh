@@ -110,7 +110,7 @@ with start delay 5
 
 check process twitterbot matching "manage.py tweetstream"
 		start program = "/var/www/utterio/tweetstream.sh"
-		stop program = "true"
+		stop program = "/bin/true"
 EOF
 
 # restart monit service
