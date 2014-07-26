@@ -22,6 +22,7 @@ sudo apt-get install unzip -y
 sudo apt-get install monit -y
 
 # address libxslt compile errors when installing python-* openstack libs
+sudo apt-get install python-dev -y
 sudo apt-get install libxslt1-dev libxslt1.1 libxml2-dev libxml2 libssl-dev -y
 
 # IPy address util
