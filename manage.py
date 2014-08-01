@@ -26,7 +26,6 @@ from webapp.libs.utils import query_yes_no, pprinttable, message
 from webapp.libs.coinbase import coinbase_get_addresses, coinbase_checker
 from webapp.libs.images import download_images
 from webapp.libs.pool import pool_salesman, pool_connect
-from webapp.libs.twitterbot import get_stream, tweet_status
 
 # configuration file
 if os.path.isfile('./DEV'): 
@@ -48,6 +47,9 @@ def configure_blurb():
 default_ip = "0.0.0.0"
 def reset(app):
 	def action(ip=('i', default_ip)):
+		"""
+		Restores the appliance to factory default settings.
+		"""
 		try:
 			if ip == default_ip:
 				print "Please enter the appliance's IP address."
@@ -88,6 +90,10 @@ def reset(app):
 # reset the admin account
 def admin(app):
 	def action(force=('f', 'false')):
+		"""
+		Resets the admin credentials.  Run this, then access 
+		the appliance's web page to create a new admin account.
+		"""
 		if force == 'true':
 			try:
 				user = db.session.query(User).first()
@@ -104,6 +110,9 @@ def admin(app):
 # install
 def install(app):
 	def action(ip=('i', default_ip)):
+		"""
+		Installs a new database configuration for the appliance.
+		"""
 		# run database reset script - use current path to run file
 		path = os.path.dirname(os.path.abspath(__file__))
 
@@ -147,8 +156,15 @@ def serve(app):
 def coinop(app):
 	def action(
 		amount=('a', 0),
-		iname=('i', '')
+		instance=('i', "smi-a4t0zcoe")
 	):
+		"""
+		Makes fake Bitcoin payments to the appliance.  Example usage 
+		paying instance 'ami-a4t0zcoe' 20 micro Bitcoin: 
+
+		./manage.py coinop -a 20 -i ami-a4t0zcoe
+		
+		"""
 		instance = db.session.query(Instances).filter_by(name=iname).first()
 		if amount == 0:
 			print "Enter a whole amount to pay instance."
@@ -162,6 +178,9 @@ def coinop(app):
 # show ips of running instances
 def ips(app):
 	def action():
+		"""
+		Prints a list of current instances and their IP addresses.
+		"""
 		from webapp.libs.openstack import instance_info
 
 		# check appliance is ready to go - exit if not
@@ -193,10 +212,11 @@ def ips(app):
 	return action
 
 # cleans up errant address assignments
-# unlikely to occur during regular operations
 def addressmop(app):
 	def action():
-
+		"""
+		Clean up errant address to instance assignments.
+		"""
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
 		if not settings['ngrok'] or not settings['openstack']:
@@ -229,6 +249,9 @@ def addressmop(app):
 # quick and dirty openstack stats
 def stats(app):
 	def action():
+		"""
+		Prints current hypervisor usage information.
+		"""
 		from webapp.libs.openstack import get_stats
 
 		# check appliance is ready to go - exit if not
@@ -254,8 +277,11 @@ def messenger(app):
 		status=('s', 'success'),
 		reloader=('r', '0')
 	):
+		"""
+		Send messages and reload request to a browser connected to the appliance.
+		"""
 		# muck the reload flags around
-		if reloader == '1' or reloader == 'true':
+		if reloader == '1' or reloader.lower() == 'true':
 			reloader = True
 		else:
 			reloader = False
@@ -267,6 +293,9 @@ def messenger(app):
 # build the tunnel.conf file
 def tunnel(app):
 	def action():
+		"""
+		Builds a new Ngrok tunnel configuration file.
+		"""
 		# get the appliance configuration
 		appliance = db.session.query(Appliance).first()
 
@@ -280,6 +309,9 @@ def tunnel(app):
 # check authorization
 def checkauth(app):
 	def action():
+		"""
+		Verify authentication token is being accepted by pool.
+		"""
 		# get the appliance configuration
 		appliance = db.session.query(Appliance).first()
 
@@ -296,6 +328,11 @@ def checkauth(app):
 # runs every 15 minutes via cron
 def flavors(app):
 	def action():
+		"""
+		Performs a sync from the pool's list of flavors to the appliance.
+
+		Cron: Every 15 minutes.
+		"""
 		# get the appliance for api token (not required, but sent if we have it)
 		appliance = db.session.query(Appliance).first()
 
@@ -309,6 +346,11 @@ def flavors(app):
 # runs every 15 minutes via cron
 def images(app):
 	def action():
+		"""
+		Performs a sync from the pool's list of images to the appliance.
+		
+		Cron: Every 15 minutes.
+		"""
 		# get the appliance for api token (not required, but sent if we have it)
 		appliance = db.session.query(Appliance).first()
 
@@ -331,7 +373,11 @@ def images(app):
 # runs every 15 minutes via cron
 def trashman(app):
 	def action():
+		"""
+		Removes decomissioned and errant instances.  Also takes out the trash occasionally.
 
+		Cron: Every 15 minutes.
+		"""
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
 		if not settings['ngrok'] or not settings['openstack']:
@@ -351,6 +397,11 @@ def trashman(app):
 # runs every 15 minutes via cron
 def salesman(app):
 	def action():
+		"""
+		Puts instances up for sale on the pool.
+
+		Cron: Every 15 minutes.
+		"""
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
 		if not settings['ngrok'] or not settings['openstack']:
@@ -369,10 +420,15 @@ def salesman(app):
 
 	return action
 
-# mix, pause, unpause instances
+# mix, pause, unpause instances - remove old dynamic images
 # runs every 5 minutes via cron
 def housekeeper(app):
 	def action():
+		"""
+		Provides housekeeping services including mix, pause and decomission.
+
+		Cron: Every 5 minutes.
+		"""
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
 		if not settings['ngrok'] or not settings['openstack']:
@@ -415,6 +471,11 @@ def housekeeper(app):
 # runs every minute via cron
 def instances(app):
 	def action():
+		"""
+		Provides instance services including start, nudge and relight.
+
+		Cron: Every 5 minutes.
+		"""
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
 		if not settings['ngrok'] or not settings['openstack']:
@@ -465,155 +526,16 @@ def instances(app):
 
 	return action
 
-# THIS IS A HUGE MESS
-# handle the request queue from the twitter stream process
-def falconer(app):
-	def action():
-		# get bot settings
-		bot = TwitterBot.get()
-		
-		# exit if we're not enabled
-		if not bot:
-			return action
-		if not bot.enabled:
-			return action
-
-		# get unhandled commands
-		commands = db.session.query(TweetCommands).filter_by(state=1).all()
-
-		for command in commands:
-			if command.command == "instance":
-				# check the user doesn't have another instance already
-				ic = db.session.query(TweetCommands).filter_by(command="instance", user=command.user).count()
-				if ic > 1 and command.user != "kordless":
-					tweet_status("Sorry, I only do one instance per user.", command.user)
-					command.delete(command)
-					continue
-
-				# grab an instance to reserve
-				instance = Instances()
-				response = instance.reserve(command.url, bot.flavor_id)
-				message(response['result']['message'], response['response'], True)
-
-				if response['response'] == "error":
-					# tweet_status("Sorry, having system difficulties.  Please wait until human assisted notice.")
-					print response['result']['message']
-					continue		
-
-				# update the command to reflect the new instance status
-				instance = response['result']['instance']
-				command.state = 10
-				command.updated = int(time.time())
-				command.instance_id = instance['id']
-				command.update()
-				
-				# tweet bits
-				ask = "%0.6f" % (float(response['result']['ask'])/1000000)
-				address = response['result']['address']
-				name = instance['name']
-				
-				# tell the user the bitcoin address
-				tweet = "send %s BTC/hour to https://blockchain.info/address/%s in next 5 mins to start ~%s." % (ask, address, name)
-				tweet_status(tweet, command.user)
-
-			elif command.command.lower() == "status":
-				
-				# if instance is set, we use it
-				if command.instance:
-					if command.state == 10:
-						# haven't paid for it, silly gooses
-						tweet = "send %s BTC/hour to https://blockchain.info/address/%s to start ~%s." % (ask, address, name)
-						tweet_status(tweet, command.user)					
-					else:
-						# get the time left in seconds
-						epoch_time = int(time.time())
-						expires = command.instance.expires
-						timer = expires - epoch_time
-						if timer < 0:
-							timer = 0
-
-						tweet_status("~%s | ipv6: %s | ipv4: %s | ipv4: %s | exp: %ss" % (
-								command.instance.name,
-								command.instance.publicipv6,
-								command.instance.privateipv4,
-								command.instance.publicipv4,
-								timer
-							),
-							command.user
-						)
-				else:
-					# no instance, so look up if they have an instance
-					user_command = db.session.query(TweetCommands).filter_by(user=command.user, command="instance").first()
-					command_count = db.session.query(TweetCommands).filter_by(command="instance").count()
-					if user_command:
-						tweet = "do a '@obitcoin !status ~%s'" % user_command.instance.name
-						tweet_status(tweet, command.user)
-					else:
-						available = int(bot.max_instances) - int(command_count)
-						tweet_status("%s of %s slots available to serve %s instances." % (
-								available,
-								bot.max_instances,
-								bot.flavor.name
-							), 
-							command.user
-						)
-					pass
-
-				command.delete(command)
-
-		# update status of commands carrying an instance_id and update
-		commands = db.session.query(TweetCommands).filter_by().all()
-
-		for command in commands:
-			if command.instance_id > 0:
-				instance = db.session.query(Instances).filter_by(id=command.instance_id).first()
-
-				# check if instance changed state
-				if instance.state != command.state:
-					# check if instance is in run state so we can tweet about it
-					if instance.state == 4:
-						tweet_status("~%s | ipv6: %s | ipv4: %s | ipv4: %s" %
-							(
-								instance.name,
-								instance.publicipv6,
-								instance.privateipv4,
-								instance.publicipv4
-							),
-							command.user
-						)
-					elif instance.state == 7:
-						# decomissioned
-						command.delete(command)
-				
-				# now sync the states
-				command.state = instance.state
-				command.update()
-
-		# get reserved instance commands
-		commands = db.session.query(TweetCommands).filter_by(state=10).all()
-
-		for command in commands:
-			if command.command == "instance":
-				# check if timeout
-				epoch_time = int(time.time())
-
-				# cancel reservation if older than 7 minutes (we fudge this in the tweet)
-				if (command.updated + 420) < epoch_time:
-					instance = db.session.query(Instances).filter_by(id=command.instance_id).first()
-					instance.callback_url = ""
-					instance.state = 1
-					instance.update()
-
-					command.delete(command)
-					message("Canceled reservation on %s." % instance.name, "warning", True)
-
-	return action
-
 # twitter stream + db storage
 # uses a forever BLOCKING call to get_stream()
 # runs from monit
 def tweetstream(app):
 	def action():
+		"""
+		Stream process for Twitter monitoring.  Do not run directly.
+		"""
+		from webapp.libs.twitterbot import get_stream
+
 		# bot settings
 		bot = TwitterBot.get()
 
@@ -629,7 +551,79 @@ def tweetstream(app):
 
 	return action
 
+# handle the request queue from the twitter stream process
+def falconer(app):
+	def action():
+		"""
+		Process Twitter user commands.
+		"""
+		from webapp.libs.twitterbot import tweet_status, run_status, reserve_instance, check_instance, cleanup_reservations
+
+		# get bot settings
+		bot = TwitterBot.get()
+		
+		# exit if we're not enabled
+		if not bot:
+			return action
+		if not bot.enabled:
+			print "The Twitter bot is disabled."
+			return action
+
+		# get unhandled commands
+		commands = db.session.query(TweetCommands).filter_by(state=1).all()
+
+		for command in commands:
+			# someone typed '!instance'
+			if command.command == "instance":
+
+				# reserve instance
+				response = reserve_instance(command, bot)
+
+				if response['response'] == "error":
+					print response['result']
+					command.delete(command)
+
+			# someone typed '!status'
+			elif command.command.lower() == "status":
+
+				# send status info
+				response = run_status(command, bot)
+
+				if response['response'] == "error":
+					print response['result']
+
+				# don't hold onto status commands
+				command.delete(command)
+
+			elif command.command.lower() == "help":
+				tweet_status("'@obitcoin !instance ^http://pastebin⋅com/raw.php?i=zX5fD6HY' & pay. Edit pastebin to suit! Also, '@obitcoin !status'.", command.user)
+
+		# update status of commands carrying an instance_id and update
+		commands = db.session.query(TweetCommands).filter_by().all()
+		for command in commands:
+			# run an instance check
+			check_instance(command, bot)
+
+		# get pending reserved instance commands
+		commands = db.session.query(TweetCommands).filter_by(state=10).all()
+
+		for command in commands:
+			cleanup_reservations(command, bot)
+
+	return action
+
 # advertising agent
+# announce instances
+def marketeer(app):
+	def action():
+		"""
+		Posts marketing blurbs to Twitter.
+		"""
+		from webapp.libs.twitterbot import tweet_status
+
+
+	return action
+
 # http://pastebin.com/raw.php?i=zX5fD6HY
 
 # for development
