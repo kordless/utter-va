@@ -24,6 +24,159 @@ def parse_oauth_tokens(result):
 			oauth_token_secret = v
 	return oauth_token, oauth_token_secret
 
+# '!instance' command handling
+def reserve_instance(command, bot):
+	# default response
+	response = {"response": "success", "result": {"message": ""}}
+
+	# check the user doesn't have another instance already
+	ic = db.session.query(TweetCommands).filter_by(command="instance", user=command.user).count()
+	if ic > 1 and command.user != "kordless":
+		tweet_status("Sorry, I only do %s instance(s) per user." % 1, command.user)
+		command.delete(command)
+		response['response'], response['result'] = "error", "User limit encountered."
+		return response
+
+	# grab an instance to reserve
+	instance = Instances()
+	response = instance.reserve(command.url, bot.flavor_id)
+
+	# notify the console
+	message(response['result']['message'], response['response'], True)
+
+	# return errors, if any
+	if response['response'] == "error":
+		return response['result']['message']
+
+	# update the command to reflect the new instance status
+	instance = response['result']['instance']
+	command.state = 10
+	command.updated = int(time.time())
+	command.instance_id = instance['id']
+	command.update()
+	
+	# pack command into response
+	response['result']['command'] = command
+
+	# tweet bits
+	ask = "%0.6f" % (float(response['result']['ask'])/1000000)
+	address = response['result']['address']
+	name = instance['name']
+	
+	# tell the user the bitcoin address
+	tweet = "send %s BTC/hour to https://blockchain.info/address/%s in next 5 mins to start ~%s." % (ask, address, name)
+	tweet_status(tweet, command.user)
+
+	return response
+
+# '!status' command handling
+def run_status(command, bot):
+	# default response
+	response = {"response": "success", "result": {"message": ""}}
+
+	# if instance is set, we use it
+	if command.instance:
+		if command.state == 10:
+			# haven't paid for it, silly gooses
+			tweet = "send %s BTC/hour to https://blockchain.info/address/%s to start ~%s." % (ask, address, name)
+			tweet_status(tweet, command.user)
+
+			response['result']['message'] = "Sent payment reminder."
+
+		else:
+			# get the time left in seconds
+			epoch_time = int(time.time())
+			expires = command.instance.expires
+			timer = expires - epoch_time
+			if timer < 0:
+				timer = 0
+
+			tweet_status("~%s | ipv6: %s | ipv4: %s | ipv4: %s | exp: %ss" % (
+					command.instance.name,
+					command.instance.publicipv6,
+					command.instance.privateipv4,
+					command.instance.publicipv4,
+					timer
+				),
+				command.user
+			)
+
+			response['result']['message'] = "Sent instance information."
+
+	else:
+		# no instance, so look up if they have an instance
+		user_command = db.session.query(TweetCommands).filter_by(user=command.user, command="instance").first()
+		command_count = db.session.query(TweetCommands).filter_by(command="instance").count()
+		
+		# remind them of the instance name
+		if user_command:
+			tweet = "do a '@obitcoin !status ~%s'" % user_command.instance.name
+			tweet_status(tweet, command.user)
+			response['result']['message'] = "Sent instance status help message."
+
+		# tweet system status
+		available = int(bot.max_instances) - int(command_count)
+		tweet_status("%s of %s slots available to serve %s instances." % (
+				available,
+				bot.max_instances,
+				bot.flavor.name
+			), 
+			command.user
+		)
+		pass
+
+	return response
+
+# check up on instances
+def check_instance(command, bot):
+	# check if command has an instance_id
+	if command.instance_id == 0:
+		return False
+
+	instance = db.session.query(Instances).filter_by(id=command.instance_id).first()
+
+	if not instance:
+		command.delete(command)
+		return False
+		
+	# check if instance changed state
+	if instance.state != command.state:
+		# check if instance is in run state so we can tweet about it
+		if instance.state == 4:
+			tweet_status("~%s | ipv6: %s | ipv4: %s | ipv4: %s" %
+				(
+					instance.name,
+					instance.publicipv6,
+					instance.privateipv4,
+					instance.publicipv4
+				),
+				command.user
+			)
+		elif instance.state == 7:
+			# decomissioned
+			command.delete(command)
+	
+	# now sync the states
+	command.state = instance.state
+	command.update()
+
+	return True
+
+def cleanup_reservations(command, bot):
+	# check if timeout
+	epoch_time = int(time.time())
+
+	# cancel reservation if older than 7 minutes (we fudge this in the tweet)
+	if (command.updated + 420) < epoch_time:
+		instance = db.session.query(Instances).filter_by(id=command.instance_id).first()
+		instance.callback_url = ""
+		instance.state = 1
+		instance.update()
+
+		command.delete(command)
+		message("Canceled reservation on %s." % instance.name, "warning", True)
+
+
 def get_stream():
 	# loop forever trying to talk to twitter
 	while True:
