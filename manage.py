@@ -727,8 +727,6 @@ def marketeer(app):
 			print "Bot announcements are disabled."
 			return action
 
-		print (bot.updated + bot.announce * 3600) - epoch
-
 		# if updated + announce > current time, do an update!
 		if epoch > (bot.updated + (bot.announce * 3600)):
 			# make up some stuff
