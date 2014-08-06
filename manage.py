@@ -472,7 +472,6 @@ def housekeeper(app):
 # runs every minute via cron
 def instances(app):
 	def task():
-		print "run instance"
 		# START
 		# instances which have received payment are moved to starting
 		instances = db.session.query(Instances).filter_by(state=2).all()
