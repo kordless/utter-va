@@ -691,7 +691,7 @@ def falconer(app):
 
 		# do a single run
 		timer_in = int(time.time())
-		task()
+		task(bot)
 		timer_out = int(time.time())
 
 		# run task X many more times per cron period
@@ -710,7 +710,7 @@ def falconer(app):
 
 			# wrap task above with time in and out
 			timer_in = int(time.time())
-			task()
+			task(bot)
 			timer_out = int(time.time())
 
 	return action
