@@ -450,6 +450,7 @@ def housekeeper(app):
 		# general houskeeping work including pausing, unpausing
 		# runs on all currently running and suspended instances
 		instances = db.session.query(Instances).filter(or_(
+			Instances.state == 2,
 			Instances.state == 4,
 			Instances.state == 5
 		)).all()
@@ -459,7 +460,7 @@ def housekeeper(app):
 			response = instance.housekeeping()
 
 			# if instance isn't running
-			if response['response'] == "fail":
+			if response['response'] == "error":
 				message(response['result']['message'], "error", True)
 			else:
 				if response['result']['message'] != "":
@@ -470,19 +471,7 @@ def housekeeper(app):
 # warmup and start instances
 # runs every minute via cron
 def instances(app):
-	def action():
-		"""
-		Provides instance services including start, nudge and relight.
-
-		Cron: Every 5 minutes.
-		"""
-		# check appliance is ready to go - exit if not
-		settings = Status().check_settings()
-		if not settings['ngrok'] or not settings['openstack']:
-			log = "Running instances - appliance is not ready."
-			app.logger.error(log)
-			return action
-
+	def task():
 		# START
 		# instances which have received payment are moved to starting
 		instances = db.session.query(Instances).filter_by(state=2).all()
@@ -499,6 +488,8 @@ def instances(app):
 					"error", 
 					True
 				)
+				instance.message = response['result']['message']
+				instance.update()
 
 		# NUDGE
 		# instances in the process of starting are monitored and updated
@@ -518,11 +509,63 @@ def instances(app):
 			response = instance.housekeeping()
 
 			# if instance isn't running
-			if response['response'] == "fail":
+			if response['response'] == "error":
 				message(response['result']['message'], "error", True)
+				instance.message = response['result']['message']
+				instance.update()
 			else:
 				if response['result']['message'] != "":
 					message(response['result']['message'], "success", True)
+
+		return
+
+	def action(
+			cron=('c', 0),
+			freq=('f', 0),
+		):
+		"""
+		Provides instance services including start, nudge and relight.
+
+		Cron: Every 1 minute.
+		"""
+		# check appliance is ready to go - exit if not
+		settings = Status().check_settings()
+		if not settings['ngrok'] or not settings['openstack']:
+			log = "Running instances - appliance is not ready."
+			app.logger.error(log)
+			return action
+
+		# check flags for non-cron run (for dev)
+		if cron == 0 or freq == 0:
+			task()
+			return action
+
+		# current UTC time in seconds since epoch
+		epoch_time = int(time.time())
+
+		# cron, frequency length in seconds, run_time
+		cron_frequency = cron
+		frequency = freq
+		run_time = 0
+
+		# run task X many times per cron period
+		for x in range(0,cron_frequency/frequency):
+			# check if we are going to go over on next run
+			est_time = (frequency * x) + run_time
+			if est_time > cron_frequency:
+				break
+
+			# wrap task above with time in and out
+			timer_in = int(time.time())
+			task()
+			timer_out = int(time.time())
+
+			# run time
+			run_time = timer_out - timer_in
+
+			# sleep for a a bit
+			if run_time < frequency:
+				time.sleep(frequency - run_time)
 
 	return action
 
@@ -553,21 +596,8 @@ def tweetstream(app):
 
 # handle the request queue from the twitter stream process
 def falconer(app):
-	def action():
-		"""
-		Process Twitter user commands.
-		"""
+	def task(bot):
 		from webapp.libs.twitterbot import tweet_status, run_status, reserve_instance, check_instance, cleanup_reservations
-
-		# get bot settings
-		bot = TwitterBot.get()
-		
-		# exit if we're not enabled
-		if not bot:
-			return action
-		if not bot.enabled:
-			print "The Twitter bot is disabled."
-			return action
 
 		# get unhandled commands
 		commands = db.session.query(TweetCommands).filter_by(state=1).all()
@@ -580,7 +610,7 @@ def falconer(app):
 				response = reserve_instance(command, bot)
 
 				if response['response'] == "error":
-					print response['result']
+					print response['result']['message']
 					command.delete(command)
 
 			# someone typed '!status'
@@ -596,7 +626,16 @@ def falconer(app):
 				command.delete(command)
 
 			elif command.command.lower() == "help":
-				tweet_status("'@obitcoin !instance ^http://pastebin⋅com/raw.php?i=zX5fD6HY' & pay. Edit pastebin to suit! Also, '@obitcoin !status'.", command.user)
+				response = tweet_status("'@%s !instance ^http://pastebin⋅com/raw.php?i=zX5fD6HY' & pay. Edit pastebin to suit! Also, '@%s !status'." % (bot.screen_name, bot.screen_name), command.user)
+
+				if response['response'] == "error":
+					print response['result']
+				
+				command.delete(command)
+
+			else:
+				# some other command or errant tweet
+				command.delete(command)
 
 		# update status of commands carrying an instance_id and update
 		commands = db.session.query(TweetCommands).filter_by().all()
@@ -610,6 +649,60 @@ def falconer(app):
 		for command in commands:
 			cleanup_reservations(command, bot)
 
+		return
+
+	def action(
+			cron=('c', 0),
+			freq=('f', 0),
+		):
+		"""
+		Provides Twitter command processing.
+
+		Cron: Every 1 minute.
+		"""
+
+		# get bot settings
+		bot = TwitterBot.get()
+		
+		# exit if we're not enabled
+		if not bot:
+			return action
+		if not bot.enabled:
+			print "The Twitter bot is disabled."
+			return action
+
+		# check flags for non-cron run (for dev)
+		if cron == 0 or freq == 0:
+			task(bot)
+			return action
+
+		# current UTC time in seconds since epoch
+		epoch_time = int(time.time())
+
+		# cron, frequency length in seconds, run_time
+		cron_frequency = cron
+		frequency = freq
+		run_time = 0
+
+		# run task X many times per cron period
+		for x in range(0,cron_frequency/frequency):
+			# check if we are going to go over on next run
+			est_time = (frequency * x) + run_time
+			if est_time > cron_frequency:
+				break
+
+			# wrap task above with time in and out
+			timer_in = int(time.time())
+			task(bot)
+			timer_out = int(time.time())
+
+			# run time
+			run_time = timer_out - timer_in
+
+			# sleep for a a bit
+			if run_time < frequency:
+				time.sleep(frequency - run_time)
+
 	return action
 
 # advertising agent
@@ -618,9 +711,55 @@ def marketeer(app):
 	def action():
 		"""
 		Posts marketing blurbs to Twitter.
+
+		Cron: Depends on offering period.
 		"""
+		import random
 		from webapp.libs.twitterbot import tweet_status
 
+		# get bot settings
+		bot = TwitterBot.get()
+
+		# get the time
+		epoch = int(time.time())
+
+		if bot.announce == 0:
+			print "Bot announcements are disabled."
+			return action
+
+		print (bot.updated + bot.announce * 3600) - epoch
+
+		# if updated + announce > current time, do an update!
+		if epoch > (bot.updated + (bot.announce * 3600)):
+			# make up some stuff
+			blurbs = [
+				"Get your hot-n-fresh #openstack instances! ",
+				"Instances for nothing and #bitcoins for free. ",
+				"Now serving #42. ",
+				"Pssst. Hey buddy, want some #openstack? ",
+				"Sorry #openstack, we're all out of IPv4 addresses. ",
+				"Any significantly advanced technology is indistinguishable from magic. ",
+				"It's #bitcoin magic! ",
+				"I'm hungry. Spare some #bitcoin? "
+			]
+			hashtags = [
+				"trust",
+				"cryptocurrency",
+				"transparency",
+				"globalcloud",
+				"federation",
+				"virtualization",
+				"monkeys"
+			]
+			blurb = random.choice(blurbs)
+			hashtag = random.choice(hashtags)
+			
+			# say it
+			tweet_status("%s '@%s !status' for more info. #%s" % (blurb, bot.screen_name, hashtag))
+			
+			# update
+			bot.updated = int(time.time())
+			bot.update()
 
 	return action
 
@@ -646,11 +785,12 @@ manager.add_action('images', images)
 manager.add_action('flavors', flavors)
 manager.add_action('trashman', trashman)
 manager.add_action('salesman', salesman)
+manager.add_action('marketeer', marketeer)
 
 # run from cron every 5 mintues
 manager.add_action('housekeeper', housekeeper)
 
-# run from cron every 1 minute
+# run from cron every minute
 manager.add_action('instances', instances)
 manager.add_action('falconer', falconer)
 
@@ -672,5 +812,8 @@ if __name__ == "__main__":
 	handler.setFormatter(formatter)
 	app.logger.addHandler(handler)
 
+	# deal with glance client logs
+	logging.getLogger('glanceclient.common.http').addHandler(handler)
+	
 	# run the manager
 	manager.run()

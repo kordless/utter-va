@@ -102,6 +102,8 @@ CREATE TABLE instances (
   flavor_id INTEGER NOT NULL,
   image_id INTEGER NOT NULL,
   address_id VARCHAR(100),
+  message VARCHAR(400),
+  message_count INTEGER,
   PRIMARY KEY (id),
   FOREIGN KEY(flavor_id) REFERENCES flavors(id),
   FOREIGN KEY(image_id) REFERENCES images(id),
@@ -111,6 +113,7 @@ CREATE TABLE instances (
 DROP TABLE IF EXISTS twitterbot;
 CREATE TABLE twitterbot (
   id INTEGER NOT NULL,
+  screen_name VARCHAR(100),
   oauth_url VARCHAR(400),
   oauth_token VARCHAR(100),
   oauth_token_secret VARCHAR(100),
@@ -121,6 +124,7 @@ CREATE TABLE twitterbot (
   flavor_id INTEGER NOT NULL,
   max_instances INTEGER NOT NULL,
   announce INTEGER NOT NULL,
+  updated INTEGER NOT NULL,
   PRIMARY KEY (id),
   FOREIGN KEY(flavor_id) REFERENCES flavors(id)
 );

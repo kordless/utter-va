@@ -103,8 +103,8 @@ class Images(CRUDMixin, db.Model):
 			# return the image
 			return image
 		
-		except:
-			app.logger.error("Failed to install image=(%s) into the OpenStack cluster." % image_name)
+		except Exception as ex:
+			app.logger.error("Failed to install image=(%s) into the OpenStack cluster. %s." % (image_name, ex))
 			return None
 
 	def housekeeping(self):

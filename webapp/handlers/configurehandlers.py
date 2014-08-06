@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import re
 import os
+import time
+
 from urllib2 import urlopen
 
 from flask import Blueprint, render_template, jsonify, flash, redirect, session, url_for, request
@@ -51,7 +53,7 @@ def configure_flavors():
 
 	# how much is BTC?
 	try:
-		quote = float(coinbase_get_quote(currency='btc_to_usd')['result']['btc_to_usd'])/100000
+		quote = float(coinbase_get_quote(currency='btc_to_usd')['result']['btc_to_usd'])/1000000
 	except:
 		quote = 0
 
@@ -156,7 +158,7 @@ def configure_images():
 
 			response = {"response": "success", "result": "dynamicimages %s" % state_out}
 		except:
-			response = {"response": "fail", "result": "no valid parameters supplied"}
+			response = {"response": "error", "result": "no valid parameters supplied"}
 
 		return jsonify(response)
 
@@ -406,31 +408,32 @@ def configure_twitter_tweet():
 	if action == "tweet":
 		ask = "%0.6f" % (float(bot.flavor.ask)/1000000)
 		response = tweet_status(
-			u"Up to (%s) %s instances are now on sale for %s μBTC/hour via '@obitcoin !status'." % (
+			u"Up to (%s) %s instances are now on sale for %s μBTC/hour via '@%s !status'." % (
 				bot.max_instances,
 				bot.flavor.name, 
-				ask
+				ask,
+				bot.screen_name
 			)
 		)
 
 	# disconnect twitter creds
 	elif action == "disconnect":
 		# this MUST say 'settings' for stream restart
-		tweet_status("Appliance settings dropping bot credentials.")
+		tweet_status("Appliance !settings dropping bot credentials.")
 		bot.delete(bot)
 		response['result']['message'] = "Twitter credentials have been removed."
 
 	# enable/disable bot
 	elif action == "enabled":
 		# this MUST say 'settings' for stream restart
-		tweet_status("Appliance settings enabling instance bot.")
+		tweet_status("Appliance !settings enabling instance bot.")
 		bot.enabled = True
 		bot.update()
 		response['result']['message'] = "Twitter bot has been enabled."
 
 	elif action == "disabled":
 		# this MUST say 'settings' for stream restart
-		tweet_status("Appliance settings disabling bot temporarily.  I'll be back.")
+		tweet_status("Appliance !settings disabling bot temporarily.  I'll be back.")
 		bot.enabled = False
 		bot.update()
 		response['result']['message'] = "Twitter bot has been disabled."
@@ -466,7 +469,11 @@ def configure_twitter():
 		if bot.complete == 0:
 			bot = oauth_initialize()
 
-		if bot.complete == 1 and request.method == 'POST':
+		if bot.complete == 1 and request.method == 'GET':
+			# ensure we don't use stale creds
+			bot = oauth_initialize()
+
+		elif bot.complete == 1 and request.method == 'POST':
 			if form.validate_on_submit():
 				pin = request.form['pin']
 				bot = oauth_complete(pin)
@@ -486,14 +493,17 @@ def configure_twitter():
 				bot.flavor_id = mrof.flavor.data
 				bot.announce = mrof.announce.data
 				bot.max_instances = mrof.max_instances.data
+				bot.updated = int(time.time())
 				bot.update()
 
-				# announce (requires 'settings' in comment to reload stream bot)
-				tweet_status("Appliance settings updated. Now serving up to (%s) %s instances via '@obitcoin !status'" % (
-						bot.max_instances,
-						bot.flavor.name
+				if bot.announce > 0:
+					# announce (requires 'settings' in comment to reload stream bot)
+					tweet_status("Appliance settings updated. Now serving up to (%s) %s instances via '@%s !status'" % (
+							bot.max_instances,
+							bot.flavor.name,
+							bot.screen_name
+						)
 					)
-				)
 				flash("Bot settings updated.", "success")
 			else:
 				# form was not valid, so show errors	
@@ -504,9 +514,10 @@ def configure_twitter():
 		flash("Twitterbot failed to contact Twitter or get credentials.", "error")
 		bot = None
 
-	# set default form values
-	mrof.flavor.data = bot.flavor_id
-	mrof.announce.data = bot.announce
+	else:
+		# set default form values
+		mrof.flavor.data = bot.flavor_id
+		mrof.announce.data = bot.announce
 
 	return render_template(
 		'configure/twitter.html',

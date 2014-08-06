@@ -25,15 +25,15 @@ def coinbase_get_quote(appliance=None, currency=None):
 		result = json.loads(urlopen(url, timeout=10).read())
 		response['result'] = {currency: result[currency]}
 	except IOError as ex:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = "Can't contact quote server.  Try again later."
 		app.logger.error("Can't contact Coinbase quote server.")
 	except ValueError as ex:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = "Having issues parsing JSON from the site: %s.  Open a ticket." % type(ex).__name__
 		app.logger.error("Can't parse JSON returned from Coinbase.")
 	except Exception as ex:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
 		app.logger.error("An error of type %s has occured." % type(ex).__name__)
 	return response
@@ -72,11 +72,11 @@ def coinbase_generate_address(appliance=None, callback_url=None, label=None):
 		response['result']['address'] = result['address']
 
 	except HTTPError as ex:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
 		app.logger.error("An error of type %s has occured." % type(ex).__name__)
 	except CoinBaseAddressBuild as ex:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = str(ex)
 		app.logger.error("Coinbase returned mismatched parameters for callback url or label.")
 	
@@ -108,11 +108,11 @@ def coinbase_get_addresses(appliance=None):
 		response['result']['addresses'] = result['addresses']
 
 	except HTTPError as ex:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
 		app.logger.error("An error of type %s has occured." % type(ex).__name__)
 	except CoinBaseAddressBuild as ex:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = str(ex)
 		app.logger.error("Coinbase returned mismatched parameters for callback url or label.")
 

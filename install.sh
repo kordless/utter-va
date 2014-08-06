@@ -162,14 +162,15 @@ sudo cat <<EOF > /var/www/utterio/crontab
 $ONE,$FOUR,$SEVEN,$TEN * * * * /var/www/utterio/manage.py images > /dev/null 2>&1
 $ONE,$FOUR,$SEVEN,$TEN * * * * /var/www/utterio/manage.py flavors > /dev/null 2>&1
 $TWO,$FIVE,$EIGHT,$ELEVEN * * * * /var/www/utterio/manage.py salesman > /dev/null 2>&1
+$TWO,$FIVE,$EIGHT,$ELEVEN * * * * /var/www/utterio/manage.py marketeer > /dev/null 2>&1
 $THREE,$SIX,$NINE,$TWELVE * * * * /var/www/utterio/manage.py trashman > /dev/null 2>&1
 
 # run various manage commands every 5 minutes
 $ONE,$TWO,$THREE,$FOUR,$FIVE,$SIX,$SEVEN,$EIGHT,$NINE,$TEN,$ELEVEN,$TWELVE * * * * /var/www/utterio/manage.py housekeeper > /dev/null 2>&1
 
 # run various manage commands every 1 minute
-* * * * * /var/www/utterio/manage.py instances > /dev/null 2>&1
-* * * * * /var/www/utterio/manage.py falconer > /dev/null 2>&1
+* * * * * /var/www/utterio/manage.py instances -c 60 -f 1 > /dev/null 2>&1
+* * * * * /var/www/utterio/manage.py falconer -c 60 -f 1 > /dev/null 2>&1
 EOF
 sudo crontab -u ubuntu /var/www/utterio/crontab
 

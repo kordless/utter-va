@@ -43,7 +43,7 @@ def get_stats():
 	try:
 		nova = nova_connection()
 	except:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = "Can't communicate with OpenStack cluster."
 		app.logger.error("Can't communicate with OpenStack cluster.")
 		return response
@@ -64,7 +64,7 @@ def get_stats():
 		}
 
 	except:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result']['message'] = "OpenStack quota list unavailable."
 		app.logger.error("The OpenStack cluster is refusing to provide quota information.")
 		return response
@@ -194,7 +194,7 @@ def image_verify_install(image):
 		image.update()
 
 		# response
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result']['image'] = row2dict(image)
 		response['result']['message'] = "%s" % ex
 
@@ -235,7 +235,7 @@ def image_delete(image):
 
 	except Exception as ex:
 		# response
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result']['message'] = "Image delete failed: %s" % ex
 		
 		app.logger.error("Failed to delete image=(%s) from the OpenStack cluster." % image.name)
@@ -336,7 +336,7 @@ def flavor_verify_install(flavor):
 		flavor.update()
 
 		# response
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result']['flavor'] = row2dict(flavor)
 		response['result']['message'] = "%s" % ex
 		
@@ -352,7 +352,7 @@ def instance_start(instance):
 	try:
 		nova = nova_connection()
 	except:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = "Can't communicate with OpenStack cluster."
 		app.logger.error("Can't communicate with OpenStack cluster.")
 		return response
@@ -383,7 +383,7 @@ def instance_start(instance):
 	
 	except Exception as ex:
 		# response
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result']['message'] = "OpenStack instance start failed."
 
 		app.logger.error("Failed to start instance=(%s)." % instance.name)
@@ -399,7 +399,7 @@ def instance_console(instance):
 	try:
 		nova = nova_connection()
 	except:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = "Can't communicate with OpenStack cluster."
 		app.logger.error("Can't communicate with OpenStack cluster.")
 
@@ -414,7 +414,7 @@ def instance_console(instance):
 		response['result']['console'] = console
 		
 	except:
-		response['response'] = "fail"
+		response['response'] = ""
 		response['result']['message'] = "OpenStack console not found."
 
 	return response
@@ -427,7 +427,7 @@ def instance_info(instance):
 	try:
 		nova = nova_connection()
 	except:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = "Can't communicate with OpenStack cluster."
 		app.logger.error("Can't communicate with OpenStack cluster.")
 		return response
@@ -441,7 +441,7 @@ def instance_info(instance):
 		response['result']['server'] = server
 
 	except:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result']['message'] = "OpenStack instance not found."
 		app.logger.error("Failed to retrieve info for instance=(%s)." % instance.name)	
 
@@ -455,7 +455,7 @@ def instance_suspend(instance):
 	try:
 		nova = nova_connection()
 	except:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result']['message'] = "Can't communicate with OpenStack cluster."
 		app.logger.error("Can't communicate with OpenStack cluster.")
 		return response
@@ -487,7 +487,7 @@ def instance_resume(instance):
 		response['result']['server'] = server
 	
 	except:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result']['message'] = "Can't communicate with OpenStack cluster."
 		app.logger.error("Can't communicate with OpenStack cluster.")
 
@@ -521,7 +521,7 @@ def instance_decommission(instance):
 
 	except:
 		# oh noes, something went wrong
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result']['message'] = "Failed to decomission OpenStack instance."
 	
 	return response

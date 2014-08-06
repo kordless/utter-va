@@ -13,6 +13,7 @@ from webapp.models.instances import Instances
 class TwitterBot(CRUDMixin, db.Model):
 	__tablename__ = 'twitterbot'
 	id = db.Column(db.Integer, primary_key=True)
+	screen_name = db.Column(db.String(100))
 	oauth_url = db.Column(db.String(400))
 	oauth_token = db.Column(db.String(100))
 	oauth_token_secret = db.Column(db.String(100))
@@ -23,12 +24,14 @@ class TwitterBot(CRUDMixin, db.Model):
 	flavor_id = db.Column(db.Integer, db.ForeignKey('flavors.id'))
 	max_instances = db.Column(db.Integer)
 	announce = db.Column(db.Integer)
+	updated = db.Column(db.Integer)
 
 	# relationships
 	flavor = db.relationship('Flavors', foreign_keys='TwitterBot.flavor_id')
 
 	def __init__(
 		self,
+		screen_name=None,
 		oauth_url=None,
 		oauth_token=None,
 		oauth_token_secret=None,
@@ -38,8 +41,10 @@ class TwitterBot(CRUDMixin, db.Model):
 		enabled=None,
 		flavor_id=None,
 		max_instances=None,
-		announce=None
+		announce=None,
+		updated=None
 	):
+		self.screen_name = screen_name
 		self.oauth_url = oauth_url
 		self.oauth_token = oauth_token
 		self.oauth_token_secret = oauth_token_secret
@@ -50,6 +55,7 @@ class TwitterBot(CRUDMixin, db.Model):
 		flavor_id = flavor_id
 		max_instances = max_instances
 		announce = announce
+		updated = updated
 
 # tweet commands model
 class TweetCommands(CRUDMixin, db.Model):
@@ -68,8 +74,8 @@ class TweetCommands(CRUDMixin, db.Model):
 
 	def __init__(
 		self,
-		created=int(time.time()),
-		updated=int(time.time()),
+		created=None,
+		updated=None,
 		user=None,
 		command=None,
 		url=None,

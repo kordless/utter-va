@@ -48,10 +48,10 @@ def coinbase_send_money(address=None, amount=None, user_fee=None, credentials=No
 	try:
 		pass
 	except HTTPError as ex:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
 	except CoinBaseAddressBuild as ex:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = str(ex)
 	
 	return response

@@ -47,10 +47,10 @@ def blockchain_generate_address(appliance=None, callback_url=None, label=None):
 		response['result']['address'] = result['address']
 
 	except HTTPError as ex:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
 	except AddressBuild as ex:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = str(ex)
 	
 	return response
@@ -81,10 +81,10 @@ def blockchain_get_addresses(appliance=None):
 		response['result']['addresses'] = result['addresses']
 
 	except HTTPError as ex:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
 	except CoinBaseAddressBuild as ex:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = str(ex)
 	
 	return response

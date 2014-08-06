@@ -63,7 +63,7 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <p><code>10 μBTC = ~US${{ '%0.4f'| format(quote*10|float) }}</code> <a href="https://coinbase.com" target="_blank">via Coinbase</a></p>
+          <p><code>10 μBTC = ~US${{ '%0.6f'| format(quote*10|float) }}</code> <a href="https://coinbase.com" target="_blank">via Coinbase</a></p>
         </div>
       </div>
     </div>
@@ -126,7 +126,7 @@
           url: '/configure/flavors/'+flavor_id+'?_csrf_token='+csrf_token,
           type: 'POST',
         }).done(function(data) {
-         if (data.response.indexOf("fail") >= 0) {
+         if (data.response.indexOf("error") >= 0) {
             alertify.log("Could not install flavor.  Check your OpenStack settings!", "error");
             $("#openstack-settings").trigger('mouseenter');
           } else {

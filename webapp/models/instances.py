@@ -45,6 +45,8 @@ class Instances(CRUDMixin, db.Model):
 	callback_url = db.Column(db.String(1024))
 	dynamic_image_url = db.Column(db.String(1024))
 	post_creation = db.Column(db.String(8192))
+	message = db.Column(db.String(400))
+	message_count = db.Column(db.Integer)
 
 	# foreign keys
 	flavor_id = db.Column(db.Integer, db.ForeignKey('flavors.id'))
@@ -71,6 +73,8 @@ class Instances(CRUDMixin, db.Model):
 		callback_url=None,
 		dynamic_image_url=None,
 		post_creation=None,
+		message=None,
+		message_count=0,
 		flavor_id=None,
 		image_id=None,
 		address_id=None
@@ -89,6 +93,8 @@ class Instances(CRUDMixin, db.Model):
 		self.callback_url = callback_url
 		self.dynamic_image_url = dynamic_image_url
 		self.post_creation = post_creation
+		self.message = message
+		self.message_count = message_count
 		self.flavor_id = flavor_id
 		self.image_id = image_id
 		self.address_id = address_id
@@ -252,6 +258,12 @@ class Instances(CRUDMixin, db.Model):
 			response['result']['message'] = "Added %s seconds to %s's expire time." % (purchased_seconds, self.name)
 			response['result']['instance'] = row2dict(self)
 		else:
+			# note the error in the instance object
+			self.message_count = self.message_count + 1
+			self.message = pool_response['result']['message']
+			self.update()
+
+			# load response and log
 			response = pool_response
 			app.logger.error("Error sending instance=(%s) data to pool." % self.name)
 
@@ -278,7 +290,7 @@ class Instances(CRUDMixin, db.Model):
 			# instance time expired, so don't start
 			self.state = 1
 			self.update()
-			response['response'] = "fail"
+			response['response'] = "error"
 			response['result']['message'] = "Instance payment is expired.  Now waiting on payment."
 
 		# we run a maximum of 7 callback checks
@@ -287,7 +299,10 @@ class Instances(CRUDMixin, db.Model):
 			pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
 
 			# check for a failure to contact the callback server
-			if pool_response['response'] == "fail":
+			if pool_response['response'] == "error":
+				self.message = pool_response['result']['message']
+				self.message_count = self.message_count + 1
+				self.update()
 				return pool_response
 
 			# look and see if we have a callback_url in the response
@@ -301,8 +316,11 @@ class Instances(CRUDMixin, db.Model):
 		
 		# for else returns a depth error
 		else:
-			response['response'] = "fail"
+			response['response'] = "error"
 			response['result']['message'] = "Callback depth exceeded."
+			self.message = response['result']['message']
+			self.message_count = self.message_count + 1
+			self.update()
 			return response
 		
 		# and lo, callback_url is saved
@@ -373,8 +391,8 @@ class Instances(CRUDMixin, db.Model):
 			image = Images().get_by_id(self.image.id)
 
 		if not image:
-			response['response'] = "fail"
-			response['result']['message'] = "Failed to create dynamic image."
+			response['response'] = "error"
+			response['result']['message'] = "Error creating dynamic image."
 			return response
 		else:
 			self.image = image
@@ -388,13 +406,13 @@ class Instances(CRUDMixin, db.Model):
 		osflavor = flavor_verify_install(flavor)
 
 		# handle failures of either flavor or image
-		if osimage['response'] == 'fail':
-			response['response'] = "fail"
-			response['result']['message'] = "Failed to create image."
+		if osimage['response'] == "error":
+			response['response'] = "error"
+			response['result']['message'] = "Error creating image."
 			return response
-		if osflavor['response'] == 'fail':
-			response['response'] = "fail"
-			response['result']['message'] = "Failed to create flavor."
+		if osflavor['response'] == "error":
+			response['response'] = "error"
+			response['result']['message'] = "Error creating flavor."
 			return response
 
 		# tell openstack to start the instance
@@ -466,7 +484,7 @@ class Instances(CRUDMixin, db.Model):
 				self.state = 2 # will be started again shortly
 				self.update()
 
-				response['response'] = "fail"
+				response['response'] = "error"
 				response['result']['message'] = "OpenStack errored on instance start."
 				
 				app.logger.error("OpenStack error on starting instance=(%s).  Setting to restart." % self.name)
@@ -485,10 +503,11 @@ class Instances(CRUDMixin, db.Model):
 					from webapp.libs.openstack import instance_decommission
 					response = instance_decommission(self)
 
-					response['response'] = "fail"
+					response['response'] = "error"
 					response['result']['message'] = "Setting instance %s to restart." % self.name
 					
 					self.state = 2 # will be started shortly after this by start
+					self.updated = epoch_time # given we 'timed' out, give the instance more time
 					self.update()
 
 					"""
@@ -504,7 +523,7 @@ class Instances(CRUDMixin, db.Model):
 					
 				else:
 					# this is a 'soft' fail
-					response['response'] = "fail"
+					response['response'] = "error"
 					response['result']['message'] = "Still starting instance=(%s)." % self.name
 
 
@@ -519,7 +538,7 @@ class Instances(CRUDMixin, db.Model):
 				self.state = 7 # will be deleted shortly after this by trashman
 				self.update()
 
-				response['response'] = "fail"
+				response['response'] = "error"
 				response['result']['message'] = "Instance %s decommissioned." % self.name
 
 				app.logger.error("OpenStack couldn't find expired instance=(%s). Decomissioning." % self.name)
@@ -529,7 +548,7 @@ class Instances(CRUDMixin, db.Model):
 				self.state = 2 # set to be started again
 				self.update()
 
-				response['response'] = "fail"
+				response['response'] = "error"
 				response['result']['message'] = "OpenStack couldn't find instance.  Restarting."
 				
 				app.logger.error("OpenStack couldn't find instance=(%s). Setting to restart." % self.name)
@@ -610,14 +629,22 @@ class Instances(CRUDMixin, db.Model):
 		else:
 			# openstack can't find this instance
 			if self.expires > epoch_time:
-				# set instance to restart - not expired, should be running
-				response['response'] = "fail" # technically, someone is probably fucking with things
-				response['result']['message'] = "Setting instance %s to restart." % self.name
-				self.state = 2 # will be started shortly after this by start
-				app.logger.error("OpenStack doesn't know about instance=(%s). Setting to restart." % self.name)
+				if self.state == 2:
+					# check error rate
+					if self.message_count > 10:
+						# we're failing to start the instance, so decomission
+						response['result']['message'] = "Instance %s decommissioned." % self.name
+						self.state = 7
+						app.logger.error("Exceeded error rate on callbacks for instance=(%s). Decomissioning." % self.name)
+				else:
+					# set instance to restart - not expired, should be running
+					response['response'] = "error" # technically, someone is probably fucking with things
+					response['result']['message'] = "Setting instance %s to restart." % self.name
+					self.state = 2 # will be started shortly after this by start
+					app.logger.error("OpenStack doesn't know about instance=(%s). Setting to restart." % self.name)
 			else:
 				# no reason to be running
-				response['response'] = "fail"
+				response['response'] = "error"
 				response['result']['message'] = "Instance %s decommissioned." % self.name
 				self.state = 7 # will be deleted shortly after this by trashman
 

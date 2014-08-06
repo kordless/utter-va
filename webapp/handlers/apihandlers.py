@@ -77,7 +77,7 @@ def api_message():
 		socketio.emit('message', {"data": response}, namespace='/utterio')
 		return jsonify(response)
 	else:
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = "apitoken is invalid"
 		return jsonify(response), 401
 
@@ -105,7 +105,7 @@ def address_handler(address_token):
 		except:
 			# bad stuff happens
 			amount = 0
-			response['response'] = "fail"
+			response['response'] = "error"
 			response['result'] = "Amount not received or zero."
 			app.logger.error("A payment provider callback contains an invalid amount.")			
 			return jsonify(response), 401
@@ -123,6 +123,6 @@ def address_handler(address_token):
 		
 	else:
 		app.logger.error("A payment was recieved on an unused bitcoin address.")
-		response['response'] = "fail"
+		response['response'] = "error"
 		response['result'] = "bitcoin address token not found"		
 		return jsonify(response), 401
