@@ -472,6 +472,7 @@ def housekeeper(app):
 # runs every minute via cron
 def instances(app):
 	def task():
+		print "run instance"
 		# START
 		# instances which have received payment are moved to starting
 		instances = db.session.query(Instances).filter_by(state=2).all()
@@ -548,8 +549,20 @@ def instances(app):
 		frequency = freq
 		run_time = 0
 
-		# run task X many times per cron period
-		for x in range(0,cron_frequency/frequency):
+		# do a single run
+		timer_in = int(time.time())
+		task()
+		timer_out = int(time.time())
+
+		# run task X many more times per cron period
+		for x in range(1,cron_frequency/frequency):
+			# run time
+			run_time = timer_out - timer_in
+
+			# sleep for a a bit
+			if run_time < frequency:
+				time.sleep(frequency - run_time)
+
 			# check if we are going to go over on next run
 			est_time = (frequency * x) + run_time
 			if est_time > cron_frequency:
@@ -559,13 +572,6 @@ def instances(app):
 			timer_in = int(time.time())
 			task()
 			timer_out = int(time.time())
-
-			# run time
-			run_time = timer_out - timer_in
-
-			# sleep for a a bit
-			if run_time < frequency:
-				time.sleep(frequency - run_time)
 
 	return action
 
@@ -684,8 +690,20 @@ def falconer(app):
 		frequency = freq
 		run_time = 0
 
-		# run task X many times per cron period
-		for x in range(0,cron_frequency/frequency):
+		# do a single run
+		timer_in = int(time.time())
+		task()
+		timer_out = int(time.time())
+
+		# run task X many more times per cron period
+		for x in range(1,cron_frequency/frequency):
+			# run time
+			run_time = timer_out - timer_in
+
+			# sleep for a a bit
+			if run_time < frequency:
+				time.sleep(frequency - run_time)
+
 			# check if we are going to go over on next run
 			est_time = (frequency * x) + run_time
 			if est_time > cron_frequency:
@@ -693,15 +711,8 @@ def falconer(app):
 
 			# wrap task above with time in and out
 			timer_in = int(time.time())
-			task(bot)
+			task()
 			timer_out = int(time.time())
-
-			# run time
-			run_time = timer_out - timer_in
-
-			# sleep for a a bit
-			if run_time < frequency:
-				time.sleep(frequency - run_time)
 
 	return action
 
