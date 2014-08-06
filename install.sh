@@ -168,9 +168,9 @@ $THREE,$SIX,$NINE,$TWELVE * * * * /var/www/utterio/manage.py trashman > /dev/nul
 # run various manage commands every 5 minutes
 $ONE,$TWO,$THREE,$FOUR,$FIVE,$SIX,$SEVEN,$EIGHT,$NINE,$TEN,$ELEVEN,$TWELVE * * * * /var/www/utterio/manage.py housekeeper > /dev/null 2>&1
 
-# run various manage commands every 1 minute
-* * * * * /var/www/utterio/manage.py instances -c 60 -f 1 > /dev/null 2>&1
-* * * * * /var/www/utterio/manage.py falconer -c 60 -f 1 > /dev/null 2>&1
+# run various manage commands every 1 minute whic break that into 15 second runs
+* * * * * /var/www/utterio/manage.py instances -c 60 -f 15 > /dev/null 2>&1
+* * * * * /var/www/utterio/manage.py falconer -c 60 -f 15 > /dev/null 2>&1
 EOF
 sudo crontab -u ubuntu /var/www/utterio/crontab
 
