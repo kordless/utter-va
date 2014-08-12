@@ -330,7 +330,7 @@ def flavor_verify_install(flavor):
 		response['result']['flavor'] = row2dict(flavor)
 
 	except Exception as ex:
-		# update our image to not be installed
+		# update our flavor to not be installed
 		flavor.osid = ""
 		flavor.active = 0
 		flavor.update()
@@ -340,7 +340,7 @@ def flavor_verify_install(flavor):
 		response['result']['flavor'] = row2dict(flavor)
 		response['result']['message'] = "%s" % ex
 		
-		app.logger.error("Failed to install flavor=(%s) into the OpenStack cluster." % flavor.name)
+		app.logger.error("Failed to install flavor=(%s) into the OpenStack cluster. %s" % (flavor.name, ex))
 
 	return response
 
