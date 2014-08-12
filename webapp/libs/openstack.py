@@ -148,7 +148,7 @@ def image_verify_install(image):
 		
 		except Exception as ex:
 			osimage = None # we're here because osimage was None
-			app.logger.info("Installing image=(%s) into the OpenStack cluster." % image.name)
+			app.logger.info("Installing image=(%s) into the OpenStack cluster. %s" % (image.name, ex))
 			install_image = True
 
 		if install_image:
@@ -165,7 +165,7 @@ def image_verify_install(image):
 				container_format = image.containerformat,
 				location = location
 			)
-			
+
 			# update updated time for image
 			pattern = '%Y-%m-%dT%H:%M:%S'
 			image.updated = int(time.mktime(time.strptime(osimage.created_at, pattern)))
@@ -443,7 +443,7 @@ def instance_info(instance):
 	except:
 		response['response'] = "error"
 		response['result']['message'] = "OpenStack instance not found."
-		app.logger.error("Failed to retrieve info for instance=(%s)." % instance.name)	
+		app.logger.error("Failed to fetch info for instance=(%s)." % instance.name)	
 
 	return response
 
