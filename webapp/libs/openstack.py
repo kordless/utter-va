@@ -284,10 +284,15 @@ def flavor_verify_install(flavor):
 
 			# check the flavor quota keys match network limit
 			osikeys = targetflavor.get_keys()
-			if flavor.network != int(osikeys['quota:inbound_average']):
+
+			if 'quota:inbound_average' in osikeys and 'quota:outbound_average' in osikeys:
+				if flavor.network != int(osikeys['quota:inbound_average']):
+					install_flavor = True
+				if flavor.network != int(osikeys['quota:outbound_average']):
+					install_flavor = True
+			else:
 				install_flavor = True
-			if flavor.network != int(osikeys['quota:outbound_average']):
-				install_flavor = True
+			
 		else:
 			# no flavor found
 			install_flavor = True
