@@ -42,9 +42,6 @@ class BaseConfiguration(object):
 	CSRF_ENABLED = True
 	CSRF_SESSION_KEY = "%CSRF_SESSION_KEY%"
 	THREADS_PER_PAGE = 8
-
-	# flask configuration
-	DEBUG = False
 	
 # debug configuration extras for dev
 # note: enable dev environment by doing a 'touch DEV' in this directory
