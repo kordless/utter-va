@@ -198,7 +198,7 @@ def image_verify_install(image):
 		response['result']['image'] = row2dict(image)
 		response['result']['message'] = "%s" % ex
 
-		app.logger.error("Failed to install image=(%s) into the OpenStack cluster." % image.name)
+		app.logger.error("Failed to install image=(%s) into the OpenStack cluster. %s" % (image.name, ex))
 
 	return response
 
