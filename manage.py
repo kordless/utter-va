@@ -673,7 +673,7 @@ def falconer(app):
 		if not bot:
 			return action
 		if not bot.enabled:
-			print "The Twitter bot is disabled."
+			print "The marketing bot is disabled."
 			return action
 
 		# check flags for non-cron run (for dev)
@@ -734,7 +734,7 @@ def marketeer(app):
 		epoch = int(time.time())
 
 		if bot.announce == 0:
-			print "Bot announcements are disabled."
+			print "The marketing bot is disabled."
 			return action
 
 		# if updated + announce > current time, do an update!

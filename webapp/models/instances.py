@@ -246,8 +246,6 @@ class Instances(CRUDMixin, db.Model):
 		self.update()
 
 		# make a call to the callback url to report instance details
-		# this will call the pool on initial payment.  subsequent payment calls go to 
-		# whatever callback address is set in the start() method below.
 		callback_url = self.callback_url
 		appliance = Appliance().get()
 		
@@ -384,6 +382,29 @@ class Instances(CRUDMixin, db.Model):
 		self.post_creation = post_creation_ssh_key_combo
 		self.update()
 
+		# take the instance's flavor and verify install
+		flavor = Flavors().get_by_id(self.flavor.id)
+		osflavor = flavor_verify_install(flavor)
+
+		if osflavor['response'] == "error":
+			# we've failed to install flavor, so we disable it
+			flavor.osid = ""
+			flavor.active = 0
+			flavor.update()
+
+			# now we disable the other instances using the flavor
+			instances = Instances()
+			instances.toggle(flavor.id, 0)
+
+			# disable this instance (was ignored by toggle)
+			self.state = 0
+			self.update()
+
+			# build the response and return
+			response['response'] = "error"
+			response['result']['message'] = "Error creating flavor inside OpenStack."
+			return response
+
 		# deal with creating dynamic image or use predefined one
 		if self.dynamic_image_url:
 			image = Images().get_or_create_by_instance(self)
@@ -401,18 +422,10 @@ class Instances(CRUDMixin, db.Model):
 		# take the image and verify install
 		osimage = image_verify_install(self.image)
 
-		# take the flavor and verify install
-		flavor = Flavors().get_by_id(self.flavor.id)
-		osflavor = flavor_verify_install(flavor)
-
-		# handle failures of either flavor or image
+			# handle failures of either flavor or image
 		if osimage['response'] == "error":
 			response['response'] = "error"
 			response['result']['message'] = "Error creating image."
-			return response
-		if osflavor['response'] == "error":
-			response['response'] = "error"
-			response['result']['message'] = "Error creating flavor."
 			return response
 
 		# tell openstack to start the instance

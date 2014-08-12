@@ -1,4 +1,5 @@
 import time
+import md5
 
 from urllib2 import urlopen
 
@@ -67,7 +68,7 @@ class Images(CRUDMixin, db.Model):
 	# create a dynamic image from an instance
 	def get_or_create_by_instance(self, instance):
 		# check if we already have it
-		image_name = "dynamic_image_%s" % generate_token(size=8, caselimit=True)
+		image_name = "dynamic_image_%s" % md5.md5(instance.dynamic_image_url).hexdigest()
 		image = db.session.query(Images).filter_by(name=image_name).first()
 
 		# return it if we have it
@@ -87,7 +88,12 @@ class Images(CRUDMixin, db.Model):
 			# connect to remote URL's site and get size
 			site = urlopen(instance.dynamic_image_url)
 			meta = site.info()
-			size = int(meta.getheaders("Content-Length")[0])
+
+			try:
+				size = int(meta.getheaders("Content-Length")[0])
+			except:
+				size = 0 # unknown size
+
 			site.close()
 
 			image.size = size
