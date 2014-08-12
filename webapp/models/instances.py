@@ -400,6 +400,9 @@ class Instances(CRUDMixin, db.Model):
 			self.state = 0
 			self.update()
 
+			# log it
+			app.logger.error("Disabling all instances using flavor=(%s) due to OpenStack failure." % flavor.name)
+
 			# build the response and return
 			response['response'] = "error"
 			response['result']['message'] = "Error creating flavor inside OpenStack."
