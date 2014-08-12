@@ -67,7 +67,7 @@ def download_images(appliance, images):
 			image.active = 3
 			image.update()
 
-		except Exception, e:
+		except Exception as ex:
 			# we failed to open image.url for size, or failed to download it locally
 			# if the local url is empty, indicate we should use original url to boot image
 			if image.local_url == "" or image.local_url is None:
@@ -79,7 +79,7 @@ def download_images(appliance, images):
 				# do nothing
 				pass
 
-			app.logger.error("Failed to download image from URL.")
+			app.logger.error("Failed to download image from URL. %s" % ex)
 
 # uninstall downloaded images
 def uninstall_image(image):
