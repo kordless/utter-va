@@ -396,8 +396,9 @@ class Instances(CRUDMixin, db.Model):
 			instances = Instances()
 			instances.toggle(flavor.id, 0)
 
-			# disable this instance (was ignored by toggle)
+			# disable this instance
 			self.state = 0
+			self.expires = self.created # zeros out the payment
 			self.update()
 
 			# log it
