@@ -126,6 +126,9 @@ def image_verify_install(image):
 		)
 
 		glance_endpoint = keystone.service_catalog.url_for(service_type='image')
+
+		app.logger.info("Using the following glance endpoint: %s" % glance_endpoint)
+
 		glance = glanceclient.Client('1', endpoint=glance_endpoint, token=keystone.auth_token)
 
 		# if image doesn't exist, or exists and is marked deleted, 
@@ -198,7 +201,7 @@ def image_verify_install(image):
 		response['result']['image'] = row2dict(image)
 		response['result']['message'] = "%s" % ex
 
-		app.logger.error("Failed to install image=(%s) into the OpenStack cluster. %s" % (image.name, ex))
+		app.logger.error("Failed to install image=(%s) into the OpenStack cluster. Error was: %s" % (image.name, ex))
 
 	return response
 
