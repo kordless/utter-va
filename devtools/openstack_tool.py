@@ -39,6 +39,13 @@ keystone = ksclient.Client(
 	tenant_id = result[3]
 )
 
+# grab glance endpoint from keystone
 glance_endpoint = keystone.service_catalog.url_for(service_type='image')
 
-print glance_endpoint
+# start connection to glance
+glance = glanceclient.Client('1', endpoint=glance_endpoint, token=keystone.auth_token)
+
+# get images
+osimages = glance.images.list()
+
+print osimages.next()
