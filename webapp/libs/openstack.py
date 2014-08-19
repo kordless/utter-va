@@ -319,7 +319,7 @@ def flavor_verify_install(flavor):
 				ephemeral=0,
 				swap=0,
 				rxtx_factor=1.0,
-				is_public=True
+				is_public=False
 			)
 
 			# set bandwidth
