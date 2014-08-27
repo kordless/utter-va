@@ -381,8 +381,7 @@ def trashman(app):
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
 		if not settings['ngrok'] or not settings['openstack']:
-			log = "Running trashman - appliance is not ready."
-			app.logger.error(log)
+			app.logger.error("Running trashman - appliance is not ready.")
 			return action
 
 		instances = db.session.query(Instances).filter_by(state=7).all()
@@ -405,8 +404,7 @@ def salesman(app):
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
 		if not settings['ngrok'] or not settings['openstack']:
-			log = "Running salesman - appliance is not ready."
-			app.logger.error(log)
+			app.logger.error("Running salesman - appliance is not ready.")
 			return action
 
 		# get the appliance
@@ -432,8 +430,7 @@ def housekeeper(app):
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
 		if not settings['ngrok'] or not settings['openstack']:
-			log = "Running housekeeper - appliance is not ready."
-			app.logger.error(log)
+			app.logger.error("Running housekeeper - appliance is not ready.")
 			return action
 
 		# MIXING
@@ -531,8 +528,7 @@ def instances(app):
 		# check appliance is ready to go - exit if not
 		settings = Status().check_settings()
 		if not settings['ngrok'] or not settings['openstack']:
-			log = "Running instances - appliance is not ready."
-			app.logger.error(log)
+			app.logger.error("Running instances - appliance is not ready.")
 			return action
 
 		# check flags for non-cron run (for dev)

@@ -68,7 +68,7 @@ class Images(CRUDMixin, db.Model):
 	# create a dynamic image from an instance
 	def get_or_create_by_instance(self, instance):
 		# check if we already have it
-		image_name = "dynamic_image_%s" % md5.md5(instance.dynamic_image_url).hexdigest()
+		image_name = "dynamic_image_%s" % md5.md5(instance.dynamic_image_url).hexdigest()[:8]
 		image = db.session.query(Images).filter_by(name=image_name).first()
 
 		# return it if we have it
@@ -86,6 +86,7 @@ class Images(CRUDMixin, db.Model):
 			image.url = instance.dynamic_image_url
 
 			# connect to remote URL's site and get size
+			app.logger.info(instance.dynamic_image_url)
 			site = urlopen(instance.dynamic_image_url)
 			meta = site.info()
 
@@ -110,7 +111,7 @@ class Images(CRUDMixin, db.Model):
 			return image
 		
 		except Exception as ex:
-			app.logger.error("Failed to install image=(%s) into the OpenStack cluster. %s." % (image_name, ex))
+			app.logger.error("Image model failed to install dynamic image=(%s) into the OpenStack cluster. %s." % (image_name, ex))
 			return None
 
 	def housekeeping(self):

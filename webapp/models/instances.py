@@ -294,7 +294,8 @@ class Instances(CRUDMixin, db.Model):
 		# we run a maximum of 7 callback checks
 		for loop_count in range(7):
 			# make a call to the callback url to get instance details
-			pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
+			next_state = 3 # hack the expected next state into the pool packet
+			pool_response = pool_instance(url=callback_url, instance=self, next_state=next_state, appliance=appliance)
 
 			# check for a failure to contact the callback server
 			if pool_response['response'] == "error":

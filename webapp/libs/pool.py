@@ -10,7 +10,7 @@ from webapp.libs.utils import row2dict
 
 # provides callback initiation for an instance to the pool operator/callback handler
 # calls InstancesHandler() in utter-pool's apihandlers.py 
-def pool_instance(url=None, instance=None, appliance=None):
+def pool_instance(url=None, instance=None, next_state=None, appliance=None):
 
 	# no custom callback uses pool's default URL
 	if not url:
@@ -59,11 +59,11 @@ def pool_instance(url=None, instance=None, appliance=None):
 			"ask": flavor.ask,
 			"address": instance.address.address,
 			"console_output": [],
-			"state": instance.state,
+			"state": instance.state if next_state == None else next_state,
 			"expires": instance.expires,
-			"ipv4_address": instance.publicipv4,
-			"ipv6_address": instance.publicipv6,
-			"ipv4_private_address": instance.privateipv4
+			"ipv4_address": instance.publicipv4 if instance.publicipv4 else "",
+			"ipv6_address": instance.publicipv6 if instance.publicipv6 else "",
+			"ipv4_private_address": instance.privateipv4 if instance.privateipv4 else ""
 		}
 	}
 
@@ -75,13 +75,13 @@ def pool_instance(url=None, instance=None, appliance=None):
 	if instance.console:
 		for line in iter(instance.console.splitlines()):
 			packet['instance']['console_output'].append(escape(line))
-
 	try:
+		# contact the pool and post instance info
 		request = Request(url)
 		request.add_header('Content-Type', 'application/json')
 		data = urlopen(request, json.dumps(packet), timeout=10).read()
 		pool_response = json.loads(data)
-		
+
 		# massage the reply a bit for simple callback servers
 		if 'response' not in pool_response:
 			# no response key, so check if we have an instance key
@@ -91,6 +91,7 @@ def pool_instance(url=None, instance=None, appliance=None):
 				response['result']['instance'] = pool_response['instance']
 			else:
 				# we don't have a response or an instance
+				app.logger.error("Didn't find an instance key in the response from the server.")
 				raise ValueError
 		else:
 			response = pool_response
