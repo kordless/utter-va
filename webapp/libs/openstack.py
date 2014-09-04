@@ -314,7 +314,7 @@ def flavor_verify_install(flavor):
 		try:
 			targetflavor = None
 			# look up the flavor by name and stop on it
-			osflavors = nova.flavors.list(is_public=None)
+			osflavors = nova.flavors.list()
 			for osflavor in osflavors:
 				if osflavor.name == flavor.name:
 					targetflavor = osflavor
@@ -368,7 +368,7 @@ def flavor_verify_install(flavor):
 				ephemeral=0,
 				swap=0,
 				rxtx_factor=1.0,
-				is_public=False
+				is_public=True
 			)
 
 			# set bandwidth
