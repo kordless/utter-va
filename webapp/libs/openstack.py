@@ -594,7 +594,7 @@ def ensure_has_floating_ip(instance):
 
 		# if instance already has a floating IP we can return
 		try:
-			nova.floating_ips.find(instance_id=server.id)
+			nova.floating_ips.find(instance_id=instance.id)
 			return response
 
 			# instance has no floating ip yet
@@ -637,7 +637,7 @@ def ensure_has_floating_ip(instance):
 
 			try:
 				# associate the first unassociated floating ip to the server
-				server.add_floating_ip(unassociated_fips[0])
+				instance.add_floating_ip(unassociated_fips[0])
 			except:
 				response['response'] = 'error'
 				response['result']['message'] = 'Failed to associate floating IP'
