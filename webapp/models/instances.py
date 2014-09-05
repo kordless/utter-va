@@ -451,7 +451,7 @@ class Instances(CRUDMixin, db.Model):
 	# returns information about an instance once it moves to ACTIVE state
 	# sets information about the instance and does a callback with info
 	def nudge(self):
-		from webapp.libs.openstack import ensure_has_floating_ip
+		from webapp.libs.openstack import try_associate_floating_ip
 		from webapp.libs.openstack import instance_info
 		from webapp.libs.openstack import instance_console
 		from webapp.libs.openstack import instance_decommission
@@ -477,12 +477,8 @@ class Instances(CRUDMixin, db.Model):
 				# set network info
 				self.state = 4
 
-				# ensure the newly active server has a floating ip associated
-				response = ensure_has_floating_ip(server)
-				if response['response'] == 'error':
-						app.logger.error(response['result']['message'])
-						instance_decommission(self)
-						return response
+				# try to get a floating ip for the new server
+				try_associate_floating_ip(server)
 
 				# extract IP addresses using IPy
 				# in some circumstances this will squash multiple same/same address types
