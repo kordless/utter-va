@@ -55,8 +55,7 @@ git clone -b improve_installation https://github.com/StackMonkey/utter-va.git ${
 chown -R ${USER}:${GROUP} ${BASE_DIR}
 
 # install all the python requirements
-cd ${BASE_DIR}
-sudo -u ${USER} pip install -U -r ./requirements.txt
+sudo -u ${USER} pip install -U -r ${BASE_DIR}/requirements.txt
 
 # set vim tabs
 cat <<EOF > /home/ubuntu/.vimrc
