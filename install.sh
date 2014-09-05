@@ -33,7 +33,7 @@ mv ngrok /usr/local/bin/ngrok
 
 # check out the current release of utter-va
 mkdir /var/log/utterio/
-git clone https://github.com/StackMonkey/utter-va.git /var/www/utterio
+git clone -b improve_installation https://github.com/StackMonkey/utter-va.git /var/www/utterio
 
 # install all the python requirements
 cd /var/www/utterio
