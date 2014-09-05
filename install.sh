@@ -62,6 +62,7 @@ with start delay 5
 
 check process ngrok matching "/usr/local/bin/ngrok -config /var/www/utterio/tunnel.conf start utterio"
     start program = "/var/www/utterio/tunnel.sh"
+        as uid ubuntu and gid ubuntu
     stop program = "/usr/bin/killall screen"
 EOF
 
@@ -75,6 +76,7 @@ with start delay 5
 
 check process gunicorn with pidfile /tmp/gunicorn.pid
     start program = "/var/www/utterio/gunicorn.sh"
+        as uid ubuntu and gid ubuntu
     stop program = "/var/www/utterio/gunistop.sh"
 EOF
 
@@ -88,6 +90,7 @@ with start delay 5
 
 check process twitterbot matching "manage.py tweetstream"
 		start program = "/var/www/utterio/tweetstream.sh"
+        as uid ubuntu and gid ubuntu
 		stop program = "/bin/true"
 EOF
 
