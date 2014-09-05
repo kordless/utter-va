@@ -587,7 +587,7 @@ def instance_decommission(instance):
 
 def try_associate_floating_ip(instance):
 	# build the response
-	response = {"response": "success", "result": {"message": ""}}
+	response = {"response": "unchanged", "result": {"message": ""}}
 
 	try:
 		nova = nova_connection()
@@ -634,6 +634,8 @@ def try_associate_floating_ip(instance):
 		try:
 			# associate the first unassociated floating ip to the server
 			instance.add_floating_ip(unassociated_fips[0])
+			response['response'] = 'changed'
+			response['result']['ip'] = unassociated_fips[0].ip
 		except:
 			response['response'] = 'error'
 			response['result']['message'] = 'Failed to associate floating IP'

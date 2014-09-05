@@ -478,7 +478,13 @@ class Instances(CRUDMixin, db.Model):
 				self.state = 4
 
 				# try to get a floating ip for the new server
-				try_associate_floating_ip(server)
+				response = try_associate_floating_ip(server)
+
+				# might need to refresh the instance info
+				if response['response'] == 'changed':
+						response = instance_info(self)
+						if response['response'] == "success":
+							server = response['result']['server']
 
 				# extract IP addresses using IPy
 				# in some circumstances this will squash multiple same/same address types
