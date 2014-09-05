@@ -9,7 +9,7 @@
 # define user/group name for services
 export USER="stackmonkey"
 export GROUP="stackmonkey"
-export BASE_DIR="/var/www/${USER}"
+export BASE_DIR="/var/www/utterio"
 
 # update repos
 apt-get update -y
@@ -87,8 +87,7 @@ set daemon 30
 with start delay 5
 
 check process gunicorn with pidfile /tmp/gunicorn.pid
-    start program = "${BASE_DIR}/gunicorn.sh"
-        as uid ${USER} and gid ${GROUP}
+    start program = "${BASE_DIR}/gunicorn.sh ${USER} ${GROUP}"
     stop program = "${BASE_DIR}/gunistop.sh"
 EOF
 
