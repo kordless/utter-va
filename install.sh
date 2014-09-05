@@ -6,79 +6,53 @@
 # github: https://github.com/stackmonkey/utter-va
 
 # update repos
-sudo apt-get update -y
+apt-get update -y
 
 # time server
 apt-get install ntp -y
 service ntp restart
 
 # install dependencies and services
-sudo apt-get install git -y
-sudo apt-get install sqlite3 -y
-sudo apt-get install python-pip -y
-sudo apt-get install build-essential -y
-sudo apt-get install python-dev -y
-sudo apt-get install unzip -y
-sudo apt-get install monit -y
+apt-get install git -y
+apt-get install sqlite3 -y
+apt-get install python-pip -y
+apt-get install build-essential -y
+apt-get install python-dev -y
+apt-get install unzip -y
+apt-get install monit -y
+apt-get install libffi-dev -y
 
 # address libxslt compile errors when installing python-* openstack libs
-sudo apt-get install python-dev -y
-sudo apt-get install libxslt1-dev libxslt1.1 libxml2-dev libxml2 libssl-dev -y
-
-# IPy address util
-sudo pip install IPy
-
-# install and patch gevent
-sudo apt-get install python-gevent -y
-pip install gevent --upgrade
+apt-get install python-dev -y
+apt-get install libxslt1-dev libxslt1.1 libxml2-dev libxml2 libssl-dev -y
 
 # install ngrok
-sudo wget -qO /tmp/ngrok.zip https://dl.ngrok.com/linux_386/ngrok.zip
-sudo unzip /tmp/ngrok.zip
-sudo mv ngrok /usr/local/bin/ngrok
-
-# install webserver
-sudo pip install gunicorn
-
-# install werkzeug
-sudo pip install Werkzeug
-
-# install flask bits via pip
-sudo pip install flask
-sudo pip install flask-wtf
-sudo pip install flask-appconfig
-sudo pip install flask-login
-sudo pip install flask-openid
-sudo pip install flask-sqlalchemy
-sudo pip install flask-actions
-sudo pip install flask-bcrypt
-sudo pip install flask-seasurf
-sudo pip install flask-socketio
-
-# install openstack libraries for python
-sudo pip install python-keystoneclient
-sudo pip install python-glanceclient
-sudo pip install python-cinderclient
-sudo pip install python-novaclient
+wget -qO /tmp/ngrok.zip https://dl.ngrok.com/linux_386/ngrok.zip
+unzip /tmp/ngrok.zip
+mv ngrok /usr/local/bin/ngrok
 
 # check out the current release of utter-va
-sudo mkdir /var/log/utterio/
-sudo git clone https://github.com/StackMonkey/utter-va.git /var/www/utterio
-#cd /var/www/utterio
-#sudo git checkout tags/v0.7-beta.6
+mkdir /var/log/utterio/
+git clone https://github.com/StackMonkey/utter-va.git /var/www/utterio
+
+# install all the python requirements
+cd /var/www/utterio
+pip install -U -r ./requirements.txt
+
+#git checkout tags/v0.7-beta.6
 
 # configure www directory
-sudo chown -R ubuntu:ubuntu /var/www/
-sudo chmod -R g+w /var/www/
+chown -R ubuntu:ubuntu /var/www/
+chmod -R g+w /var/www/
 
 # set vim tabs
-sudo cat <<EOF > /home/ubuntu/.vimrc
+cat <<EOF > /home/ubuntu/.vimrc
 set tabstop=4
 EOF
 chown ubuntu.ubuntu /home/ubuntu/.vimrc
 
 # configure monit
-sudo cat <<EOF > /etc/monit/conf.d/ngrok
+cat <<EOF > /etc/monit/conf.d/ngrok
 set httpd port 5150 and
     use address localhost
     allow localhost
@@ -91,7 +65,7 @@ check process ngrok matching "/usr/local/bin/ngrok -config /var/www/utterio/tunn
     stop program = "/usr/bin/killall screen"
 EOF
 
-sudo cat <<EOF > /etc/monit/conf.d/gunicorn
+cat <<EOF > /etc/monit/conf.d/gunicorn
 set httpd port 5150 and
     use address localhost
     allow localhost
@@ -104,7 +78,7 @@ check process gunicorn with pidfile /tmp/gunicorn.pid
     stop program = "/var/www/utterio/gunistop.sh"
 EOF
 
-sudo cat <<EOF > /etc/monit/conf.d/twitterbot
+cat <<EOF > /etc/monit/conf.d/twitterbot
 set httpd port 5150 and
     use address localhost
     allow localhost
@@ -118,9 +92,9 @@ check process twitterbot matching "manage.py tweetstream"
 EOF
 
 # restart monit service
-sudo service monit restart
+service monit restart
 sleep 2
-sudo monit monitor all
+monit monitor all
 
 # generate tokens and write into new config.py file
 cp /var/www/utterio/config.py.template /var/www/utterio/config.py
@@ -133,14 +107,15 @@ s,%CSRF_SESSION_KEY%,$CSRF_SESSION_KEY,g;
 " -i /var/www/utterio/config.py
 
 # change ownership of www directory
-sudo chown -R ubuntu:ubuntu /var/www/
-sudo chmod -R g+w /var/www/
+chown -R ubuntu:ubuntu /var/www/
+chmod -R g+w /var/www/
 
 # grab the IP address of the box
 MYIP=$(/sbin/ifconfig eth0| sed -n 's/.*inet *addr:\([0-9\.]*\).*/\1/p')
 
 # build the database and sync with pool operator
-sudo su -c "/var/www/utterio/manage.py install -i $MYIP" -s /bin/sh ubuntu
+#sudo su -c "/var/www/utterio/manage.py install -i $MYIP" -s /bin/sh ubuntu
+sudo -u ubuntu /var/www/utterio/manage.py install -i $MYIP
 
 # install crontab for ubuntu user to run every 15 minutes starting with a random minute
 MICROS=`date +%N`
@@ -157,7 +132,7 @@ TEN=`expr $ONE + 45`
 ELEVEN=`expr $ONE + 50`
 TWELVE=`expr $ONE + 55`
 
-sudo cat <<EOF > /var/www/utterio/crontab
+cat <<EOF > /var/www/utterio/crontab
 # run various manage commands every 15 minutes
 $ONE,$FOUR,$SEVEN,$TEN * * * * /var/www/utterio/manage.py images > /dev/null 2>&1
 $ONE,$FOUR,$SEVEN,$TEN * * * * /var/www/utterio/manage.py flavors > /dev/null 2>&1
@@ -172,7 +147,8 @@ $ONE,$TWO,$THREE,$FOUR,$FIVE,$SIX,$SEVEN,$EIGHT,$NINE,$TEN,$ELEVEN,$TWELVE * * *
 * * * * * /var/www/utterio/manage.py instances -c 60 -f 15 > /dev/null 2>&1
 * * * * * /var/www/utterio/manage.py falconer -c 60 -f 15 > /dev/null 2>&1
 EOF
-sudo crontab -u ubuntu /var/www/utterio/crontab
+crontab -u ubuntu /var/www/utterio/crontab
 
 # finally, start downloading images
-sudo su -c "/var/www/utterio/manage.py images" -s /bin/sh ubuntu
+#sudo su -c "/var/www/utterio/manage.py images" -s /bin/sh ubuntu
+sudo -u ubuntu /var/www/utterio/manage.py images
