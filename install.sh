@@ -37,6 +37,9 @@ wget -qO /tmp/ngrok.zip https://dl.ngrok.com/linux_386/ngrok.zip
 unzip /tmp/ngrok.zip
 mv ngrok /usr/local/bin/ngrok
 
+# need to create /var/www to put service user's home there
+mkdir /var/www
+
 # add user and group to run services as
 groupadd ${GROUP}
 useradd -g ${GROUP} -m -d ${HOME} ${USER}
