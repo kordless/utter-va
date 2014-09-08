@@ -7,6 +7,7 @@ from subprocess import Popen
 from flask import jsonify
 
 from novaclient.v1_1 import client as novaclient
+from novaclient import exceptions as nova_exceptions
 from cinderclient import client as cclient
 import keystoneclient.v2_0.client as ksclient
 import glanceclient
@@ -581,4 +582,66 @@ def instance_decommission(instance):
 		response['response'] = "error"
 		response['result']['message'] = "Failed to decomission OpenStack instance."
 	
+	return response
+
+
+def try_associate_floating_ip(instance):
+	# build the response
+	response = {"response": "unchanged", "result": {"message": ""}}
+
+	try:
+		nova = nova_connection()
+
+		# if instance already has a floating IP we can return
+		try:
+			nova.floating_ips.find(instance_id=instance.id)
+			return response
+
+		# instance has no floating ip yet
+		except nova_exceptions.NotFound:
+			pass
+
+		# check for already created but not associated floating ips
+		unassociated_fips = [
+			ip
+			for ip in nova.floating_ips.list()
+			if ip.instance_id == None]
+
+		# if there are no unassociated floating ips we need to create one
+		if len(unassociated_fips) < 1:
+
+			# we won't try to create a floating ip pool ourselves if none exists
+			if len(nova.floating_ip_pools.list()) < 1:
+				response['response'] = 'error'
+				response['result']['message'] = 'There is no floating IP pool available'
+				return response
+
+			# try allocating an ip in each of the pools until one succeeds
+			for pool in nova.floating_ip_pools.list():
+				try:
+					unassociated_fips.append(
+						nova.floating_ips.create(pool=pool.name))
+					break
+				except:
+					pass
+
+				# still have no floating ip, giving up
+				if len(unassociated_fips) < 1:
+					response['response'] = 'error'
+					response['result']['message'] = 'Failed to allocate a new floating IP'
+					return response
+
+		try:
+			# associate the first unassociated floating ip to the server
+			instance.add_floating_ip(unassociated_fips[0])
+			response['response'] = 'changed'
+			response['result']['ip'] = unassociated_fips[0].ip
+		except:
+			response['response'] = 'error'
+			response['result']['message'] = 'Failed to associate floating IP'
+			return response
+	except:
+		response['response'] = "error"
+		response['result']['message'] = "Can't communicate with OpenStack cluster."
+
 	return response

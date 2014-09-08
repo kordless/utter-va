@@ -451,8 +451,10 @@ class Instances(CRUDMixin, db.Model):
 	# returns information about an instance once it moves to ACTIVE state
 	# sets information about the instance and does a callback with info
 	def nudge(self):
+		from webapp.libs.openstack import try_associate_floating_ip
 		from webapp.libs.openstack import instance_info
 		from webapp.libs.openstack import instance_console
+		from webapp.libs.openstack import instance_decommission
 
 		# get instance console output
 		response = instance_console(self)
@@ -475,6 +477,15 @@ class Instances(CRUDMixin, db.Model):
 				# set network info
 				self.state = 4
 
+				# try to get a floating ip for the new server
+				response = try_associate_floating_ip(server)
+
+				# might need to refresh the instance info
+				if response['response'] == 'changed':
+						response = instance_info(self)
+						if response['response'] == "success":
+							server = response['result']['server']
+
 				# extract IP addresses using IPy
 				# in some circumstances this will squash multiple same/same address types
 				# we only extract and store one each of private ipv4, public ipv4, and public ipv6
@@ -496,7 +507,6 @@ class Instances(CRUDMixin, db.Model):
 			# ERROR status from openstack
 			elif server.status == "ERROR":
 				# instance failed to start, so delete and reset to paid
-				from webapp.libs.openstack import instance_decommission
 				response = instance_decommission(self)
 
 				self.state = 2 # will be started again shortly
@@ -518,7 +528,6 @@ class Instances(CRUDMixin, db.Model):
 				# test to see if we are 'hung' on SPAWNING for more than wait_timer
 				if epoch_time > wait_timer:
 					# we're now  past when the instance needed to move to RUNNING
-					from webapp.libs.openstack import instance_decommission
 					response = instance_decommission(self)
 
 					response['response'] = "error"
