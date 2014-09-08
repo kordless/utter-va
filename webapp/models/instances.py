@@ -478,11 +478,14 @@ class Instances(CRUDMixin, db.Model):
 				self.state = 4
 
 				# try to get a floating ip for the new server
-				response = try_associate_floating_ip(server)
+				float_response = try_associate_floating_ip(server)
 
-				# might need to refresh the instance info
-				if response['response'] == 'changed':
+				# check if call got a floating IP
+				if float_response['response'] == "success":
+						# get instance info again to pick up new IP
 						response = instance_info(self)
+
+						# load the response into the server object
 						if response['response'] == "success":
 							server = response['result']['server']
 
