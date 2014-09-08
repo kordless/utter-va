@@ -729,6 +729,10 @@ def marketeer(app):
 		# get the time
 		epoch = int(time.time())
 
+		if not bot:
+			print "The marketing bot is disabled."
+			return action
+
 		if bot.announce == 0:
 			print "The marketing bot is disabled."
 			return action
