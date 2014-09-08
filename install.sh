@@ -41,7 +41,7 @@ mv ngrok /usr/local/bin/ngrok
 groupadd ${GROUP}
 useradd -g ${GROUP} -m -d /var/lib/stackmonkey ${USER}
 
-# check out the current release of utter-va
+# create log directory
 mkdir /var/log/utterio/
 chown ${USER}:${GROUP} /var/log/utterio/
 
