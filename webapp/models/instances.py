@@ -489,6 +489,10 @@ class Instances(CRUDMixin, db.Model):
 						if response['response'] == "success":
 							server = response['result']['server']
 
+				else:
+					# log 'errors' in floating assignment
+					app.logger.info(float_response['result']['message'])
+
 				# extract IP addresses using IPy
 				# in some circumstances this will squash multiple same/same address types
 				# we only extract and store one each of private ipv4, public ipv4, and public ipv6
