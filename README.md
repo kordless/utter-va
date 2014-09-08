@@ -8,7 +8,7 @@ We currently need individuals familiar with [OpenStack](http://openstack.org/) t
 
 Utter.io is like AirBnb for excess compute: The utter.io project provides fast location and provisioning of compute resources within a cooperative set of systems managed by [OpenStack operators](http://superuser.openstack.org/). Resource accounting inside the network is settled with [Bitcoin](https://bitcoin.org/) and purchases of compute instances can be made by users without an account. Additionally, groups of operators can form adhoc [hybrid clouds](http://en.wikipedia.org/wiki/Cloud_computing#Hybrid_cloud), allowing fast scaling and sharing of excess compute resources between trusted entities.  If you are familiar with cloud terminology, this idea may be one possible solution to some of the challenges in achieving a global [cloud federation](http://www.datacenterknowledge.com/archives/2012/09/17/federation-is-the-future-of-the-cloud/).
 
-It is my belief that crypto currency technologies can bring a new category to the existing cloud offerings of **compute**, **storage**, and **network**.  That new category is **trust**. While conversations about how crypto currencies affect our financial systems are definitely interesting, paying for **compute**, **storage** and **network** with stored **trust** is an awe inspiring vision of the future.
+Crypto currency technologies can bring a new category to the existing cloud offerings of **compute**, **storage**, and **network**.  That new category is **trust**. While conversations about how crypto currencies affect our financial systems are definitely interesting, paying for **compute**, **storage** and **network** with stored **trust** is an awe inspiring vision of the future.
 
 This peek into the future of [commodity compute](http://en.wikipedia.org/wiki/Commodity_computing) can be seen by visiting the [StackMonkey compute pool](https://www.stackmonkey.com/). StackMonkey is a demonstrative cooperative intended to be the Wild West of compute pools (given it's the first one) and built for use by hackers, crackers, security researchers, devs, do-it-yourselfers, and the communities and technologies they develop from it.
 
@@ -22,7 +22,7 @@ The first compute pool is hosted on [AppEngine](https://appspot.com) and runs th
 The utter-exchange component will be completed at a later date, probably in mid-2015. The exchange will serve as a clearing house for compute put up for sale on the pool controllers. Keep in mind there is an opportunity to run [more pools](https://github.com/stackmonkey/utter-pool), so get motivated!  The exchange will operate as a [DAC](https://en.bitcoin.it/wiki/Distributed_Autonomous_Community_/_Decentralized_Application) once the technologies required to create it have been completed.  You can expect a crypto currency to be launched for the project. Both the currency and compute assets managed by the network will be connected to the crypto markets.
 
 ### Requirements
-The virtual appliance requires a running OpenStack cluster.  If you don't have an OpenStack cluster already running, fear not!  You may follow the instructions for [Installing OpenStack in 10 Minutes](http://www.stackgeek.com/guides/gettingstarted.html) on the [StackGeek website](http://stackgeek.com/). I wear a cowboy hat in the video, so you definitely don't want to miss it.
+The virtual appliance requires a running OpenStack cluster.  If you don't have an OpenStack cluster already running, fear not!  You may follow the instructions for [Installing OpenStack in 10 Minutes](http://www.stackgeek.com/guides/gettingstarted.html) on the [StackGeek website](http://stackgeek.com/).
 
 Once you have OpenStack installed, you'll need to create or have the following service accounts available:
 
@@ -45,7 +45,7 @@ The script automatically creates a user and project for the virtual appliance, s
 
 Once the script completes, you can skip to the configuration section below.
 
-***Note***: It may be possible to run this script on an existing OpenStack cluster not installed with the StackGeek scripts.  If you get it working, I could use some help writing up instructions for it here! :)
+***Note***: It may be possible to run this script on an existing OpenStack cluster not installed with the StackGeek scripts.
 
 ### Manual Install
 If you have previously installed OpenStack, you can manually start a virtual appliance from the **Horizon UI**.  Begin by logging into OpenStack with an administrative account and then following these steps:
