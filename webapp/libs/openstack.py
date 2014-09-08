@@ -605,15 +605,16 @@ def try_associate_floating_ip(instance):
 		unassociated_fips = [
 			ip
 			for ip in nova.floating_ips.list()
-			if ip.instance_id == None]
+			if ip.instance_id == None
+		]
 
 		# if there are no unassociated floating ips we need to create one
 		if len(unassociated_fips) < 1:
 
 			# we won't try to create a floating ip pool ourselves if none exists
 			if len(nova.floating_ip_pools.list()) < 1:
-				response['response'] = 'error'
-				response['result']['message'] = 'There is no floating IP pool available'
+				response['response'] = "error"
+				response['result']['message'] = "There is no floating IP pool available."
 				return response
 
 			# try allocating an ip in each of the pools until one succeeds
@@ -627,18 +628,18 @@ def try_associate_floating_ip(instance):
 
 				# still have no floating ip, giving up
 				if len(unassociated_fips) < 1:
-					response['response'] = 'error'
-					response['result']['message'] = 'Failed to allocate a new floating IP'
+					response['response'] = "error"
+					response['result']['message'] = 'Failed to allocate a new floating IP.'
 					return response
 
 		try:
 			# associate the first unassociated floating ip to the server
 			instance.add_floating_ip(unassociated_fips[0])
-			response['response'] = 'changed'
+			response['response'] = "success"
 			response['result']['ip'] = unassociated_fips[0].ip
 		except:
-			response['response'] = 'error'
-			response['result']['message'] = 'Failed to associate floating IP'
+			response['response'] = "error"
+			response['result']['message'] = 'Failed to associate floating IP.'
 			return response
 	except:
 		response['response'] = "error"
