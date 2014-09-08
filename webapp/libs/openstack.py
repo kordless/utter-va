@@ -636,6 +636,7 @@ def try_associate_floating_ip(instance):
 			# associate the first unassociated floating ip to the server
 			instance.add_floating_ip(unassociated_fips[0])
 			response['response'] = "success"
+			response['result']['message'] = 'Floating IP address assigned.'			
 			response['result']['ip'] = unassociated_fips[0].ip
 		except:
 			response['response'] = "error"
