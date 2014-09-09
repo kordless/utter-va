@@ -322,6 +322,7 @@ def flavor_verify_install(flavor):
 			for osflavor in osflavors:
 				app.logger.error("Found OpenStack flavor=(%s). Looking for flavor=(%s)" % (osflavor.name, flavor.name))
 				if osflavor.name == flavor.name:
+					app.logger.error("Found match!")
 					targetflavor = osflavor
 					break
 		
@@ -334,6 +335,7 @@ def flavor_verify_install(flavor):
 
 		if targetflavor:
 			# check flavor specs match
+			app.logger.error("Looking for same same.")
 			if targetflavor.vcpus != flavor.vpus: # vpus wrong
 				install_flavor = True
 			if targetflavor.disk != flavor.disk: # disk size wrong
@@ -343,7 +345,8 @@ def flavor_verify_install(flavor):
 
 			# check the flavor quota keys match network limit
 			osikeys = targetflavor.get_keys()
-
+			app.logger.error("Made it past get keys.")
+			
 			if 'quota:inbound_average' in osikeys and 'quota:outbound_average' in osikeys:
 				if flavor.network != int(osikeys['quota:inbound_average']):
 					install_flavor = True
