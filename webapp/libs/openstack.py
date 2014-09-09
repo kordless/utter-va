@@ -316,6 +316,7 @@ def flavor_verify_install(flavor):
 			targetflavor = None
 
 			# look up the flavor by name and stop on it
+			app.logger.info("Going to get flavor list.")
 			osflavors = nova.flavors.list()
 			app.logger.info("Got flavor list.")
 			for osflavor in osflavors:
