@@ -14,6 +14,7 @@ import glanceclient
 
 from webapp import app, db
 from webapp.models.models import OpenStack
+from webapp.models.models import Appliance
 from webapp.libs.exceptions import OpenStackConfiguration, OpenStackError
 from webapp.libs.utils import message, row2dict
 
@@ -401,19 +402,31 @@ def flavor_verify_install(flavor):
 			except:
 				app.logger.info("Could not remove the old flavor=(%s) from the OpenStack cluster." % flavor.name)
 
-		# referenced from ticket #80 
-		# create the new flavor
-		targetflavor = nova.flavors.create(
-			flavor.name,
-			flavor.memory,
-			flavor.vpus,
-			flavor.disk,
-			flavorid='auto',
-			ephemeral=0,
-			swap=0,
-			rxtx_factor=1.0,
-			is_public=True
-		)
+		# appliance
+		appliance = Appliance().get()
+		if install_flavor and not appliance.create_flavors:
+			response['response'] = "error"
+			response['result']['message'] = "Creation of flavors is not enabled"
+			return response
+
+		try:
+			# referenced from ticket #80 
+			# create the new flavor
+			targetflavor = nova.flavors.create(
+				flavor.name,
+				flavor.memory,
+				flavor.vpus,
+				flavor.disk,
+				flavorid='auto',
+				ephemeral=0,
+				swap=0,
+				rxtx_factor=1.0,
+				is_public=True
+			)
+		except nova_exceptions.Forbidden:
+			response['response'] = "forbidden"
+			response['result']['message'] = "Forbidden to create flavor."
+			return response
 
 		# set bandwidth
 		targetflavor.set_keys({"quota:inbound_average": flavor.network})

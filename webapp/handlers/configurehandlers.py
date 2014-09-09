@@ -51,6 +51,9 @@ def configure_flavors():
 	# load flavors
 	flavors = db.session.query(Flavors).all()
 
+	# load appliance
+	appliance = Appliance.get()
+
 	# how much is BTC?
 	try:
 		quote = float(coinbase_get_quote(currency='btc_to_usd')['result']['btc_to_usd'])/1000000
@@ -61,8 +64,17 @@ def configure_flavors():
 		'configure/flavors.html',
 		settings=settings,
 		quote=quote,
-		flavors=flavors
+		flavors=flavors,
+		appliance=appliance
 	)
+
+@mod.route('/configure/toggle/<string:setting>', methods=['PUT'])
+@login_required
+def configure_flavors_collecting_creating(setting=None):
+	appliance = Appliance().get()
+	setattr(appliance, setting, bool(int(request.form['enable'])))
+	appliance.save()
+	return jsonify({"response": "success"})
 
 @mod.route('/configure/flavors/<int:flavor_id>', methods=['GET', 'PUT'])
 @login_required

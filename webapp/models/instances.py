@@ -387,7 +387,7 @@ class Instances(CRUDMixin, db.Model):
 		flavor = Flavors().get_by_id(self.flavor.id)
 		osflavor = flavor_verify_install(flavor)
 
-		if osflavor['response'] == "error":
+		if osflavor['response'] == "error" or osflavor['response'] == "forbidden":
 			# we've failed to install flavor, so we disable it
 			flavor.osid = ""
 			flavor.active = 0
@@ -402,12 +402,27 @@ class Instances(CRUDMixin, db.Model):
 			self.expires = self.created # zeros out the payment
 			self.update()
 
-			# log it
-			app.logger.error("Disabling all instances using flavor=(%s) due to OpenStack failure." % flavor.name)
+			if osflavor['response'] == "forbidden":
+				response['result']['message'] = \
+					"Not allowed to create flavor inside OpenStack, disabling flavor creation"
 
-			# build the response and return
+				# log it
+				app.logger.error("Disabling all instances using flavor=(%s) and disabling "
+												 "creation of flavors due to lack of permissions." % flavor.name)
+
+				# disable creation of flavors for this appliance
+				appliance.create_flavors = False
+				appliance.update()
+
+			else:
+				# log it
+				app.logger.error("Disabling all instances using flavor=(%s) due to "
+												 "OpenStack failure." % flavor.name)
+
+				# build the response and return
+				response['result']['message'] = "Error creating flavor inside OpenStack."
+
 			response['response'] = "error"
-			response['result']['message'] = "Error creating flavor inside OpenStack."
 			return response
 
 		# deal with creating dynamic image or use predefined one

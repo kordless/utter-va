@@ -98,6 +98,8 @@ class Appliance(CRUDMixin, db.Model):
 	latitude = db.Column(db.String(100), unique=True)
 	longitude = db.Column(db.String(100), unique=True)
 	local_ip = db.Column(db.String(100), unique=True)
+	create_flavors = db.Column(db.Boolean)
+	collect_flavors = db.Column(db.Boolean)
 
 	def __init__(
 		self, 
@@ -110,7 +112,9 @@ class Appliance(CRUDMixin, db.Model):
 		cbapisecret=None, 
 		latitude=None, 
 		longitude=None,
-		local_ip=None
+		local_ip=None,
+		create_flavors=None,
+		collect_flavors=None
 	):
 		self.apitoken = apitoken
 		self.ngroktoken = ngroktoken
@@ -122,6 +126,8 @@ class Appliance(CRUDMixin, db.Model):
 		self.latitude = latitude
 		self.longitude = longitude
 		self.local_ip = local_ip
+		self.create_flavors = create_flavors
+		self.collect_flavors = collect_flavors
 
 	def initialize(self, ip):
 		# generate a new API token
@@ -131,6 +137,8 @@ class Appliance(CRUDMixin, db.Model):
 		self.ngroktoken = ""
 		self.subdomain = ""
 		self.dynamicimages = 1
+		self.create_flavors = True
+		self.collect_flavors = True
 		# important, do not remove
 		self.secret = generate_token(size=8, caselimit=True) # not used.  having fun yet?  
 		self.cbapikey = ""
