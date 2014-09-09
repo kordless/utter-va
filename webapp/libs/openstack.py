@@ -293,7 +293,21 @@ def image_delete(image):
 		response['result']['message'] = "Image delete failed: %s" % ex
 		
 		app.logger.error("Failed to delete image=(%s) from the OpenStack cluster." % image.name)
+	return response
 
+def list_flavors(filter_by=None):
+	response = {"response": "success", "result": {"message": ""}}
+	try:
+		# get flavors from openstack cluster and filter them to only include ones
+		# that have a key matching the filter critera, or if filter_by is none just
+		# include all flavors.
+		response['result']['flavors'] = filter(
+			lambda flavor: not filter_by or filter_by in flavor.get_keys().keys(),
+			nova_connection().flavors.list())
+	except Exception:
+		# error communicating with openstack
+		response['response'] = "error"
+		response['result']['message'] = "Error communicating with OpenStack cluster."
 	return response
 
 def flavor_error_response(message, flavor):
@@ -317,7 +331,6 @@ def flavor_error_response(message, flavor):
 def flavor_verify_install(flavor):
 	# build the response
 	response = {"response": "", "result": {"message": "", "flavor": {}}}
-	
 
 	# get the cluster configuration
 	try:
@@ -351,7 +364,6 @@ def flavor_verify_install(flavor):
 	except:
 		# no flavor found
 		targetflavor = None
-
 
 	# check for install needed
 	install_flavor = False
@@ -426,6 +438,10 @@ def flavor_verify_install(flavor):
 		except nova_exceptions.Forbidden:
 			response['response'] = "forbidden"
 			response['result']['message'] = "Forbidden to create flavor."
+			return response
+		except:
+			response['response'] = "error"
+			response['result']['message'] = "Error creating flavor inside OpenStack."
 			return response
 
 		# set bandwidth

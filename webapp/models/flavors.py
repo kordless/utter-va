@@ -23,6 +23,10 @@ class Flavors(CRUDMixin,  db.Model):
 	launches = db.Column(db.Integer)
 	flags = db.Column(db.Integer)
 	active = db.Column(db.Integer)
+	source = db.Column(db.Integer)
+	# possible sources are:
+	# 0 - pool
+	# 1 - openstack cluster
 
 	def __init__(
 		self,
@@ -38,7 +42,8 @@ class Flavors(CRUDMixin,  db.Model):
 		hot=None,
 		launches=None,
 		flags=None,
-		active=None
+		active=None,
+		source=None
 	):
 		self.name = name
 		self.osid = osid
@@ -47,12 +52,15 @@ class Flavors(CRUDMixin,  db.Model):
 		self.memory = memory
 		self.disk = disk
 		self.network = network
+		# rate is the price this flavor has been sold for in the past
 		self.rate = rate
+		# ask the price that this flavor costs
 		self.ask = ask
 		self.hot = hot
 		self.launches = launches
 		self.flags = flags
 		self.active = active
+		self.source = source
 
 	def __repr__(self):
 		return '<Flavor %r>' % (self.name)
@@ -67,6 +75,52 @@ class Flavors(CRUDMixin,  db.Model):
 				flavors_active =+ 1
 
 		return flavors_active
+
+	def sync_from_openstack(self):
+		from webapp.libs.openstack import list_flavors
+
+		response = list_flavors(filter_by='stackmonkey')
+		if response['response'] == "error":
+			app.logger.error("Failed to list flavors from OpenStack cluster")
+			return
+
+		osflavors = response['result']['flavors']
+
+		# create all the non-existent ones
+		for osflavor in osflavors:
+			oskeys = osflavor.get_keys()
+			try:
+				ask_price = int(oskeys['stackmonkey'])
+			except ValueError:
+				continue
+			flavor = db.session.query(Flavors).filter_by(name=osflavor.name).first()
+			if not flavor:
+				flavor = Flavors()
+			flavor.osid = osflavor.id
+			flavor.source = 1 # source is openstack cluster
+			flavor.ask = ask_price
+			flavor.description = 'synced from openstack'
+			flavor.name = osflavor.name
+			flavor.vpus = osflavor.vcpus
+			flavor.memory = osflavor.ram
+			flavor.disk = osflavor.disk
+			# flavor.hot = remoteflavor['hot']
+			flavor.launches = 0
+			flavor.flags = 0
+			flavor.active = 1
+			flavor.hot = 2
+			flavor.rate = 0
+			if 'quota:outbound_average' in oskeys.keys():
+				flavor.network = oskeys['quota:outbound_average']
+			else:
+				flavor.network = 1
+			flavor.save()
+
+		osflavor_names = [x.name for x in osflavors]
+		# delete all flavors that came from openstack but are deleted now
+		for flavor in db.session.query(Flavors).filter_by(source=0):
+			if flavor.name not in osflavor_names:
+				flavor.delete()
 
 	def sync(self, appliance):
 		# grab image list from pool server
@@ -108,6 +162,7 @@ class Flavors(CRUDMixin,  db.Model):
 					flavor.hot = remoteflavor['hot']
 					flavor.launches = remoteflavor['launches']
 					flavor.flags = remoteflavor['flags']
+					flavor.source = 0 # source is pool
 					flavor.active = 1
 
 					# add and commit

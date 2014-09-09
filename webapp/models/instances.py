@@ -420,7 +420,7 @@ class Instances(CRUDMixin, db.Model):
 												 "OpenStack failure." % flavor.name)
 
 				# build the response and return
-				response['result']['message'] = "Error creating flavor inside OpenStack."
+				response['result']['message'] = osflavor['result']['message']
 
 			response['response'] = "error"
 			return response

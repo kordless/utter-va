@@ -70,6 +70,7 @@ CREATE TABLE flavors (
   launches INTEGER NOT NULL,
   active INTEGER NOT NULL,
   flags INTEGER NOT NULL,
+  source INTEGER NOT NULL DEFAULT(0),
   PRIMARY KEY (id)
 );
 
