@@ -295,125 +295,140 @@ def image_delete(image):
 
 	return response
 
+def flavor_error_response(message, flavor):
+	# response
+	response['response'] = "error"
+	response['result']['flavor'] = row2dict(flavor)
+	response['result']['message'] = "%s" % messaage
+	
+	# disable flavor	
+	flavor.osid = ""
+	flavor.active = 0
+	flavor.update()
+
+	# log it
+	app.logger.error("Failed to install flavor=(%s) into the OpenStack cluster. %s" % (flavor.name, message))
+
+	return response
+
 # used by instance start method to install a flavor if we don't have it
 # or re-install a flavor if the flavor doesn't match appliance specs
 def flavor_verify_install(flavor):
 	# build the response
 	response = {"response": "", "result": {"message": "", "flavor": {}}}
+	
+
+	# get the cluster configuration
 	try:
-		# get the cluster configuration
 		openstack = db.session.query(OpenStack).first()
 		
 		# what happens if they haven't configured it already?
 		if not openstack:
 			raise OpenStackConfiguration("OpenStack configuration isn't complete.")
-
-		# establish connection to openstack
+	except Exception as ex:
+		# return error
+		flavor_error_response(ex)
+	
+	# establish connection to openstack
+	try:
 		nova = nova_connection()
+	except Exception as ex:
+		# return error
+		flavor_error_response(ex)
 
-		# handle exception from nova if not found
+	# look up flavors		
+	try:
+		targetflavor = None
+
+		# look up the flavor by name and stop on it
+		osflavors = nova.flavors.list()
+		for osflavor in osflavors:
+			if osflavor.name == flavor.name:
+				targetflavor = osflavor
+				break
+	
+	except:
+		# no flavor found
+		targetflavor = None
+
+
+	# check for install needed
+	install_flavor = False
+
+	# check flavor specs match
+	if targetflavor:
+		if targetflavor.vcpus != flavor.vpus: # vpus wrong
+			install_flavor = True
+		if targetflavor.disk != flavor.disk: # disk size wrong
+			install_flavor = True 
+		if targetflavor.ram != flavor.memory: # memory wrong
+			install_flavor = True
+
+		# get the flavor network quota keys (if required)
 		try:
-			targetflavor = None
+			if flavor.network > 0:
+				# get the flavor keys from openstack
+				# throws not found if they don't exist
+				osikeys = targetflavor.get_keys()
 
-			# look up the flavor by name and stop on it
-			app.logger.error("Going to get flavor list.")
-			osflavors = nova.flavors.list()
-			app.logger.error("Got flavor list.")
-			for osflavor in osflavors:
-				app.logger.error("Found OpenStack flavor=(%s). Looking for flavor=(%s)" % (osflavor.name, flavor.name))
-				if osflavor.name == flavor.name:
-					app.logger.error("Found match!")
-					targetflavor = osflavor
-					break
-		
-		except:
-			# no flavor found
-			targetflavor = None
-
-		# check for install needed
-		install_flavor = False
-
-		if targetflavor:
-			# check flavor specs match
-			app.logger.error("Looking for same same.")
-			if targetflavor.vcpus != flavor.vpus: # vpus wrong
-				install_flavor = True
-			if targetflavor.disk != flavor.disk: # disk size wrong
-				install_flavor = True 
-			if targetflavor.ram != flavor.memory: # memory wrong
-				install_flavor = True
-
-			# check the flavor quota keys match network limit
-			osikeys = targetflavor.get_keys()
-			app.logger.error("Made it past get keys.")
-			
-			if 'quota:inbound_average' in osikeys and 'quota:outbound_average' in osikeys:
-				if flavor.network != int(osikeys['quota:inbound_average']):
+				# check quotas match
+				if 'quota:inbound_average' in osikeys and 'quota:outbound_average' in osikeys:
+					if flavor.network != int(osikeys['quota:inbound_average']):
+						install_flavor = True
+					if flavor.network != int(osikeys['quota:outbound_average']):
+						install_flavor = True
+				else:
 					install_flavor = True
-				if flavor.network != int(osikeys['quota:outbound_average']):
-					install_flavor = True
-			elif flavor.network > 0:
-				# no osikeys, and pool flavor has bandwidth limit
-				install_flavor = True
 			else:
-				# pool flavor has unlimited network
+				# do nothing
 				pass
 
-		else:
-			# no flavor found
+		except:
+			# just force install
 			install_flavor = True
-			app.logger.info("Flavor not found.")
 
-		# install the flavor
-		if install_flavor:
-			if targetflavor:
-				try:
-					# remove the old flavor
-					nova.flavors.delete(targetflavor.id)
-				except:
-					app.logger.info("Could not remove the old flavor=(%s) from the OpenStack cluster." % flavor.name)
+	else:
+		# no flavor found
+		install_flavor = True
+		app.logger.info("Flavor not found.")
 
-			# referenced from ticket #80 
-			# create the new flavor
-			targetflavor = nova.flavors.create(
-				flavor.name,
-				flavor.memory,
-				flavor.vpus,
-				flavor.disk,
-				flavorid='auto',
-				ephemeral=0,
-				swap=0,
-				rxtx_factor=1.0,
-				is_public=True
-			)
+	# install the flavor
+	if install_flavor:
+		if targetflavor:
+			try:
+				# remove the old flavor
+				nova.flavors.delete(targetflavor.id)
+			except:
+				app.logger.info("Could not remove the old flavor=(%s) from the OpenStack cluster." % flavor.name)
 
-			# set bandwidth
-			targetflavor.set_keys({"quota:inbound_average": flavor.network})
-			targetflavor.set_keys({"quota:outbound_average": flavor.network})
+		# referenced from ticket #80 
+		# create the new flavor
+		targetflavor = nova.flavors.create(
+			flavor.name,
+			flavor.memory,
+			flavor.vpus,
+			flavor.disk,
+			flavorid='auto',
+			ephemeral=0,
+			swap=0,
+			rxtx_factor=1.0,
+			is_public=True
+		)
 
-			app.logger.info("Installed flavor=(%s) into the OpenStack cluster." % flavor.name)
+		# set bandwidth
+		targetflavor.set_keys({"quota:inbound_average": flavor.network})
+		targetflavor.set_keys({"quota:outbound_average": flavor.network})
 
-		# update the flavor database with id
-		flavor.osid = targetflavor.id
-		flavor.update(flavor)
+		app.logger.info("Installed flavor=(%s) into the OpenStack cluster." % flavor.name)
 
-		# response
-		response['response'] = "success"
-		response['result']['message'] = "Flavor added."
-		response['result']['flavor'] = row2dict(flavor)
+	# update the flavor database with id
+	flavor.osid = targetflavor.id
+	flavor.update(flavor)
 
-	except Exception as ex:
-		# update our flavor to not be installed
-		flavor.osid = ""
-		flavor.active = 0
-		flavor.update()
-
-		# response
-		response['response'] = "error"
-		response['result']['flavor'] = row2dict(flavor)
-		response['result']['message'] = "%s" % ex
-		
-		app.logger.error("Failed to install flavor=(%s) into the OpenStack cluster. %s" % (flavor.name, ex))
+	# response
+	response['response'] = "success"
+	response['result']['message'] = "Flavor added."
+	response['result']['flavor'] = row2dict(flavor)
 
 	return response
 
