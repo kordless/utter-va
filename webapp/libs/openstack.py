@@ -320,7 +320,7 @@ def flavor_verify_install(flavor):
 			osflavors = nova.flavors.list()
 			app.logger.error("Got flavor list.")
 			for osflavor in osflavors:
-				app.logger.info("Found OpenStack flavor=(%s). Looking for flavor=(%s)" % (osflavor.name, flavor.name))
+				app.logger.error("Found OpenStack flavor=(%s). Looking for flavor=(%s)" % (osflavor.name, flavor.name))
 				if osflavor.name == flavor.name:
 					targetflavor = osflavor
 					break
