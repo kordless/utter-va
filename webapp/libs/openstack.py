@@ -343,9 +343,13 @@ def flavor_verify_install(flavor):
 					install_flavor = True
 				if flavor.network != int(osikeys['quota:outbound_average']):
 					install_flavor = True
-			else:
+			elif flavor.network > 0:
+				# no osikeys, and pool flavor has bandwidth limit
 				install_flavor = True
-			
+			else:
+				# pool flavor has unlimited network
+				pass
+
 		else:
 			# no flavor found
 			install_flavor = True
@@ -359,6 +363,7 @@ def flavor_verify_install(flavor):
 				except:
 					app.logger.info("Could not remove the old flavor=(%s) from the OpenStack cluster." % flavor.name)
 
+			# referenced from ticket #80 
 			# create the new flavor
 			targetflavor = nova.flavors.create(
 				flavor.name,
