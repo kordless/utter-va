@@ -71,7 +71,7 @@
                 <td>{{ flavor.vpus }} Core{% if flavor.vpus > 1 %}s{% endif %}</td>
                 <td>{{ flavor.memory }}MB</td>
                 <td>{{ flavor.disk }}GB</td>
-                <td>{{ flavor.network }}Mb/sec</td>
+                <td>{% if flavor.network < 0 %}Unlimited{% else %}{{ flavor.network }} Mb/sec{% endif %}</td>
                 <td>{{ flavor.ask }} μBTC/Hour</td>
                 <td>
                   <div class="toggle-modern">

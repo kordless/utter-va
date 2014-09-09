@@ -167,6 +167,7 @@ class Appliance(CRUDMixin, db.Model):
 
 			# create data structure for yaml file
 			data = dict(
+				inspect_addr = "disabled",
 				auth_token = self.ngroktoken.encode('ascii','ignore'),
 				tunnels = dict(
 					utterio = dict(

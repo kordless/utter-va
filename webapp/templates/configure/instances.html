@@ -124,6 +124,7 @@
       location.reload();
     });
 
+    // instance timers
     setInterval(function() {
       var epoch_time = parseInt((new Date).getTime()/1000);
       $('td[id^="instance-timer-"]').each(function(index){
@@ -141,6 +142,7 @@
         }
       });
     }, 1000);
+
     
     // start instance buttons
     $('button[id^="instance-start-"]').each(function(index){
