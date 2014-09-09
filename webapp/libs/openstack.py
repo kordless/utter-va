@@ -314,18 +314,22 @@ def flavor_verify_install(flavor):
 		# handle exception from nova if not found
 		try:
 			targetflavor = None
+
 			# look up the flavor by name and stop on it
 			osflavors = nova.flavors.list()
 			for osflavor in osflavors:
+				app.logger.info("Found OpenStack flavor=(%s). Looking for flavor=(%s)" % (osflavor.name, flavor.name))
 				if osflavor.name == flavor.name:
 					targetflavor = osflavor
 					break
+		
 		except:
 			# no flavor found
 			targetflavor = None
 
 		# check for install needed
 		install_flavor = False
+
 		if targetflavor:
 			# check flavor specs match
 			if targetflavor.vcpus != flavor.vpus: # vpus wrong
@@ -353,6 +357,7 @@ def flavor_verify_install(flavor):
 		else:
 			# no flavor found
 			install_flavor = True
+			app.logger.info("Flavor not found.")
 
 		# install the flavor
 		if install_flavor:
