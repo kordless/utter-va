@@ -256,6 +256,9 @@ class PoolApiBase(object):
 	def api_object():
 		pass
 
+	def __init__(self, appliance):
+		self.appliance = appliance
+
 	# register the methods to prepare data for sending, keyed by action
 	def add_data_preparation_method(self, action, method):
 		self.data_preparation_methods[action] = method
@@ -268,6 +271,17 @@ class PoolApiBase(object):
 			ver=self.api_version,
 			api_object=self.api_object,
 			action=action)
+
+	# take an already existing dict of data and add the authentication data
+	def add_authentication_data(self, data):
+		data['appliance'] = {
+			"apitoken": self.appliance.apitoken, 
+			"dynamicimages": self.appliance.dynamicimages,
+			"location": {
+				"latitude": self.appliance.latitude,
+				"longitude": self.appliance.longitude
+			}}
+		return data
 
 	# get the request object
 	def build_request(self, url):
@@ -283,7 +297,8 @@ class PoolApiBase(object):
 					self.build_request(
 						self.api_url(action)),
 					self.stringify['dump'](
-						self.data_preparation_methods[action](data)),
+						self.add_authentication_data(
+							self.data_preparation_methods[action](data))),
 					self.timeout)
 
 			# if reply code was 2xx
@@ -312,8 +327,8 @@ class PoolApiBase(object):
 class PoolApiCustomFlavors(PoolApiBase):
 	api_object = 'custom-flavors'
 
-	def __init__(self):
-		PoolApiBase.__init__(self)
+	def __init__(self, *args, **kwargs):
+		PoolApiBase.__init__(self, *args, **kwargs)
 
 		# register data preparation methods
 		for (k, v) in {'create': self.prepare_create_data,

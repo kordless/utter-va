@@ -2,6 +2,7 @@ from webapp import app
 from webapp import db
 from webapp.libs.pool import PoolApiCustomFlavors
 
+from webapp.models.models import Appliance
 from webapp.models.mixins import CRUDMixin
 
 from webapp.libs.utils import generate_token, row2dict
@@ -129,13 +130,15 @@ class Flavors(CRUDMixin,  db.Model):
 				flavor.flags = 4
 				flavor.save()
 
+		appliance = Appliance().get()
+
 		# execute all actions necessary to sync pool and openstack
 		for flavor in Flavors.get_all():
 
 			# create the new custom flavors on pool
 			if flavor.flags & 2 == 2:
 				try:
-					PoolApiCustomFlavors().request(
+					PoolApiCustomFlavors(appliance).request(
 						action='create',
 						data={'flavor': flavor})
 					flavor.flags = 0
@@ -146,7 +149,7 @@ class Flavors(CRUDMixin,  db.Model):
 			# delete custom flavors from pool
 			if flavor.flags & 4 == 4:
 				try:
-					PoolApiCustomFlavors().request(
+					PoolApiCustomFlavors(appliance).request(
 						action='delete',
 						data={'flavor': flavor})
 					flavor.delete()
