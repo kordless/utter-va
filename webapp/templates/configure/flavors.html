@@ -68,26 +68,33 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <table class="table table-hover">
-            <tbody>
-              <tr>
-                <td>
-                  <div class="toggle-modern">
-										<div id="collect_flavors" class="{% if appliance.collect_flavors %} enabled{% endif %}"></div>
-                  </div>
-                </td>  
-                <td>Should the flavors provided by your OpenStack cluster be sold on stackmonkey?</td>
-              </tr>
-              <tr>
-                <td>
-                  <div class="toggle-modern">
-										<div id="create_flavors" class="{% if appliance.create_flavors %} enabled{% endif %}"></div>
-                  </div>
-                </td>  
-                <td>Should the appliance attempt to create it's own flavors on your OpenStack cluster?</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="section-header">
+            <div class="bs-callout bs-callout-info bs-callout-top">
+              <h4>Flavor synchronization settings</h4>
+              <p>These two settings control where flavors should be synced from. They can be fetched from the <strong>OpenStack cluster</strong> or/and from the <strong>StackMonkey pool</strong>.</p>
+              <p>If flavors should be synced from the <strong>StackMonkey pool</strong>, the appliance needs to have the appropriate <strong>permissions</strong> to create flavors on the <strong>OpenStack cluster</strong>. If unsure about those <strong>permissions</strong>, just leave this setting in the <strong>on</strong> position. Once the appliance detects it has no <strong>permissions</strong> to create flavors on the <strong>OpenStack cluster</strong> it will set it back to <strong>off</strong> automatically.</p>
+            </div>
+            <table class="table table-hover">
+              <tbody>
+                <tr>
+                  <td>
+                    <div class="toggle-modern">
+                      <div id="collect_flavors" class="{% if appliance.collect_flavors %} enabled{% endif %}"></div>
+                    </div>
+                  </td>  
+                  <td>Should the flavors provided by your OpenStack cluster be sold on stackmonkey?</td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="toggle-modern">
+                      <div id="create_flavors" class="{% if appliance.create_flavors %} enabled{% endif %}"></div>
+                    </div>
+                  </td>  
+                  <td>Should the appliance attempt to create it's own flavors on your OpenStack cluster?</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
