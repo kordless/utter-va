@@ -73,6 +73,9 @@
               <h4>Flavor synchronization settings</h4>
               <p>These two settings control where flavors should be synced from. They can be fetched from the <strong>OpenStack cluster</strong> or/and from the <strong>StackMonkey pool</strong>.</p>
               <p>If flavors should be synced from the <strong>StackMonkey pool</strong>, the appliance needs to have the appropriate <strong>permissions</strong> to create flavors on the <strong>OpenStack cluster</strong>. If unsure about those <strong>permissions</strong>, just leave this setting in the <strong>on</strong> position. Once the appliance detects it has no <strong>permissions</strong> to create flavors on the <strong>OpenStack cluster</strong> it will set it back to <strong>off</strong> automatically.</p>
+              <p>If the setting to <strong>Sync from OpenStack Cluster</strong> is set to on, the appliance will scan the list of flavors via the nova api. All flavors that have a key <strong>stackmonkey</strong> in the extra specs and a <strong>numberic value</strong> associated to this key will be synchronized. The value should be an integer representing the <strong>asking price</strong> for this flavor.</p>
+              <p>This example shows how to add the <strong>stackmonkey</strong> key to the extra_specs of the flavor with id <strong>1000</strong> and set the asking price to <strong>5</strong>:</p>
+              <p><strong><i># nova flavor-key 1000 set stackmonkey=5</i></strong></p>
             </div>
             <table class="table table-hover">
               <tbody>
@@ -82,7 +85,7 @@
                       <div id="collect_flavors" class="{% if appliance.collect_flavors %} enabled{% endif %}"></div>
                     </div>
                   </td>  
-                  <td>Should the flavors provided by your OpenStack cluster be sold on stackmonkey?</td>
+                  <td>Sync from OpenStack cluster</td>
                 </tr>
                 <tr>
                   <td>
@@ -90,7 +93,7 @@
                       <div id="create_flavors" class="{% if appliance.create_flavors %} enabled{% endif %}"></div>
                     </div>
                   </td>  
-                  <td>Should the appliance attempt to create it's own flavors on your OpenStack cluster?</td>
+                  <td>Sync from StackMonkey pool</td>
                 </tr>
               </tbody>
             </table>
