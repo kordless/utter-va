@@ -299,7 +299,7 @@ def list_flavors(filter_by=None):
 	response = {"response": "success", "result": {"message": ""}}
 	try:
 		# get flavors from openstack cluster and filter them to only include ones
-		# that have a key matching the filter critera, or if filter_by is none just
+		# that have a key matching the filter critera, or if filter_by is None just
 		# include all flavors.
 		response['result']['flavors'] = filter(
 			lambda flavor: not filter_by or filter_by in flavor.get_keys().keys(),
