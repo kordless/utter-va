@@ -2,7 +2,6 @@ from webapp import app
 from webapp import db
 from webapp.libs.pool import PoolApiCustomFlavors
 
-from webapp.models.models import Appliance
 from webapp.models.mixins import CRUDMixin
 
 from webapp.libs.utils import generate_token, row2dict
