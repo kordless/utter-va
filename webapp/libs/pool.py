@@ -1,5 +1,6 @@
 import json
 
+import abc
 from cgi import escape
 
 from urllib2 import urlopen, Request
@@ -227,3 +228,116 @@ def pool_connect(method="authorization", appliance=None):
 		response['result']['message'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
 
 	return response
+
+
+class PoolApiException(Exception):
+	url = ""
+	data = ""
+
+	def __init__(self, message, url, data):
+		Exception.__init__(self, message)
+		app.logger.error(message)
+		self.url = url
+		self.data = data
+
+
+class PoolApiBase(object):
+	uri_base = u'api'
+	api_version = u'v1'
+	content_type = u'application/json'
+	timeout = 10
+	stringify = {'dump': json.dumps, 'load': json.loads}
+
+	# dict of action keys with data preparation functions as value
+	data_preparation_methods = {}
+
+	# which object on the api should be selected
+	@abc.abstractproperty
+	def api_object():
+		pass
+
+	# register the methods to prepare data for sending, keyed by action
+	def add_data_preparation_method(self, action, method):
+		self.data_preparation_methods[action] = method
+
+	# build the url to the api endpoint
+	def api_url(self, action):
+		return u'{host}/{base}/{ver}/{api_object}/{action}'.format(
+			host=app.config['POOL_APPSPOT_WEBSITE'],
+			base=self.uri_base,
+			ver=self.api_version,
+			api_object=self.api_object,
+			action=action)
+
+	# get the request object
+	def build_request(self, url):
+		request = Request(url)
+		request.add_header('Content-Type', self.content_type)
+		return request
+
+	# main entry, do the request
+	def request(self, action=None, data=None):
+		try:
+			# submit request to the api
+			response = urlopen(
+					self.build_request(
+						self.api_url(action)),
+					self.stringify['dump'](
+						self.data_preparation_methods[action](data)),
+					self.timeout)
+
+			# if reply code was 2xx
+			if response.getcode() / 100 == 2:
+				return stringify['load'](response.read())
+
+		# starting from here, handle all error conditions
+			err_msg = u"Bad return status from API request."
+		except HTTPError, e:
+			err_msg = u"Error code %s returned from server: %s" % (str(e.code), type(e).__name__)
+		except IOError:
+			err_msg = u"Can't contact callback server.  Try again later."
+		except ValueError as ex:
+			err_msg = u"Having issues parsing JSON from the site: %s.  Open a ticket." \
+				% type(ex).__name__
+		except Exception as ex:
+			err_msg = u"An error of type %s has occured.  Open a ticket." % \
+				type(ex).__name__
+		raise PoolApiException(
+			err_msg,
+			self.api_url(),
+			data)
+
+
+# class to act on custom flavors on the pool
+class PoolApiCustomFlavors(PoolApiBase):
+	api_object = 'custom-flavors'
+
+	def __init__(self):
+		PoolApiBase.__init__(self)
+
+		# register data preparation methods
+		for (k, v) in {'create': self.prepare_create_data,
+								 'delete': self.prepare_delete_data}.items():
+				self.add_data_preparation_method(k, v)
+
+	# prepare data to create a custom flavor in the pool
+	def prepare_create_data(self, data):
+		return {
+			'osid': data['flavor'].osid,
+			'ask': data['flavor'].ask,
+			'description': data['flavor'].description,
+			'name': data['flavor'].name,
+			'vpus': data['flavor'].vpus,
+			'memory': data['flavor'].memory,
+			'disk': data['flavor'].disk,
+			'launches': data['flavor'].launches,
+			'active': data['flavor'].active,
+			'hot': data['flavor'].hot,
+			'rate': data['flavor'].rate,
+			'network': data['flavor'].network}
+
+	# prepare the data to delete a custom flavor in the pool
+	def prepare_delete_data(self, data):
+		return {
+			'osid': data['flavor'].osid,
+			'name': data['flavor'].name}

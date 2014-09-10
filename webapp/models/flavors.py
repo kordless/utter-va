@@ -1,5 +1,6 @@
 from webapp import app
 from webapp import db
+from webapp.libs.pool import PoolApiCustomFlavors
 
 from webapp.models.mixins import CRUDMixin
 
@@ -22,6 +23,11 @@ class Flavors(CRUDMixin,  db.Model):
 	hot = db.Column(db.Integer)
 	launches = db.Column(db.Integer)
 	flags = db.Column(db.Integer)
+	# possible values are:
+	# 8 - deleted on pool, needs to be deleted on appliance and OpenStack
+	# 4 - deleted on openstack, needs to be deleted locally and on pool
+	# 2 - created on openstack, needs to be created on pool
+	# 0 - all well, nothing to be done
 	active = db.Column(db.Integer)
 	source = db.Column(db.Integer)
 	# possible sources are:
@@ -96,6 +102,7 @@ class Flavors(CRUDMixin,  db.Model):
 			flavor = db.session.query(Flavors).filter_by(name=osflavor.name).first()
 			if not flavor:
 				flavor = Flavors()
+				flavor.flags = 2
 			flavor.osid = osflavor.id
 			flavor.source = 1 # source is openstack cluster
 			flavor.ask = ask_price
@@ -106,7 +113,6 @@ class Flavors(CRUDMixin,  db.Model):
 			flavor.disk = osflavor.disk
 			# flavor.hot = remoteflavor['hot']
 			flavor.launches = 0
-			flavor.flags = 0
 			flavor.active = 1
 			flavor.hot = 2
 			flavor.rate = 0
@@ -117,10 +123,35 @@ class Flavors(CRUDMixin,  db.Model):
 			flavor.save()
 
 		osflavor_names = [x.name for x in osflavors]
-		# delete all flavors that came from openstack but are deleted now
+		# mark all flavors that came from openstack but are deleted now
 		for flavor in db.session.query(Flavors).filter_by(source=0):
 			if flavor.name not in osflavor_names:
-				flavor.delete()
+				flavor.flags = 4
+				flavor.save()
+
+		# execute all actions necessary to sync pool and openstack
+		for flavor in Flavors.get_all():
+
+			# create the new custom flavors on pool
+			if flavor.flags & 2 == 2:
+				try:
+					PoolApiCustomFlavors().request(
+						action='create',
+						data={'flavor': flavor})
+					flavor.flags = 0
+					flavor.save()
+				except:
+					pass
+
+			# delete custom flavors from pool
+			if flavor.flags & 4 == 4:
+				try:
+					PoolApiCustomFlavors().request(
+						action='delete',
+						data={'flavor': flavor})
+					flavor.delete()
+				except:
+					pass
 
 	def sync(self, appliance):
 		# grab image list from pool server
