@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- encoding:utf-8 -*-
 # manage.py
 
@@ -338,6 +338,10 @@ def flavors(app):
 
 		# sync the flavors
 		flavors = Flavors()
+
+		if appliance.collect_flavors:
+			flavors.sync_from_openstack()
+
 		response = flavors.sync(appliance)
 
 	return action
