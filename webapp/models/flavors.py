@@ -202,7 +202,7 @@ class Flavors(CRUDMixin,  db.Model):
 				except:
 					pass
 
-	def sync(self, appliance):
+	def sync_pool_to_openstack(self, appliance):
 		# grab image list from pool server
 		response = pool_connect(method="flavors", appliance=appliance)
 
