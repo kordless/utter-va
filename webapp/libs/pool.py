@@ -387,9 +387,14 @@ class CustomFlavorsPoolApiCreate(CustomFlavorsPoolApiBase):
 			'p:network': 'network'}}
 
 
+# class to create new flavors on pool
+class CustomFlavorsPoolApiUpdate(CustomFlavorsPoolApiCreate):
+	_action = "update"
+
+
 # class to delete flavors on pool
 class CustomFlavorsPoolApiDelete(CustomFlavorsPoolApiBase):
-	_action = "update"
+	_action = "delete"
 	_data_keys = {
 		'k:flavor': {
 			'p:osid': 'osid',

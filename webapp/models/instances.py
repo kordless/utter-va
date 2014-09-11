@@ -51,12 +51,10 @@ class Instances(CRUDMixin, db.Model):
 	# foreign keys
 	flavor_id = db.Column(db.Integer, db.ForeignKey('flavors.id'))
 	image_id = db.Column(db.Integer, db.ForeignKey('images.id'))
-	address_id = db.Column(db.Integer, db.ForeignKey('addresses.id'))
 
 	# relationships
 	flavor = db.relationship('Flavors', foreign_keys='Instances.flavor_id')
 	image = db.relationship('Images', foreign_keys='Instances.image_id')
-	address = db.relationship('Addresses', foreign_keys='Instances.address_id')
 
 	def __init__(self, 
 		created=None,
@@ -77,7 +75,6 @@ class Instances(CRUDMixin, db.Model):
 		message_count=0,
 		flavor_id=None,
 		image_id=None,
-		address_id=None
 	):
 		self.created = created
 		self.updated = updated
@@ -97,7 +94,6 @@ class Instances(CRUDMixin, db.Model):
 		self.message_count = message_count
 		self.flavor_id = flavor_id
 		self.image_id = image_id
-		self.address_id = address_id
 
 	def toggle(self, flavor_id, active):
 		# set active/inactive state for instances with a given flavor_id
@@ -730,6 +726,7 @@ class Instances(CRUDMixin, db.Model):
 			response['result']['message'] = "Terminating instance %s" % self.name
 		else:
 			# delete this instance into forever
+			### needs to be fixed!!!! address_id does not exist anymore
 			address = Addresses().get_by_id(self.address_id)
 			address.release()
 			self.delete(self)

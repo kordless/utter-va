@@ -18,7 +18,8 @@ class Flavors(CRUDMixin,  db.Model):
 	vpus = db.Column(db.Integer)
 	memory = db.Column(db.Integer)
 	disk = db.Column(db.Integer)
-	network = db.Column(db.Integer)
+	network_up = db.Column(db.Integer)
+	network_down = db.Column(db.Integer)
 	rate = db.Column(db.Integer)
 	ask = db.Column(db.Integer)
 	hot = db.Column(db.Integer)
@@ -28,12 +29,25 @@ class Flavors(CRUDMixin,  db.Model):
 	# 8 - deleted on pool, needs to be deleted on appliance and OpenStack
 	# 4 - deleted on openstack, needs to be deleted locally and on pool
 	# 2 - created on openstack, needs to be created on pool
+	# 1 - updated on openstack, needs to be updated on pool
 	# 0 - all well, nothing to be done
 	active = db.Column(db.Integer)
 	source = db.Column(db.Integer)
 	# possible sources are:
 	# 0 - pool
 	# 1 - openstack cluster
+
+	# mappings of names with openstack flavor properties and extra keys
+	# used in method get_values_from_osflavor
+	os_property_mapping = [
+		('osid', 'id'),
+		('name', 'name'),
+		('vpus', 'vcpus'),
+		('memory', 'ram'),
+		('disk', 'disk'),
+		('network_down', 'extra_spec:int:quota:inbound_average'),
+		('network_up', 'extra_spec:int:quota:outbound_average'),
+		('ask', 'extra_spec:int:stackmonkey')]
 
 	def __init__(
 		self,
@@ -43,13 +57,18 @@ class Flavors(CRUDMixin,  db.Model):
 		vpus=None,
 		memory=None,
 		disk=None,
-		network=None,
-		rate=None,
-		ask=None,
-		hot=None,
-		launches=None,
+		# the default network limitation if none is specified is 1
+		network_up=1,
+		network_down=1,
+		# the default price and rate is 0 if nothing is passed
+		rate=0,
+		ask=0,
+		# default hot value should be 2, because we feel like it
+		hot=2,
+		launches=0,
 		flags=None,
-		active=None,
+		# flavors are only active if activated
+		active=0,
 		source=None
 	):
 		self.name = name
@@ -58,7 +77,8 @@ class Flavors(CRUDMixin,  db.Model):
 		self.vpus = vpus
 		self.memory = memory
 		self.disk = disk
-		self.network = network
+		self.network_up = network_up
+		self.network_down = network_down
 		# rate is the price this flavor has been sold for in the past
 		self.rate = rate
 		# ask the price that this flavor costs
@@ -83,55 +103,87 @@ class Flavors(CRUDMixin,  db.Model):
 
 		return flavors_active
 
-	def sync_from_openstack(self, appliance):
+	# extract values and keys from osflavor and return them as simple dict
+	def get_values_from_osflavor(self, flavor):
+		key_spec = "extra_spec:"
+		keys = flavor.get_keys()
+		ret_value = {}
+		for property in self.os_property_mapping:
+			if property[1][:len(key_spec)] == key_spec:
+				property_chunks = property[1].split(':', 2)
+				try:
+					# get the specified value from keys and try to convert it to
+					# the specified fromat, like int or str
+					ret_value[property[0]] = eval(property_chunks[1])(
+							keys[property_chunks[2]])
+				except (ValueError, KeyError):
+					pass
+			else:
+				ret_value[property[0]] = getattr(flavor, property[1])
+		return ret_value
+
+	# check if same as given openstack flavor
+	def is_same_as_osflavor(self, osflavor):
+		for (key, value) in self.get_values_from_osflavor(osflavor).items():
+			if getattr(self, key) != value:
+				return False
+		return True
+
+	# copy all properties from osflavor to self
+	def copy_values_from_osflavor(self, osflavor):
+		for (key, value) in self.get_values_from_osflavor(osflavor).items():
+			setattr(self, key, value)
+		self.save()
+
+	def sync_openstack_to_pool(self, appliance):
 		from webapp.libs.openstack import list_flavors
 
+		# get all flavors that have the stackmonkey key set in their extra_specs
 		response = list_flavors(filter_by='stackmonkey')
 		if response['response'] == "error":
 			app.logger.error("Failed to list flavors from OpenStack cluster")
 			return
-
 		osflavors = response['result']['flavors']
 
 		# create all the non-existent ones
 		for osflavor in osflavors:
-			oskeys = osflavor.get_keys()
-			try:
-				ask_price = int(oskeys['stackmonkey'])
-			except ValueError:
-				continue
+			# if flavor doesn't exist, create new one
 			flavor = db.session.query(Flavors).filter_by(name=osflavor.name).first()
 			if not flavor:
+				# flavor is new
 				flavor = Flavors()
 				flavor.flags = 2
-			flavor.osid = osflavor.id
-			flavor.source = 1 # source is openstack cluster
-			flavor.ask = ask_price
-			flavor.description = 'synced from openstack'
-			flavor.name = osflavor.name
-			flavor.vpus = osflavor.vcpus
-			flavor.memory = osflavor.ram
-			flavor.disk = osflavor.disk
-			# flavor.hot = remoteflavor['hot']
-			flavor.launches = 0
-			flavor.active = 1
-			flavor.hot = 2
-			flavor.rate = 0
-			if 'quota:outbound_average' in oskeys.keys():
-				flavor.network = oskeys['quota:outbound_average']
+				flavor.source = 1
+				flavor.copy_values_from_osflavor(osflavor)
+				# if a price is given, activate the new flavor
+				if flavor.ask > 0:
+					flavor.active = 1
+					flavor.save()
 			else:
-				flavor.network = 1
-			flavor.save()
+				if not flavor.is_same_as_osflavor(osflavor):
+					# flavor has changed
+					flavor.copy_values_from_osflavor(osflavor)
+					flavor.flags = 1
+					flavor.save()
 
-		osflavor_names = [x.name for x in osflavors]
-		# mark all flavors that came from openstack but are deleted now
+		osflavor_ids = [x.id for x in osflavors]
+		# mark all flavors that originally came from openstack but are deleted now
 		for flavor in db.session.query(Flavors).filter_by(source=0):
-			if flavor.name not in osflavor_names:
+			if flavor.id not in osflavor_ids:
 				flavor.flags = 4
 				flavor.save()
 
 		# execute all actions necessary to sync pool and openstack
 		for flavor in Flavors.get_all():
+
+			# sync updates from openstack to the pool
+			if flavor.flags & 1 == 1:
+				try:
+					CustomFlavorsPoolApiUpdate(appliance).request(data={'flavor': flavor})
+					flavor.flags = 0
+					flavor.save()
+				except:
+					pass
 
 			# create the new custom flavors on pool
 			if flavor.flags & 2 == 2:
