@@ -1,4 +1,5 @@
 import json
+import types
 
 import abc
 from cgi import escape
@@ -242,68 +243,107 @@ class PoolApiException(Exception):
 
 
 class PoolApiBase(object):
-	uri_base = u'api'
-	api_version = u'v1'
-	content_type = u'application/json'
-	timeout = 10
-	stringify = {'dump': json.dumps, 'load': json.loads}
+	_uri_base = u'api'
+	_api_version = u'v1'
+	_content_type = u'application/json'
+	_timeout = 10
+	_stringify = {'dump': json.dumps, 'load': json.loads}
 
-	# dict of action keys with data preparation functions as value
-	data_preparation_methods = {}
+	# keys that should be taken from data to be passed to api
+	# data format:
+	# first letter of key can be 'k' for 'key' or 'p' for 'property'
+	# second letter must be :
+	# starting from third letter on comes the value
+	# values of final leaf nodes are names to be used in data passed to pool
+	_data_keys = {}
 
 	# which object on the api should be selected
 	@abc.abstractproperty
-	def api_object():
+	def _api_object():
+		pass
+
+	# which action should be executed on the object
+	@abc.abstractproperty
+	def _action():
 		pass
 
 	def __init__(self, appliance):
-		self.appliance = appliance
-
-	# register the methods to prepare data for sending, keyed by action
-	def add_data_preparation_method(self, action, method):
-		self.data_preparation_methods[action] = method
-
-	# build the url to the api endpoint
-	def api_url(self, action):
-		return u'{host}/{base}/{ver}/{api_object}/{action}'.format(
-			host=app.config['POOL_APPSPOT_WEBSITE'],
-			base=self.uri_base,
-			ver=self.api_version,
-			api_object=self.api_object,
-			action=action)
+		self._appliance = appliance
 
 	# take an already existing dict of data and add the authentication data
-	def add_authentication_data(self, data):
+	def _add_authentication_data(self, data):
 		data['appliance'] = {
-			"apitoken": self.appliance.apitoken, 
-			"dynamicimages": self.appliance.dynamicimages,
+			"apitoken": self._appliance.apitoken,
+			"dynamicimages": self._appliance.dynamicimages,
 			"location": {
-				"latitude": self.appliance.latitude,
-				"longitude": self.appliance.longitude
+				"latitude": self._appliance.latitude,
+				"longitude": self._appliance.longitude
 			}}
 		return data
 
+	# build the url to the api endpoint
+	def _api_url(self):
+		return u'{host}/{base}/{ver}/{api_object}/{action}'.format(
+			host=app.config['POOL_APPSPOT_WEBSITE'],
+			base=self._uri_base,
+			ver=self._api_version,
+			api_object=self._api_object,
+			action=self._action)
+
 	# get the request object
-	def build_request(self, url):
+	def _build_request(self, url):
 		request = Request(url)
-		request.add_header('Content-Type', self.content_type)
+		request.add_header('Content-Type', self._content_type)
 		return request
 
+	# extract the required data from the passed object
+	def _extract_data(self, data):
+		extracted_data = {}
+		self._extract_data_from_node(data, self._data_keys, extracted_data)
+		return extracted_data
+
+	# iterate over nodes of tree
+	def _extract_data_from_node(self, node, keys, extracted_data):
+
+		# loop over the given keys
+		for node_key in keys.keys():
+
+			# get named property
+			if node_key[:1] == "p":
+				sub_node = getattr(node, node_key[2:])
+
+			# get named key
+			if node_key[:1] == "k":
+				sub_node = node[node_key[2:]]
+
+			# if string we must have reached a leaf
+			if type(sub_node) in types.StringTypes:
+				extracted_data[keys[node_key]] = sub_node
+				return
+
+			# if string we must have reached a leaf
+			if type(sub_node) is types.NoneType:
+				extracted_data[keys[node_key]] = ""
+				return
+
+			# otherwise keep looping down into the rabbit hole
+			self._extract_data_from_node(sub_node, keys[node_key], extracted_data)
+
 	# main entry, do the request
-	def request(self, action=None, data=None):
+	def request(self, data=None):
 		try:
 			# submit request to the api
 			response = urlopen(
-					self.build_request(
-						self.api_url(action)),
-					self.stringify['dump'](
-						self.add_authentication_data(
-							self.data_preparation_methods[action](data))),
-					self.timeout)
+					self._build_request(
+						self._api_url()),
+					self._stringify['dump'](
+						self._add_authentication_data(
+							self._extract_data(data))),
+					self._timeout)
 
 			# if reply code was 2xx
 			if response.getcode() / 100 == 2:
-				return stringify['load'](response.read())
+				return self._stringify['load'](response.read())
 
 		# starting from here, handle all error conditions
 			err_msg = u"Bad return status from API request."
@@ -319,40 +359,38 @@ class PoolApiBase(object):
 				type(ex).__name__
 		raise PoolApiException(
 			err_msg,
-			self.api_url(),
+			self._api_url(),
 			data)
 
 
 # class to act on custom flavors on the pool
-class PoolApiCustomFlavors(PoolApiBase):
-	api_object = 'custom-flavors'
+class CustomFlavorsPoolApiBase(PoolApiBase):
+	_api_object = 'custom-flavors'
 
-	def __init__(self, *args, **kwargs):
-		PoolApiBase.__init__(self, *args, **kwargs)
 
-		# register data preparation methods
-		for (k, v) in {'create': self.prepare_create_data,
-								 'delete': self.prepare_delete_data}.items():
-				self.add_data_preparation_method(k, v)
+# class to create new flavors on pool
+class CustomFlavorsPoolApiCreate(CustomFlavorsPoolApiBase):
+	_action = "create"
+	_data_keys = {
+		'k:flavor': {
+			'p:osid': 'osid',
+			'p:ask': 'ask',
+			'p:description': 'description',
+			'p:name': 'name',
+			'p:vpus': 'vpus',
+			'p:memory': 'memory',
+			'p:disk': 'disk',
+			'p:launches': 'launches',
+			'p:active': 'active',
+			'p:hot': 'hot',
+			'p:rate': 'rate',
+			'p:network': 'network'}}
 
-	# prepare data to create a custom flavor in the pool
-	def prepare_create_data(self, data):
-		return {
-			'osid': data['flavor'].osid,
-			'ask': data['flavor'].ask,
-			'description': data['flavor'].description,
-			'name': data['flavor'].name,
-			'vpus': data['flavor'].vpus,
-			'memory': data['flavor'].memory,
-			'disk': data['flavor'].disk,
-			'launches': data['flavor'].launches,
-			'active': data['flavor'].active,
-			'hot': data['flavor'].hot,
-			'rate': data['flavor'].rate,
-			'network': data['flavor'].network}
 
-	# prepare the data to delete a custom flavor in the pool
-	def prepare_delete_data(self, data):
-		return {
-			'osid': data['flavor'].osid,
-			'name': data['flavor'].name}
+# class to delete flavors on pool
+class CustomFlavorsPoolApiDelete(CustomFlavorsPoolApiBase):
+	_action = "update"
+	_data_keys = {
+		'k:flavor': {
+			'p:osid': 'osid',
+			'p:name': 'name'}}

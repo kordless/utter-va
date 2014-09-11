@@ -340,7 +340,7 @@ def flavors(app):
 		flavors = Flavors()
 
 		if appliance.collect_flavors:
-			flavors.sync_from_openstack()
+			flavors.sync_from_openstack(appliance)
 
 		response = flavors.sync(appliance)
 
