@@ -249,12 +249,12 @@ class PoolApiBase(object):
 	_timeout = 10
 	_stringify = {'dump': json.dumps, 'load': json.loads}
 
-	# keys that should be taken from data to be passed to api
-	# data format:
-	# first letter of key can be 'k' for 'key' or 'p' for 'property'
-	# second letter must be :
-	# starting from third letter on comes the value
-	# values of final leaf nodes are names to be used in data passed to pool
+	# keys/properties that should be taken from data to be passed to api
+	# format specification:
+	#   first letter of dict key must be 'k' for 'key' or 'p' for 'property'
+	#   second letter must be ':'
+	#   starting from third letter on comes the value
+	#   values of final leaf nodes are names to be used in data passed to pool
 	_data_keys = {}
 
 	# which object on the api should be selected
@@ -321,7 +321,7 @@ class PoolApiBase(object):
 				extracted_data[keys[node_key]] = sub_node
 				return
 
-			# if string we must have reached a leaf
+			# if none we must have reached a leaf
 			if type(sub_node) is types.NoneType:
 				extracted_data[keys[node_key]] = ""
 				return
