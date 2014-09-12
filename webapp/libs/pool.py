@@ -317,14 +317,16 @@ class PoolApiBase(object):
 				sub_node = node[node_key[2:]]
 
 			# if string we must have reached a leaf
-			if type(sub_node) in types.StringTypes:
+			if type(sub_node) in types.StringTypes or \
+					type(sub_node) == types.IntType or \
+					type(sub_node) == types.BooleanType:
 				extracted_data[keys[node_key]] = sub_node
-				return
+				continue
 
 			# if none we must have reached a leaf
 			if type(sub_node) is types.NoneType:
 				extracted_data[keys[node_key]] = ""
-				return
+				continue
 
 			# otherwise keep looping down into the rabbit hole
 			self._extract_data_from_node(sub_node, keys[node_key], extracted_data)
@@ -365,7 +367,7 @@ class PoolApiBase(object):
 
 # class to act on custom flavors on the pool
 class CustomFlavorsPoolApiBase(PoolApiBase):
-	_api_object = 'custom-flavors'
+	_api_object = 'flavors'
 
 
 # class to create new flavors on pool
@@ -373,7 +375,6 @@ class CustomFlavorsPoolApiCreate(CustomFlavorsPoolApiBase):
 	_action = "create"
 	_data_keys = {
 		'k:flavor': {
-			'p:osid': 'osid',
 			'p:ask': 'ask',
 			'p:description': 'description',
 			'p:name': 'name',
@@ -384,7 +385,8 @@ class CustomFlavorsPoolApiCreate(CustomFlavorsPoolApiBase):
 			'p:active': 'active',
 			'p:hot': 'hot',
 			'p:rate': 'rate',
-			'p:network': 'network'}}
+			'p:network_down': 'network_down',
+			'p:network_up': 'network_up'}}
 
 
 # class to create new flavors on pool

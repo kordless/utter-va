@@ -31,7 +31,7 @@ class Flavors(CRUDMixin,  db.Model):
 	# 2 - created on openstack, needs to be created on pool
 	# 1 - updated on openstack, needs to be updated on pool
 	# 0 - all well, nothing to be done
-	active = db.Column(db.Integer)
+	active = db.Column(db.Boolean)
 	source = db.Column(db.Integer)
 	# possible sources are:
 	# 0 - pool
