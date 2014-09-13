@@ -28,8 +28,6 @@ class Flavors(CRUDMixin,  db.Model):
 	# possible values are:
 	# 8 - deleted on pool, needs to be deleted on appliance and OpenStack
 	# 4 - deleted on openstack, needs to be deleted locally and on pool
-	# 2 - created on openstack, needs to be created on pool
-	# 1 - updated on openstack, needs to be updated on pool
 	# 0 - all well, nothing to be done
 	active = db.Column(db.Boolean)
 	source = db.Column(db.Integer)
@@ -167,40 +165,11 @@ class Flavors(CRUDMixin,  db.Model):
 					flavor.save()
 
 		osflavor_ids = [x.id for x in osflavors]
-		# mark all flavors that originally came from openstack but are deleted now
+		# delete all flavors that originally came from openstack but are deleted now
 		for flavor in db.session.query(Flavors).filter_by(source=0):
 			if flavor.id not in osflavor_ids:
 				flavor.flags = 4
-				flavor.save()
-
-		# execute all actions necessary to sync pool and openstack
-		for flavor in Flavors.get_all():
-
-			# sync updates from openstack to the pool
-			if flavor.flags & 1 == 1:
-				try:
-					CustomFlavorsPoolApiUpdate(appliance).request(data={'flavor': flavor})
-					flavor.flags = 0
-					flavor.save()
-				except:
-					pass
-
-			# create the new custom flavors on pool
-			if flavor.flags & 2 == 2:
-				try:
-					CustomFlavorsPoolApiCreate(appliance).request(data={'flavor': flavor})
-					flavor.flags = 0
-					flavor.save()
-				except:
-					pass
-
-			# delete custom flavors from pool
-			if flavor.flags & 4 == 4:
-				try:
-					CustomFlavorsPoolApiDelete(appliance).request(data={'flavor': flavor})
-					flavor.delete()
-				except:
-					pass
+				flavor.delete()
 
 	def sync_pool_to_openstack(self, appliance):
 		# grab image list from pool server
