@@ -100,6 +100,13 @@ class Instances(CRUDMixin, db.Model, ModelSerializerMixin):
 		self.flavor_id = flavor_id
 		self.image_id = image_id
 
+	@property
+	def address(self):
+		return db.session.query(Addresses).join(
+			Instances,
+			Instances.id == Addresses.instance_id).filter(
+				Instances.id == self.id).first().address
+
 	def toggle(self, flavor_id, active):
 		# set active/inactive state for instances with a given flavor_id
 		# we only set instances that are in state 0 - inactive, or 1 - waiting on payment
@@ -751,7 +758,13 @@ class Instances(CRUDMixin, db.Model, ModelSerializerMixin):
 			'name': self.name,
 			'image': self.image.name,
 			'state': self.state,
+			'address': self.address,
+			'expires': self.expires,
 			'flavor': {
+				'ask': self.flavor.ask,
+				'network_up': self.flavor.network_up,
+				'network_down': self.flavor.network_down,
+				'disk': self.flavor.disk,
 				'vpus': self.flavor.vpus,
 				'memory': self.flavor.memory,
 			},
