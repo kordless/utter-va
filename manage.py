@@ -339,8 +339,7 @@ def flavors(app):
 		# sync the flavors
 		flavors = Flavors()
 
-		flavors.sync_openstack_to_pool(appliance)
-		flavors.sync_pool_to_openstack(appliance)
+		flavors.sync(appliance)
 
 	return action
 

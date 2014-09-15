@@ -18,8 +18,8 @@ class Flavors(CRUDMixin,  db.Model):
 	vpus = db.Column(db.Integer)
 	memory = db.Column(db.Integer)
 	disk = db.Column(db.Integer)
-	network_up = db.Column(db.Integer)
 	network_down = db.Column(db.Integer)
+	network_up = db.Column(db.Integer)
 	rate = db.Column(db.Integer)
 	ask = db.Column(db.Integer)
 	hot = db.Column(db.Integer)
@@ -56,8 +56,8 @@ class Flavors(CRUDMixin,  db.Model):
 		memory=None,
 		disk=None,
 		# the default network limitation if none is specified is 1
-		network_up=1,
 		network_down=1,
+		network_up=1,
 		# the default price and rate is 0 if nothing is passed
 		rate=0,
 		ask=0,
@@ -75,8 +75,8 @@ class Flavors(CRUDMixin,  db.Model):
 		self.vpus = vpus
 		self.memory = memory
 		self.disk = disk
-		self.network_up = network_up
 		self.network_down = network_down
+		self.network_up = network_up
 		# rate is the price this flavor has been sold for in the past
 		self.rate = rate
 		# ask the price that this flavor costs
@@ -171,7 +171,7 @@ class Flavors(CRUDMixin,  db.Model):
 				flavor.flags = 4
 				flavor.delete()
 
-	def sync_pool_to_openstack(self, appliance):
+	def sync(self, appliance):
 		# grab image list from pool server
 		response = pool_connect(method="flavors", appliance=appliance)
 
@@ -205,7 +205,8 @@ class Flavors(CRUDMixin,  db.Model):
 					flavor.vpus = remoteflavor['vpus']
 					flavor.memory = remoteflavor['memory']
 					flavor.disk = remoteflavor['disk']
-					flavor.network = remoteflavor['network']
+					flavor.network_down = remoteflavor['network_down']
+					flavor.network_up = remoteflavor['network_up']
 					flavor.rate = remoteflavor['rate']
 					flavor.ask = remoteflavor['rate'] # set ask to market rate
 					flavor.hot = remoteflavor['hot']
@@ -225,7 +226,8 @@ class Flavors(CRUDMixin,  db.Model):
 					flavor.vpus = remoteflavor['vpus']
 					flavor.memory = remoteflavor['memory']
 					flavor.disk = remoteflavor['disk']
-					flavor.network = remoteflavor['network']
+					flavor.network_down = remoteflavor['network_down']
+					flavor.network_up = remoteflavor['network_up']
 					flavor.rate = remoteflavor['rate']
 					flavor.hot = remoteflavor['hot']
 					# we leave flavor.ask alone

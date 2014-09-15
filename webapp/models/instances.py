@@ -10,14 +10,17 @@ from webapp.models.mixins import CRUDMixin
 
 from webapp.libs.utils import generate_token, row2dict
 from webapp.libs.pool import pool_instance
+from webapp.libs.model_serializer import ModelSerializerMixin
 
 from webapp.models.models import Appliance
 from webapp.models.addresses import Addresses
 from webapp.models.images import Images
 from webapp.models.flavors import Flavors
 
+from utter_apiobjects import InstanceSchema
+
 # instance model
-class Instances(CRUDMixin, db.Model):
+class Instances(CRUDMixin, db.Model, ModelSerializerMixin):
 	__tablename__ = 'instances'
 	id = db.Column(db.Integer, primary_key=True)
 	created = db.Column(db.Integer)
@@ -55,6 +58,8 @@ class Instances(CRUDMixin, db.Model):
 	# relationships
 	flavor = db.relationship('Flavors', foreign_keys='Instances.flavor_id')
 	image = db.relationship('Images', foreign_keys='Instances.image_id')
+
+	serialization_schema = InstanceSchema
 
 	def __init__(self, 
 		created=None,
@@ -738,6 +743,48 @@ class Instances(CRUDMixin, db.Model):
 		pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
 
 		return response
+
+	def serialize(self):
+		appliance = Appliance().get()
+		schema = self.serialization_schema()
+		schema.update({
+			'name': self.name,
+			'image': self.image.name,
+			'state': self.state,
+			'flavor': {
+				'vpus': self.flavor.vpus,
+				'memory': self.flavor.memory,
+			},
+			'appliance': {
+				'location': {
+					'latitude': appliance.latitude,
+					'longitude': appliance.longitude,
+				},
+				'dynamicimages': appliance.dynamicimages,
+				'version': app.config['VERSION'],
+			},
+			'ip_addresses': [
+				{
+					'version': addr['version'],
+					'scope': addr['scope'],
+					'address': addr['address'],
+				} for addr in [
+					{
+						'version': 4,
+						'scope': 'public',
+						'address': self.publicipv4,
+					}, {
+						'version': 4,
+						'scope': 'private',
+						'address': self.privateipv4,
+					}, {
+						'version': 6,
+						'scope': 'public',
+						'address': self.publicipv6,
+					}]
+					if addr['address'] != None],
+		})
+		return schema.serialize()
 
 	def __repr__(self):
 		return '<Instance %r>' % (self.name)
