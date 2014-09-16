@@ -789,6 +789,7 @@ class Instances(CRUDMixin, db.Model, ModelSerializerMixin):
 
 		return response
 
+	# create api schema and fill it with data from self
 	def serialize(self):
 		schema = self.serialization_schema()
 		schema.fill_from_object(self)
