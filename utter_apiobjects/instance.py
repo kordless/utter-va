@@ -6,17 +6,11 @@ appliance_schema = {
 	'properties': {
 		'version': {'type': 'string'},
 		'dynamicimages': {'type': 'number'},
-		'ask': {'type': 'number'},
-		'location': {
-			'type': 'object',
-			'properties': {
-				'latitude': {'type': 'string'},
-				'longitude': {'type': 'string'},
-			},
-			'required': ['latitude', 'longitude'],
+		'apitoken': {'type': 'string'},
+		'latitude': {'type': 'string'},
+		'longitude': {'type': 'string'},
 		},
-	},
-	'required': ['version', 'dynamicimages', 'location', ],
+	'required': ['version', 'dynamicimages', 'apitoken', 'longitude', 'latitude'],
 }
 
 flavor_schema = {
@@ -31,6 +25,15 @@ flavor_schema = {
 		'memory': {'type': 'number'},
 	},
 	'required': ['ask', 'network_up', 'network_down', 'disk', 'vpus', 'memory', ],
+}
+
+image_schema = {
+	'type': 'object',
+	'title': 'Image',
+	'properties': {
+		'name': {'type': 'string'}
+	},
+	'required': ['name'],
 }
 
 ip_address_schema = {
@@ -50,7 +53,7 @@ instance_schema = {
 	'title': 'Instance',
 	'properties': {
 		'name': {'type': 'string'},
-		'image': {'type': 'string'},
+		'image': image_schema,
 		'state': {'type': 'number'},
 		'address': {'type': 'string'},
 		'console_output': {
@@ -70,5 +73,3 @@ instance_schema = {
 		'expires', 'flavor', 'appliance',
 	],
 }
-
-Instance = pjs.ObjectBuilder(instance_schema).build_classes().Instance

@@ -17,7 +17,7 @@ from webapp.models.addresses import Addresses
 from webapp.models.images import Images
 from webapp.models.flavors import Flavors
 
-from utter_apiobjects import InstanceSchema
+from utter_apiobjects import schemes
 
 # instance model
 class Instances(CRUDMixin, db.Model, ModelSerializerMixin):
@@ -59,7 +59,7 @@ class Instances(CRUDMixin, db.Model, ModelSerializerMixin):
 	flavor = db.relationship('Flavors', foreign_keys='Instances.flavor_id')
 	image = db.relationship('Images', foreign_keys='Instances.image_id')
 
-	serialization_schema = InstanceSchema
+	serialization_schema = schemes['InstanceSchema']
 
 	def __init__(self, 
 		created=None,
@@ -101,11 +101,51 @@ class Instances(CRUDMixin, db.Model, ModelSerializerMixin):
 		self.image_id = image_id
 
 	@property
+	def appliance(self):
+		return Appliance.get()
+
+	@property
+	def ip_addresses(self):
+		return [
+			{
+				'version': addr['version'],
+				'scope': addr['scope'],
+				'address': addr['address'],
+			} for addr in [
+				{
+					'version': 4,
+					'scope': 'public',
+					'address': self.publicipv4,
+				}, {
+					'version': 4,
+					'scope': 'private',
+					'address': self.privateipv4,
+				}, {
+					'version': 6,
+					'scope': 'public',
+					'address': self.publicipv6,
+				}]
+			if addr['address'] != None
+		]
+
+	@property
+	def console_output(self):
+		from webapp.libs.openstack import instance_console
+		response = instance_console(self)
+		if response['response'] == "error":
+			raise Exception("Failed to get console_output.")
+		if response['response'] == "success":
+			return response['result']['console']
+		return []
+
+	@property
 	def address(self):
-		return db.session.query(Addresses).join(
+		address = db.session.query(Addresses).join(
 			Instances,
 			Instances.id == Addresses.instance_id).filter(
-				Instances.id == self.id).first().address
+				Instances.id == self.id).first()
+		if address:
+			return address.address
 
 	def toggle(self, flavor_id, active):
 		# set active/inactive state for instances with a given flavor_id
@@ -198,9 +238,7 @@ class Instances(CRUDMixin, db.Model, ModelSerializerMixin):
 		else:
 			# found enough instances - make sure they have addresses assigned to them
 			for instance in instances:
-				instance.address = Addresses().assign(instance.id)
-				instance.update()
-
+				Addresses().assign(instance.id)
 			response['result']['message'] = "Found existing instances and assigned addresses."
 
 		return response
@@ -752,51 +790,8 @@ class Instances(CRUDMixin, db.Model, ModelSerializerMixin):
 		return response
 
 	def serialize(self):
-		appliance = Appliance().get()
 		schema = self.serialization_schema()
-		schema.update({
-			'name': self.name,
-			'image': self.image.name,
-			'state': self.state,
-			'address': self.address,
-			'expires': self.expires,
-			'flavor': {
-				'ask': self.flavor.ask,
-				'network_up': self.flavor.network_up,
-				'network_down': self.flavor.network_down,
-				'disk': self.flavor.disk,
-				'vpus': self.flavor.vpus,
-				'memory': self.flavor.memory,
-			},
-			'appliance': {
-				'location': {
-					'latitude': appliance.latitude,
-					'longitude': appliance.longitude,
-				},
-				'dynamicimages': appliance.dynamicimages,
-				'version': app.config['VERSION'],
-			},
-			'ip_addresses': [
-				{
-					'version': addr['version'],
-					'scope': addr['scope'],
-					'address': addr['address'],
-				} for addr in [
-					{
-						'version': 4,
-						'scope': 'public',
-						'address': self.publicipv4,
-					}, {
-						'version': 4,
-						'scope': 'private',
-						'address': self.privateipv4,
-					}, {
-						'version': 6,
-						'scope': 'public',
-						'address': self.publicipv6,
-					}]
-					if addr['address'] != None],
-		})
+		schema.fill_from_object(self)
 		return schema.serialize()
 
 	def __repr__(self):

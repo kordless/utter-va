@@ -20,58 +20,9 @@ def pool_instance(url=None, instance=None, next_state=None, appliance=None):
 			app.config['POOL_APPSPOT_WEBSITE'],
 			instance.name
 		)
-		apitoken = appliance.apitoken
-	else:
-		# mask our apitoken on subsequent redirects
-		apitoken = None
 
 	# response template for if things go wrong
 	response = {"response": "success", "result": {"message": ""}}
-	
-	try:
-		# getting lazy load errors every once in a while on flavors.  suggested fix here:
-		# http://stackoverflow.com/questions/4253176/issue-with-sqlalchemy-parent-instance-someclass-is-not-bound-to-a-session
-		# open ticket on this issue is here: https://github.com/StackMonkey/utter-va/issues/57
-		flavor = instance.flavor.get()
-	except:
-		app.logger.error("Lazy load error encountered on getting flavor for instance=(%s)." % instance.name)
-		response['response'] = "error"
-		response['result'] = "Lazy load error encountered."
-		return response
-
-	if instance.image:
-		image_name = instance.image.name
-	else:
-		image_name = "dynamic_image"
-
-	# build the outbound instance packet (to pool or callback service)
-	packet = { 
-		"appliance": {
-			"version": app.config['VERSION'],
-			"dynamicimages": appliance.dynamicimages,
-			"location": {
-				"latitude": appliance.latitude,
-				"longitude": appliance.longitude
-			}
-		},
-		"instance": {
-			"name": instance.name,
-			"flavor": flavor.name,
-			"image": image_name,
-			"ask": flavor.ask,
-			"address": instance.address.address,
-			"console_output": [],
-			"state": instance.state if next_state == None else next_state,
-			"expires": instance.expires,
-			"ipv4_address": instance.publicipv4 if instance.publicipv4 else "",
-			"ipv6_address": instance.publicipv6 if instance.publicipv6 else "",
-			"ipv4_private_address": instance.privateipv4 if instance.privateipv4 else ""
-		}
-	}
-
-	# append the apitoken for the pool controller for pool auth
-	if apitoken:
-		packet['appliance']['apitoken'] = apitoken
 
 	# hack up the console object, if there is one
 	if instance.console:
@@ -81,7 +32,7 @@ def pool_instance(url=None, instance=None, next_state=None, appliance=None):
 		# contact the pool and post instance info
 		request = Request(url)
 		request.add_header('Content-Type', 'application/json')
-		data = urlopen(request, json.dumps(packet), timeout=10).read()
+		data = urlopen(request, instance.serialize(), timeout=10).read()
 		pool_response = json.loads(data)
 
 		# massage the reply a bit for simple callback servers

@@ -157,6 +157,10 @@ class Appliance(CRUDMixin, db.Model):
 		# create entry
 		self.update(self)
 
+	@property
+	def version(self):
+		return app.config['VERSION']
+
 	def token_refresh(self):
 		self.apitoken = generate_token(size=64)
 
