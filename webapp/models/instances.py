@@ -10,7 +10,6 @@ from webapp.models.mixins import CRUDMixin
 
 from webapp.libs.utils import generate_token, row2dict
 from webapp.libs.pool import pool_instance
-from webapp.libs.model_serializer import ModelSerializerMixin
 
 from webapp.models.models import Appliance
 from webapp.models.addresses import Addresses
@@ -20,7 +19,7 @@ from webapp.models.flavors import Flavors
 from utter_apiobjects import schemes
 
 # instance model
-class Instances(CRUDMixin, db.Model, ModelSerializerMixin):
+class Instances(CRUDMixin, db.Model):
 	__tablename__ = 'instances'
 	id = db.Column(db.Integer, primary_key=True)
 	created = db.Column(db.Integer)
