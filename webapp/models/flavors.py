@@ -166,8 +166,8 @@ class Flavors(CRUDMixin,  db.Model):
 
 		osflavor_ids = [x.id for x in osflavors]
 		# delete all flavors that originally came from openstack but are deleted now
-		for flavor in db.session.query(Flavors).filter_by(source=0):
-			if flavor.id not in osflavor_ids:
+		for flavor in db.session.query(Flavors).filter_by(source=1):
+			if flavor.osid not in osflavor_ids:
 				flavor.flags = 4
 				flavor.delete()
 
