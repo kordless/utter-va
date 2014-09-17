@@ -491,8 +491,6 @@ class Instances(CRUDMixin, db.Model, ModelSerializerMixin):
 			response['result']['message'] = "Error creating image."
 			return response
 
-		import pdb
-		pdb.set_trace()
 		# tell openstack to start the instance
 		cluster_response = instance_start(self)
 
