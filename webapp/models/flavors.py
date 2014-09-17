@@ -56,8 +56,8 @@ class Flavors(CRUDMixin,  db.Model):
 		memory=None,
 		disk=None,
 		# the default network limitation if none is specified is 1
-		network_down=1,
-		network_up=1,
+		network_down=-1,
+		network_up=-1,
 		# the default price and rate is 0 if nothing is passed
 		rate=0,
 		ask=0,
@@ -133,7 +133,7 @@ class Flavors(CRUDMixin,  db.Model):
 			setattr(self, key, value)
 		self.save()
 
-	def sync_openstack_to_pool(self, appliance):
+	def sync_from_openstack(self, appliance):
 		from webapp.libs.openstack import list_flavors
 
 		# get all flavors that have the stackmonkey key set in their extra_specs

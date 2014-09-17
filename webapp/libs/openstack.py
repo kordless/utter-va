@@ -377,25 +377,17 @@ def flavor_verify_install(flavor):
 		if targetflavor.ram != flavor.memory: # memory wrong
 			install_flavor = True
 
-		# get the flavor network quota keys (if required)
-		try:
-			if flavor.network > 0:
-				# get the flavor keys from openstack
-				# throws not found if they don't exist
-				osikeys = targetflavor.get_keys()
-
-				# check quotas match
-				if 'quota:inbound_average' in osikeys and 'quota:outbound_average' in osikeys:
-					if flavor.network != int(osikeys['quota:inbound_average']):
-						install_flavor = True
-					if flavor.network != int(osikeys['quota:outbound_average']):
-						install_flavor = True
-				else:
+		try: 
+			# get the flavor network quota keys and check quotas match
+			osikeys = targetflavor.get_keys()
+			if flavor.network_up > 0:
+				if 'quota:outbound_average' not in osikeys or \
+						flavor.network_up != int(osikeys['quota:outbound_average']):
 					install_flavor = True
-			else:
-				# do nothing
-				pass
-
+			if flavor.network_down > 0:
+				if 'quota:inbound_average' not in osikeys or \
+						flavor.network_down != int(osikeys['quota:inbound_average']):
+					install_flavor = True
 		except:
 			# just force install
 			install_flavor = True

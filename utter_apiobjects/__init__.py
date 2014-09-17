@@ -16,7 +16,16 @@ schemes = {
 # template with functions that should be associated to the api schemas
 class SchemaTemplate(object):
 
-	def fill_from_object(self, src):
+	def fill_object_from_schema(self, dst):
+		for (k, v) in self.__class__.__dict__['__propinfo__'].iteritems():
+			if getattr(self, k) != None:
+				attr = getattr(self, k)
+				if type(attr) == types.ListType:
+					setattr(dst, k, attr)
+				else:
+					setattr(dst, k, attr.as_dict())
+
+	def fill_schema_from_object(self, src):
 		self.update(self.iterate_properties(src, self.__class__.__dict__['__propinfo__']))
 
 	# iterate over properties of schema and copy properties from src object into schema
@@ -34,5 +43,7 @@ class SchemaTemplate(object):
 # iterate over schemas to add some functions to them
 for (k, v) in schemes.iteritems():
 	schemes[k] = getattr(pjs.ObjectBuilder(v[0]).build_classes(), v[1])
-	for method in ['fill_from_object', 'iterate_properties']:
+	for method in ['fill_schema_from_object',
+								'fill_object_from_schema',
+								'iterate_properties']:
 		setattr(schemes[k], method, SchemaTemplate.__dict__[method])

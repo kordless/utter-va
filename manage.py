@@ -340,6 +340,7 @@ def flavors(app):
 		flavors = Flavors()
 
 		flavors.sync(appliance)
+		flavors.sync_from_openstack(appliance)
 
 	return action
 

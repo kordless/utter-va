@@ -225,10 +225,7 @@ class Instances(CRUDMixin, db.Model, ModelSerializerMixin):
 				# finally, assign a bitcoin address
 				addresses = Addresses()
 				address = addresses.assign(instance.id)
-				if address:
-					instance.address = address	
-					instance.update()
-				else:
+				if not address:
 					# we have no address, so delete what we made
 					instance.delete(instance)
 
@@ -494,6 +491,8 @@ class Instances(CRUDMixin, db.Model, ModelSerializerMixin):
 			response['result']['message'] = "Error creating image."
 			return response
 
+		import pdb
+		pdb.set_trace()
 		# tell openstack to start the instance
 		cluster_response = instance_start(self)
 
@@ -792,7 +791,7 @@ class Instances(CRUDMixin, db.Model, ModelSerializerMixin):
 	# create api schema and fill it with data from self
 	def serialize(self):
 		schema = self.serialization_schema()
-		schema.fill_from_object(self)
+		schema.fill_schema_from_object(self)
 		return schema.serialize()
 
 	def __repr__(self):
