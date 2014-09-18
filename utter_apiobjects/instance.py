@@ -1,18 +1,3 @@
-import python_jsonschema_objects as pjs
-
-appliance_schema = {
-	'type': 'object',
-	'title': 'Appliance',
-	'properties': {
-		'version': {'type': 'string'},
-		'dynamicimages': {'type': 'number'},
-		'apitoken': {'type': 'string'},
-		'latitude': {'type': 'string'},
-		'longitude': {'type': 'string'},
-		},
-	'required': ['version', 'dynamicimages', 'apitoken', 'longitude', 'latitude'],
-}
-
 flavor_schema = {
 	'type': 'object',
 	'title': 'Flavor',
@@ -66,10 +51,9 @@ instance_schema = {
 			'items': ip_address_schema,
 		},
 		'flavor': flavor_schema,
-		'appliance': appliance_schema,
 	},
 	'required': [
 		'name', 'image', 'state', 'address',
-		'expires', 'flavor', 'appliance',
+		'expires', 'flavor',
 	],
 }

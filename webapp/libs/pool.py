@@ -10,58 +10,34 @@ from urllib2 import HTTPError
 from webapp import app
 from webapp.libs.utils import row2dict
 
+from utter_apiobjects import schemes
+
 # provides callback initiation for an instance to the pool operator/callback handler
 # calls InstancesHandler() in utter-pool's apihandlers.py 
 def pool_instance(url=None, instance=None, next_state=None, appliance=None):
 
-	# no custom callback uses pool's default URL
-	if not url:
-		url = "%s/api/v1/instances/%s/" % (
-			app.config['POOL_APPSPOT_WEBSITE'],
-			instance.name
-		)
-
 	# response template for if things go wrong
 	response = {"response": "success", "result": {"message": ""}}
 
-	# hack up the console object, if there is one
-	if instance.console:
-		for line in iter(instance.console.splitlines()):
-			packet['instance']['console_output'].append(escape(line))
 	try:
-		# contact the pool and post instance info
-		request = Request(url)
-		request.add_header('Content-Type', 'application/json')
-		data = urlopen(request, instance.serialize(), timeout=10).read()
-		pool_response = json.loads(data)
-
-		# massage the reply a bit for simple callback servers
-		if 'response' not in pool_response:
-			# no response key, so check if we have an instance key
-			if 'instance' in pool_response:
-				# overload that into the response object
-				response['result']['message'] = "Loaded instance object into response."
-				response['result']['instance'] = pool_response['instance']
-			else:
-				# we don't have a response or an instance
-				app.logger.error("Didn't find an instance key in the response from the server.")
-				raise ValueError
+		pool_api = PoolApiInstancesUpdate(appliance)
+		if url:
+			pool_api.use_custom_url(url)
 		else:
-			response = pool_response
-				
-	except HTTPError, e:
-		response['response'] = "error"
-		response['result']['message'] = "Error code %s returned from server." % str(e.code)
-	except IOError as ex:
-		response['response'] = "error"
-		response['result']['message'] = "Can't contact callback server.  Try again later."
-	except ValueError as ex:
-		response['response'] = "error"
-		response['result']['message'] = "Having issues parsing JSON from the site: %s.  Open a ticket." % type(ex).__name__
-	except Exception as ex:
-		response['response'] = "error"
-		response['result']['message'] = "An error of type %s has occured.  Open a ticket." % type(ex).__name__
+			pool_api.use_custom_url(
+				"%s/api/v1/instances/%s/" % (
+				app.config['POOL_APPSPOT_WEBSITE'],
+				instance.name
+			))
 
+		# send instance data to the pool and keep response
+		response['result']['instance'] = pool_api.request(json.dumps({
+			'appliance': appliance.as_dict(),
+			'instance': instance.as_dict(),
+		}))
+	except PoolApiException as e:
+		response['response'] = "error"
+		response['result']['message'] = str(e)
 	return response
 
 # put instances up for sale
@@ -183,14 +159,17 @@ def pool_connect(method="authorization", appliance=None):
 
 
 class PoolApiException(Exception):
-	url = ""
-	data = ""
 
 	def __init__(self, message, url, data):
 		Exception.__init__(self, message)
 		app.logger.error(message)
 		self.url = url
 		self.data = data
+		self.msg = message
+
+	def __str__(self):
+		return u'got "{msg}" when calling "{url}"'.format(
+			msg=self.msg, url=self.url)
 
 
 class PoolApiBase(object):
@@ -198,15 +177,7 @@ class PoolApiBase(object):
 	_api_version = u'v1'
 	_content_type = u'application/json'
 	_timeout = 10
-	_stringify = {'dump': json.dumps, 'load': json.loads}
-
-	# keys/properties that should be taken from data to be passed to api
-	# format specification:
-	#   first letter of dict key must be 'k' for 'key' or 'p' for 'property'
-	#   second letter must be ':'
-	#   starting from third letter on comes the value
-	#   values of final leaf nodes are names to be used in data passed to pool
-	_data_keys = {}
+	_custom_url = None
 
 	# which object on the api should be selected
 	@abc.abstractproperty
@@ -221,19 +192,10 @@ class PoolApiBase(object):
 	def __init__(self, appliance):
 		self._appliance = appliance
 
-	# take an already existing dict of data and add the authentication data
-	def _add_authentication_data(self, data):
-		data['appliance'] = {
-			"apitoken": self._appliance.apitoken,
-			"dynamicimages": self._appliance.dynamicimages,
-			"location": {
-				"latitude": self._appliance.latitude,
-				"longitude": self._appliance.longitude
-			}}
-		return data
-
 	# build the url to the api endpoint
 	def _api_url(self):
+		if self._custom_url:
+			return self._custom_url
 		return u'{host}/{base}/{ver}/{api_object}/{action}'.format(
 			host=app.config['POOL_APPSPOT_WEBSITE'],
 			base=self._uri_base,
@@ -247,40 +209,9 @@ class PoolApiBase(object):
 		request.add_header('Content-Type', self._content_type)
 		return request
 
-	# extract the required data from the passed object
-	def _extract_data(self, data):
-		extracted_data = {}
-		self._extract_data_from_node(data, self._data_keys, extracted_data)
-		return extracted_data
-
-	# iterate over nodes of tree
-	def _extract_data_from_node(self, node, keys, extracted_data):
-
-		# loop over the given keys
-		for node_key in keys.keys():
-
-			# get named property
-			if node_key[:1] == "p":
-				sub_node = getattr(node, node_key[2:])
-
-			# get named key
-			if node_key[:1] == "k":
-				sub_node = node[node_key[2:]]
-
-			# if string we must have reached a leaf
-			if type(sub_node) in types.StringTypes or \
-					type(sub_node) == types.IntType or \
-					type(sub_node) == types.BooleanType:
-				extracted_data[keys[node_key]] = sub_node
-				continue
-
-			# if none we must have reached a leaf
-			if type(sub_node) is types.NoneType:
-				extracted_data[keys[node_key]] = ""
-				continue
-
-			# otherwise keep looping down into the rabbit hole
-			self._extract_data_from_node(sub_node, keys[node_key], extracted_data)
+	# use given url instead of the default one
+	def use_custom_url(self, url):
+		self._custom_url = url
 
 	# main entry, do the request
 	def request(self, data=None):
@@ -288,15 +219,11 @@ class PoolApiBase(object):
 			# submit request to the api
 			response = urlopen(
 					self._build_request(
-						self._api_url()),
-					self._stringify['dump'](
-						self._add_authentication_data(
-							self._extract_data(data))),
-					self._timeout)
+						self._api_url()), data, self._timeout)
 
 			# if reply code was 2xx
 			if response.getcode() / 100 == 2:
-				return self._stringify['load'](response.read())
+				return json.loads(response.read())
 
 		# starting from here, handle all error conditions
 			err_msg = u"Bad return status from API request."
@@ -317,38 +244,10 @@ class PoolApiBase(object):
 
 
 # class to act on custom flavors on the pool
-class CustomFlavorsPoolApiBase(PoolApiBase):
-	_api_object = 'flavors'
+class PoolApiInstancesBase(PoolApiBase):
+	_api_object = 'instances'
 
 
 # class to create new flavors on pool
-class CustomFlavorsPoolApiCreate(CustomFlavorsPoolApiBase):
-	_action = "create"
-	_data_keys = {
-		'k:flavor': {
-			'p:ask': 'ask',
-			'p:description': 'description',
-			'p:name': 'name',
-			'p:vpus': 'vpus',
-			'p:memory': 'memory',
-			'p:disk': 'disk',
-			'p:launches': 'launches',
-			'p:active': 'active',
-			'p:hot': 'hot',
-			'p:rate': 'rate',
-			'p:network_down': 'network_down',
-			'p:network_up': 'network_up'}}
-
-
-# class to create new flavors on pool
-class CustomFlavorsPoolApiUpdate(CustomFlavorsPoolApiCreate):
+class PoolApiInstancesUpdate(PoolApiInstancesBase):
 	_action = "update"
-
-
-# class to delete flavors on pool
-class CustomFlavorsPoolApiDelete(CustomFlavorsPoolApiBase):
-	_action = "delete"
-	_data_keys = {
-		'k:flavor': {
-			'p:osid': 'osid',
-			'p:name': 'name'}}

@@ -16,10 +16,11 @@ from webapp.models.addresses import Addresses
 from webapp.models.images import Images
 from webapp.models.flavors import Flavors
 
+from webapp.models.schema_mixin import ModelSchemaMixin
 from utter_apiobjects import schemes
 
 # instance model
-class Instances(CRUDMixin, db.Model):
+class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 	__tablename__ = 'instances'
 	id = db.Column(db.Integer, primary_key=True)
 	created = db.Column(db.Integer)
@@ -58,7 +59,7 @@ class Instances(CRUDMixin, db.Model):
 	flavor = db.relationship('Flavors', foreign_keys='Instances.flavor_id')
 	image = db.relationship('Images', foreign_keys='Instances.image_id')
 
-	serialization_schema = schemes['InstanceSchema']
+	schema = schemes['InstanceSchema']
 
 	def __init__(self, 
 		created=None,
@@ -784,12 +785,6 @@ class Instances(CRUDMixin, db.Model):
 		pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
 
 		return response
-
-	# create api schema and fill it with data from self
-	def serialize(self):
-		schema = self.serialization_schema()
-		schema.fill_schema_from_object(self)
-		return schema.serialize()
 
 	def __repr__(self):
 		return '<Instance %r>' % (self.name)

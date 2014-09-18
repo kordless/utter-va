@@ -1,7 +1,5 @@
 from webapp import app
 from webapp import db
-from webapp.libs.pool import CustomFlavorsPoolApiDelete
-from webapp.libs.pool import CustomFlavorsPoolApiCreate
 
 from webapp.models.mixins import CRUDMixin
 

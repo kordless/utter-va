@@ -5,7 +5,7 @@ import python_jsonschema_objects as pjs
 from python_jsonschema_objects.classbuilder import ProtocolBase
 
 from instance import instance_schema
-from instance import appliance_schema
+from appliance import appliance_schema
 
 
 schemes = {

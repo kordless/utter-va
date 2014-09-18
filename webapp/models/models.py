@@ -16,10 +16,13 @@ from webapp.libs.geoip import get_geodata
 from webapp.models.images import Images
 from webapp.models.flavors import Flavors
 
+from webapp.models.schema_mixin import ModelSchemaMixin
+from utter_apiobjects import schemes
+
 # includes user, twitterbot, openstack, appliance, status models
 
 # user model
-class User(UserMixin, CRUDMixin,  db.Model):
+class User(UserMixin, CRUDMixin,  db.Model, ModelSchemaMixin):
 	__tablename__ = 'users'
 	id = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(100), unique=True)
@@ -85,7 +88,7 @@ class OpenStack(CRUDMixin, db.Model):
 
 
 # appliance model
-class Appliance(CRUDMixin, db.Model):
+class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 	__tablename__ = 'appliance'
 	id = db.Column(db.Integer, primary_key=True)
 	apitoken = db.Column(db.String(100), unique=True)
@@ -100,6 +103,7 @@ class Appliance(CRUDMixin, db.Model):
 	local_ip = db.Column(db.String(100), unique=True)
 	create_flavors = db.Column(db.Boolean)
 	collect_flavors = db.Column(db.Boolean)
+	schema = schemes['ApplianceSchema']
 
 	def __init__(
 		self, 
