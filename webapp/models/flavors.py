@@ -136,8 +136,8 @@ class Flavors(CRUDMixin,  db.Model):
 	def sync_from_openstack(self, appliance):
 		from webapp.libs.openstack import list_flavors
 
-		# get all flavors that have the stackmonkey key set in their extra_specs
-		response = list_flavors(filter_by='stackmonkey')
+		# get all flavors that have the stackmonkey:ask_price key set in their extra_specs
+		response = list_flavors(filter_by='stackmonkey:ask_price')
 		if response['response'] == "error":
 			app.logger.error("Failed to list flavors from OpenStack cluster")
 			return
