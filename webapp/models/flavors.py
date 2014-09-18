@@ -45,7 +45,7 @@ class Flavors(CRUDMixin,  db.Model):
 		('disk', 'disk'),
 		('network_down', 'extra_spec:int:quota:inbound_average'),
 		('network_up', 'extra_spec:int:quota:outbound_average'),
-		('ask', 'extra_spec:int:stackmonkey')]
+		('ask', 'extra_spec:int:stackmonkey:ask_price')]
 
 	def __init__(
 		self,
