@@ -32,7 +32,7 @@ def pool_instance(url=None, instance=None, next_state=None, appliance=None):
 
 		# send instance data to the pool and keep response
 		response['result']['instance'] = json.loads(
-			instance_json = pool_api.request(json.dumps({
+			pool_api.request(json.dumps({
 				'appliance': appliance.as_schema().as_dict(),
 				'instance': instance.as_schema().as_dict(),
 			})))
