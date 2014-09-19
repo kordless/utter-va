@@ -3,7 +3,7 @@ flavor_schema = {
 	'type': 'object',
 	'title': 'Flavor',
 	'properties': {
-		'osid': {'type': 'number'},
+		'osid': {'type': 'string'},
 		'name': {'type': 'string'},
 		'description': {'type': 'string'},
 		'rate': {'type': 'number'},

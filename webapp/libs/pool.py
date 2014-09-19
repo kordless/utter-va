@@ -31,10 +31,12 @@ def pool_instance(url=None, instance=None, next_state=None, appliance=None):
 			))
 
 		# send instance data to the pool and keep response
-		response['result']['instance'] = pool_api.request(json.dumps({
-			'appliance': appliance.as_schema().as_dict(),
-			'instance': instance.as_schema().as_dict(),
-		}))
+		response['result']['instance'] = json.loads(
+			instance_json = pool_api.request(json.dumps({
+				'appliance': appliance.as_schema().as_dict(),
+				'instance': instance.as_schema().as_dict(),
+			})))
+
 	except PoolApiException as e:
 		response['response'] = "error"
 		response['result']['message'] = str(e)
@@ -162,7 +164,6 @@ class PoolApiException(Exception):
 
 	def __init__(self, message, url, data):
 		Exception.__init__(self, message)
-		app.logger.error(message)
 		self.url = url
 		self.data = data
 		self.msg = message
@@ -220,7 +221,7 @@ class PoolApiBase(object):
 
 			# if reply code was 2xx
 			if str(response.getcode())[:1] == '2':
-				return json.loads(response.read())
+				return response.read()
 
 		# starting from here, handle all error conditions
 			err_msg = u"Bad return status from API request."

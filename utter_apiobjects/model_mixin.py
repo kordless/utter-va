@@ -1,5 +1,7 @@
 import abc
 
+from utter_apiobjects.helpers import ApiSchemaHelper
+
 class ModelSchemaMixin(object):
 
 	@abc.abstractproperty
@@ -9,7 +11,7 @@ class ModelSchemaMixin(object):
 	# create api schema and fill it with data from self
 	def as_schema(self):
 		schema = self.object_schema()
-		schema.fill_schema_from_object(self)
+		ApiSchemaHelper.fill_schema_from_object(schema, self)
 		return schema
 
 	# render list of objects of this model

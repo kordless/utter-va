@@ -5,11 +5,13 @@ from webapp import db
 
 from webapp.models.mixins import CRUDMixin
 
-from webapp.libs.utils import generate_token, row2dict
+from webapp.libs.utils import generate_token
 from webapp.libs.pool import pool_connect
 from webapp.libs.pool import PoolApiFlavorsList
+from webapp.libs.pool import PoolApiException
 
 from utter_apiobjects.model_mixin import ModelSchemaMixin
+from utter_apiobjects.helpers import ApiSchemaHelper
 from utter_apiobjects import schemes
 
 # flavors model
@@ -180,80 +182,59 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				flavor.delete()
 
 	def sync(self, appliance):
-		# grab flavor list from pool server
-		response = pool_connect(method="flavors", appliance=appliance)
-		pool_api = PoolApiFlavorsList()
-		response = pool_api.request(json.dumps({
-			'appliance': appliance.as_schema().as_dict()}))
+		response = {'response': 'success', 'result': ''}
 
-		# remote sync
-		if response['response'] == "success":
-			remoteflavors = response['result']
+		try:
+			# validate the returned dictionary and unpack it into a dictionary
+			flavor_list_schema = schemes['FlavorListSchema']().from_json(
+				# grab flavor list from pool server
+				PoolApiFlavorsList().request())
+		except ValueError:
+			app.logger.error("Received Flavor List in broken format from pool.")
+			return
+		except PoolApiException as e:
+			app.logger.error(str(e))
+			return
 
-			# update the database with the flavors
-			for remoteflavor in remoteflavors['flavors']:
-				flavor = db.session.query(Flavors).filter_by(name=remoteflavor['name']).first()
+		# update the database with the flavors
+		for flavor_schema in flavor_list_schema.items:
+			# in case of update we will want to keep certain values
+			keep_values = {}
 
-				# check if we need to delete flavor from local db
-				# b'001000' indicates delete flavor
-				# TODO: need to cleanup OpenStack flavor if we uninstall
-				if (remoteflavor['flags'] & 8) == 8:
-					# only delete if we have it
-					if flavor is not None:
-						# remove the flavor from the database
-						flavor.delete(flavor)
-					else:
-						# we don't have it, so we do nothing
-						pass
+			flavor = db.session.query(Flavors).filter_by(
+				name=flavor_schema.name.as_dict()).first()
 
-				elif flavor is None:
-					# we don't have the flavor coming in from the server
-					flavor = Flavors()
+			# check if we need to delete flavor from local db
+			# b'001000' indicates delete flavor
+			# TODO: need to cleanup OpenStack flavor if we uninstall
+			if (flavor_schema.flags.as_dict() & 8) == 8 and flavor != None:
+				# only delete if we have it
+				flavor.delete()
 
-					# create a new flavor
-					flavor.name = remoteflavor['name']
-					flavor.description = remoteflavor['description']
-					flavor.vpus = remoteflavor['vpus']
-					flavor.memory = remoteflavor['memory']
-					flavor.disk = remoteflavor['disk']
-					flavor.network_down = remoteflavor['network_down']
-					flavor.network_up = remoteflavor['network_up']
-					flavor.rate = remoteflavor['rate']
-					flavor.ask = remoteflavor['rate'] # set ask to market rate
-					flavor.hot = remoteflavor['hot']
-					flavor.launches = remoteflavor['launches']
-					flavor.flags = remoteflavor['flags']
-					flavor.source = 0 # source is pool
-					flavor.active = 1
+			elif flavor is None:
+				# we don't have the flavor coming in from the server
+				flavor = Flavors()
+			else:
+				# keep a few values that shouldn't be updated
+				keep_values = {
+					'ask': flavor.ask,
+					'active': flavor.active,
+				}
 
-					# add and commit
-					flavor.update(flavor)
+			ApiSchemaHelper.fill_object_from_schema(flavor_schema, flavor)
 
-				# we have the flavor and need to update it	
-				else:
-					# we have the flavor already, so update
-					flavor.name = remoteflavor['name']
-					flavor.description = remoteflavor['description']
-					flavor.vpus = remoteflavor['vpus']
-					flavor.memory = remoteflavor['memory']
-					flavor.disk = remoteflavor['disk']
-					flavor.network_down = remoteflavor['network_down']
-					flavor.network_up = remoteflavor['network_up']
-					flavor.rate = remoteflavor['rate']
-					flavor.hot = remoteflavor['hot']
-					# we leave flavor.ask alone
-					# we leave flavor.active alone
-					flavor.launches = remoteflavor['launches']
-					flavor.flags = remoteflavor['flags']
-					
-					# update
-					flavor.update(flavor)
+			# restore those values that we don't want to update
+			for (k, v) in keep_values.items():
+				setattr(flavor, k, v)
 
-			# overload the results with the list of current flavors
-			response['result']['flavors'] = []
-			flavors = db.session.query(Flavors).all()
-			for flavor in flavors:
-				response['result']['flavors'].append(row2dict(flavor))
+			flavor.update(flavor)
+
+		# overload the results with the list of current flavors
+		response['result'] = {
+			'flavors': [
+				x.as_schema().as_dict()
+				for x in db.session.query(Flavors).all()]
+		}
 		
 		return response
 
