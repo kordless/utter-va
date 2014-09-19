@@ -5,9 +5,12 @@ from webapp.models.mixins import CRUDMixin
 
 from webapp.libs.utils import generate_token, row2dict
 from webapp.libs.pool import pool_connect
+from webapp.models.schema_mixin import ModelSchemaMixin
+
+from utter_apiobjects import schemes
 
 # flavors model
-class Flavors(CRUDMixin,  db.Model):
+class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 	__tablename__ = 'flavors'
 	id = db.Column(db.Integer, primary_key=True)
 	osid = db.Column(db.String(100))
@@ -45,6 +48,9 @@ class Flavors(CRUDMixin,  db.Model):
 		('network_down', 'extra_spec:int:quota:inbound_average'),
 		('network_up', 'extra_spec:int:quota:outbound_average'),
 		('ask', 'extra_spec:int:stackmonkey:ask_price')]
+
+	# which schema should be used for validation and serialization
+	schema = schemes['FlavorSchema']
 
 	def __init__(
 		self,
@@ -171,7 +177,7 @@ class Flavors(CRUDMixin,  db.Model):
 				flavor.delete()
 
 	def sync(self, appliance):
-		# grab image list from pool server
+		# grab flavor list from pool server
 		response = pool_connect(method="flavors", appliance=appliance)
 
 		# remote sync
@@ -183,7 +189,7 @@ class Flavors(CRUDMixin,  db.Model):
 				flavor = db.session.query(Flavors).filter_by(name=remoteflavor['name']).first()
 
 				# check if we need to delete flavor from local db
-				# b'001000' indicates delete image
+				# b'001000' indicates delete flavor
 				# TODO: need to cleanup OpenStack flavor if we uninstall
 				if (remoteflavor['flags'] & 8) == 8:
 					# only delete if we have it

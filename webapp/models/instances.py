@@ -59,6 +59,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 	flavor = db.relationship('Flavors', foreign_keys='Instances.flavor_id')
 	image = db.relationship('Images', foreign_keys='Instances.image_id')
 
+	# which schema should be used for validation and serialization
 	schema = schemes['InstanceSchema']
 
 	def __init__(self, 

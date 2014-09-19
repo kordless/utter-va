@@ -6,11 +6,13 @@ from python_jsonschema_objects.classbuilder import ProtocolBase
 
 from instance import instance_schema
 from appliance import appliance_schema
+from flavor import flavor_schema
 
 
 schemes = {
 	'InstanceSchema': (instance_schema, 'Instance'),
 	'ApplianceSchema': (appliance_schema, 'Appliance'),
+	'FlavorSchema': (flavor_schema, 'Flavor'),
 }
 
 # template with functions that should be associated to the api schemas

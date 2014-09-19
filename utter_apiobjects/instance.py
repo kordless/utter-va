@@ -1,16 +1,4 @@
-flavor_schema = {
-	'type': 'object',
-	'title': 'Flavor',
-	'properties': {
-		'ask': {'type': 'number'},
-		'network_up': {'type': 'number'},
-		'network_down': {'type': 'number'},
-		'disk': {'type': 'number'},
-		'vpus': {'type': 'number'},
-		'memory': {'type': 'number'},
-	},
-	'required': ['ask', 'network_up', 'network_down', 'disk', 'vpus', 'memory', ],
-}
+from utter_apiobjects.flavor import flavor_schema
 
 image_schema = {
 	'type': 'object',
