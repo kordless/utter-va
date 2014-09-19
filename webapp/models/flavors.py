@@ -32,6 +32,7 @@ class Flavors(CRUDMixin,  db.Model):
 	# possible sources are:
 	# 0 - pool
 	# 1 - openstack cluster
+	# 2 - merge generated in pool
 
 	# mappings of names with openstack flavor properties and extra keys
 	# used in method get_values_from_osflavor

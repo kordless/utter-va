@@ -70,25 +70,12 @@
         <div class="col-md-12">
           <div class="section-header">
             <div class="bs-callout bs-callout-info bs-callout-top">
-              <h4>Flavor synchronization settings</h4>
-							<p>This setting controls if flavors from the <strong>pool</strong> should be created on the <strong>OpenStack cluster</strong></p>
-              <p>If flavors should be synced from the <strong>StackMonkey pool</strong>, the appliance needs to have the appropriate <strong>permissions</strong> to create flavors on the <strong>OpenStack cluster</strong>. If unsure about those <strong>permissions</strong>, just leave this setting in the <strong>on</strong> position. Once the appliance detects it has no <strong>permissions</strong> to create flavors on the <strong>OpenStack cluster</strong> it will set it back to <strong>off</strong> automatically.</p>
-              <p>If the setting to <strong>Sync from OpenStack Cluster</strong> is set to on, the appliance will scan the list of flavors via the nova api. All flavors that have a key <strong>stackmonkey</strong> in the extra specs and a <strong>numberic value</strong> associated to this key will be synchronized. The value should be an integer representing the <strong>asking price</strong> for this flavor.</p>
-              <p>This example shows how to add the <strong>stackmonkey</strong> key to the extra_specs of the flavor with id <strong>1000</strong> and set the asking price to <strong>5</strong>:</p>
-              <p><strong><i># nova flavor-key 1000 set stackmonkey=5</i></strong></p>
+              <h4>Flavor synchronization from OpenStack cluster</h4>
+							<p>You can sell the existing <strong>flavors</strong> of your OpenStack cluster via <strong>StackMonkey</strong> by marking them with an <strong>extra_specs</strong> key indicating that a flavor should be sold and the <strong>price</strong> you are asking for it</p>
+							<p>This <strong>example</strong> demonstrates how you would sell your <strong>flavor</strong> with the <strong>id 1000</strong> for a price of <strong>5 μBTC</strong>. It needs to be run as a user with sufficient <strong>permissions</strong>, for example <strong>admin</strong>:<p>
+              <p><strong><i># nova flavor-key 1000 set stackmonkey:ask_price=5</i></strong></p>
+							<p><strong>After a few minutes</strong> the newly marked flavor should be <strong>synced</strong> and appear on this page with the defined <strong>price</strong>.</p>
             </div>
-            <table class="table table-hover">
-              <tbody>
-                <tr>
-                  <td>
-                    <div class="toggle-modern">
-                      <div id="create_flavors" class="{% if appliance.create_flavors %} enabled{% endif %}"></div>
-                    </div>
-                  </td>  
-                  <td>Sync from StackMonkey pool</td>
-                </tr>
-              </tbody>
-            </table>
           </div>
         </div>
       </div>

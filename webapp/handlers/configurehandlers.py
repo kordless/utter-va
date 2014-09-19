@@ -7,6 +7,7 @@ from urllib2 import urlopen
 
 from flask import Blueprint, render_template, jsonify, flash, redirect, session, url_for, request
 from flask.ext.login import login_user, logout_user, current_user, login_required
+from sqlalchemy import or_
 
 from webapp import app, db, bcrypt, login_manager
 
@@ -49,7 +50,8 @@ def configure_flavors():
 	settings = Status().check_settings()
 
 	# load flavors
-	flavors = db.session.query(Flavors).all()
+	flavors = db.session.query(Flavors).filter(
+		or_(Flavors.source==0, Flavors.source==1)).all()
 
 	# load appliance
 	appliance = Appliance.get()
