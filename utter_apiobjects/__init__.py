@@ -7,12 +7,14 @@ from python_jsonschema_objects.classbuilder import ProtocolBase
 from instance import instance_schema
 from appliance import appliance_schema
 from flavor import flavor_schema
+from flavor import flavor_list_schema
 
 
 schemes = {
 	'InstanceSchema': (instance_schema, 'Instance'),
 	'ApplianceSchema': (appliance_schema, 'Appliance'),
 	'FlavorSchema': (flavor_schema, 'Flavor'),
+	'FlavorListSchema': (flavor_list_schema, 'Flavorlist'),
 }
 
 # template with functions that should be associated to the api schemas
@@ -35,7 +37,7 @@ class SchemaTemplate(object):
 		data = {}
 		for (k, v) in properties.iteritems():
 			if type(v['type']) == types.StringType:
-				if getattr(src, k) != None:
+				if hasattr(src, k) and getattr(src, k) != None:
 					data[k] = getattr(src, k)
 			elif issubclass(v['type'], ProtocolBase):
 				if getattr(src, k) != None:

@@ -1,3 +1,5 @@
+import json
+
 from webapp import app
 from webapp import db
 
@@ -5,8 +7,9 @@ from webapp.models.mixins import CRUDMixin
 
 from webapp.libs.utils import generate_token, row2dict
 from webapp.libs.pool import pool_connect
-from webapp.models.schema_mixin import ModelSchemaMixin
+from webapp.libs.pool import PoolApiFlavorsList
 
+from utter_apiobjects.model_mixin import ModelSchemaMixin
 from utter_apiobjects import schemes
 
 # flavors model
@@ -50,7 +53,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		('ask', 'extra_spec:int:stackmonkey:ask_price')]
 
 	# which schema should be used for validation and serialization
-	schema = schemes['FlavorSchema']
+	object_schema = schemes['FlavorSchema']
 
 	def __init__(
 		self,
@@ -179,6 +182,9 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 	def sync(self, appliance):
 		# grab flavor list from pool server
 		response = pool_connect(method="flavors", appliance=appliance)
+		pool_api = PoolApiFlavorsList()
+		response = pool_api.request(json.dumps({
+			'appliance': appliance.as_schema().as_dict()}))
 
 		# remote sync
 		if response['response'] == "success":

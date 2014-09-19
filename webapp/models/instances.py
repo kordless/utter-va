@@ -16,7 +16,7 @@ from webapp.models.addresses import Addresses
 from webapp.models.images import Images
 from webapp.models.flavors import Flavors
 
-from webapp.models.schema_mixin import ModelSchemaMixin
+from utter_apiobjects.model_mixin import ModelSchemaMixin
 from utter_apiobjects import schemes
 
 # instance model
@@ -60,7 +60,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 	image = db.relationship('Images', foreign_keys='Instances.image_id')
 
 	# which schema should be used for validation and serialization
-	schema = schemes['InstanceSchema']
+	object_schema = schemes['InstanceSchema']
 
 	def __init__(self, 
 		created=None,

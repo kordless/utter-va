@@ -20,7 +20,7 @@ def pool_instance(url=None, instance=None, next_state=None, appliance=None):
 	response = {"response": "success", "result": {"message": ""}}
 
 	try:
-		pool_api = PoolApiInstancesUpdate(appliance)
+		pool_api = PoolApiInstancesUpdate()
 		if url:
 			pool_api.use_custom_url(url)
 		else:
@@ -32,8 +32,8 @@ def pool_instance(url=None, instance=None, next_state=None, appliance=None):
 
 		# send instance data to the pool and keep response
 		response['result']['instance'] = pool_api.request(json.dumps({
-			'appliance': appliance.as_dict(),
-			'instance': instance.as_dict(),
+			'appliance': appliance.as_schema().as_dict(),
+			'instance': instance.as_schema().as_dict(),
 		}))
 	except PoolApiException as e:
 		response['response'] = "error"
@@ -189,9 +189,6 @@ class PoolApiBase(object):
 	def _action():
 		pass
 
-	def __init__(self, appliance):
-		self._appliance = appliance
-
 	# build the url to the api endpoint
 	def _api_url(self):
 		if self._custom_url:
@@ -222,7 +219,7 @@ class PoolApiBase(object):
 						self._api_url()), data, self._timeout)
 
 			# if reply code was 2xx
-			if response.getcode() / 100 == 2:
+			if str(response.getcode())[:1] == '2':
 				return json.loads(response.read())
 
 		# starting from here, handle all error conditions
@@ -243,11 +240,21 @@ class PoolApiBase(object):
 			data)
 
 
-# class to act on custom flavors on the pool
+# interact with instance objects on pool api
 class PoolApiInstancesBase(PoolApiBase):
 	_api_object = 'instances'
 
 
-# class to create new flavors on pool
+# update instance objects on pool
 class PoolApiInstancesUpdate(PoolApiInstancesBase):
 	_action = "update"
+
+
+# interact with flavor objects on pool api
+class PoolApiFlavorsBase(PoolApiBase):
+	_api_object = 'flavors'
+
+
+# list flavor flavor objects on pool
+class PoolApiFlavorsList(PoolApiFlavorsBase):
+	_action = "list"

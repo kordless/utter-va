@@ -19,6 +19,18 @@ flavor_schema = {
 		'vpus': {'type': 'number'},
 		'memory': {'type': 'number'},
 	},
-	'required': ['name', 'hot', 'launches', 'flags', 'source', 'ask',
-							'network_up', 'network_down', 'disk', 'vpus', 'memory', ],
+	'required': [
+		'name', 'hot', 'launches', 'flags', 'source', 'network_up', 'network_down',
+		'disk', 'vpus', 'memory', ],
+}
+
+flavor_list_schema = {
+	'type': 'object',
+	'title': 'FlavorList',
+	'properties': {
+		'items': {
+			'type': 'array',
+			'items': flavor_schema,
+		},
+	},
 }
