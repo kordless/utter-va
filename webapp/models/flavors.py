@@ -36,11 +36,12 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 	# 4 - deleted on openstack, needs to be deleted locally and on pool
 	# 0 - all well, nothing to be done
 	active = db.Column(db.Boolean)
-	source = db.Column(db.Integer)
-	# possible sources are:
-	# 0 - pool
+	locality = db.Column(db.Integer)
+	# possible localities are:
+	# 0 - created on pool
 	# 1 - openstack cluster
-	# 2 - merge generated in pool
+	# 2 - merge generated in pool and not installed locally
+	# 3 - merge generated in pool and installed locally
 
 	# mappings of names with openstack flavor properties and extra keys
 	# used in method get_values_from_osflavor
@@ -77,7 +78,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		flags=None,
 		# flavors are only active if activated
 		active=0,
-		source=None
+		locality=None
 	):
 		self.name = name
 		self.osid = osid
@@ -95,7 +96,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		self.launches = launches
 		self.flags = flags
 		self.active = active
-		self.source = source
+		self.locality = locality
 
 	def __repr__(self):
 		return '<Flavor %r>' % (self.name)
@@ -161,7 +162,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				# flavor is new
 				flavor = Flavors()
 				flavor.flags = 2
-				flavor.source = 1
+				flavor.locality = 1
 				flavor.copy_values_from_osflavor(osflavor)
 				# if a price is given, activate the new flavor
 				if flavor.ask > 0:
@@ -176,7 +177,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 
 		osflavor_ids = [x.id for x in osflavors]
 		# delete all flavors that originally came from openstack but are deleted now
-		for flavor in db.session.query(Flavors).filter_by(source=1):
+		for flavor in db.session.query(Flavors).filter_by(locality=1):
 			if flavor.osid not in osflavor_ids:
 				flavor.flags = 4
 				flavor.delete()
@@ -210,6 +211,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 			if (flavor_schema.flags.as_dict() & 8) == 8 and flavor != None:
 				# only delete if we have it
 				flavor.delete()
+				continue
 
 			elif flavor is None:
 				# we don't have the flavor coming in from the server

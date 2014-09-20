@@ -49,9 +49,9 @@ def configure_flavors():
 	# check configuration
 	settings = Status().check_settings()
 
-	# load flavors
-	flavors = db.session.query(Flavors).filter(
-		or_(Flavors.source==0, Flavors.source==1)).all()
+	# flavors without the ones that were results of merges on
+	# the pool and are not installed locally
+	flavors = db.session.query(Flavors).filter(Flavors.locality != 2).all()
 
 	# load appliance
 	appliance = Appliance.get()

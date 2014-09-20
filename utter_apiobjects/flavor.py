@@ -11,7 +11,7 @@ flavor_schema = {
 		'launches': {'type': 'number'},
 		'flags': {'type': 'number'},
 		'active': {'type': 'boolean'},
-		'source': {'type': 'number'},
+		'locality': {'type': 'number'},
 		'ask': {'type': 'number'},
 		'network_up': {'type': 'number'},
 		'network_down': {'type': 'number'},
@@ -20,7 +20,7 @@ flavor_schema = {
 		'memory': {'type': 'number'},
 	},
 	'required': [
-		'name', 'hot', 'launches', 'flags', 'source', 'network_up', 'network_down',
+		'name', 'hot', 'launches', 'flags', 'locality', 'network_up', 'network_down',
 		'disk', 'vpus', 'memory', ],
 }
 
