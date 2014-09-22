@@ -432,7 +432,7 @@ def configure_instance_detail(instance_id):
 	if instance:
 		# page is PUT'ing data - coinop 0 mBTC
 		if request.method == 'PUT':
-			eesponse = instance.coinop(0)
+			response = instance.coinop(0)
 			return jsonify(response)
 		else:
 			# GET

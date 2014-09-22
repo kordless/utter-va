@@ -30,8 +30,6 @@ CREATE TABLE appliance (
   latitude VARCHAR(100) NOT NULL,
   longitude VARCHAR(100) NOT NULL,
   local_ip VARCHAR(100) NOT NULL,
-  create_flavors BOOLEAN DEFAULT(1),
-  collect_flavors BOOLEAN DEFAULT(1),
   PRIMARY KEY (id)
 );
 

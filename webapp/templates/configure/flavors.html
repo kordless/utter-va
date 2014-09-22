@@ -29,7 +29,7 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-					<p>You can get <a href='/configure/pool_flavors'>more flavors</a> from the pool</p>
+					<p>You can get <a href='/configure/pool_flavors'>more flavors</a> from the pool.</p>
         </div>
       </div>
       <div class="row">
@@ -77,8 +77,8 @@
             <div class="bs-callout bs-callout-info bs-callout-top">
               <h4>Flavor synchronization from OpenStack cluster</h4>
 							<p>You can sell the existing <strong>flavors</strong> of your OpenStack cluster via <strong>StackMonkey</strong> by marking them with an <strong>extra_specs</strong> key indicating that a flavor should be sold and the <strong>price</strong> you are asking for it</p>
-							<p>This <strong>example</strong> demonstrates how you would sell your <strong>flavor</strong> with the <strong>id 1000</strong> for a price of <strong>5 μBTC</strong>. It needs to be run as a user with sufficient <strong>permissions</strong>, for example <strong>admin</strong>:<p>
-              <p><strong><i># nova flavor-key 1000 set stackmonkey:ask_price=5</i></strong></p>
+							<p>This <strong>example</strong> demonstrates how you would sell your <strong>flavor</strong> with the id <strong><code>1000</code></strong> for a price of <strong>5 μBTC</strong>. It needs to be run as a user with sufficient <strong>permissions</strong>, for example <strong>admin</strong>:<p>
+              <p><strong><code># nova flavor-key 1000 set stackmonkey:ask_price=5</code></strong></p>
 							<p><strong>After a few minutes</strong> the newly marked flavor should be <strong>synced</strong> and appear on this page with the defined <strong>price</strong>.</p>
             </div>
           </div>
