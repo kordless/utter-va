@@ -101,8 +101,6 @@ class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 	latitude = db.Column(db.String(100), unique=True)
 	longitude = db.Column(db.String(100), unique=True)
 	local_ip = db.Column(db.String(100), unique=True)
-	create_flavors = db.Column(db.Boolean)
-	collect_flavors = db.Column(db.Boolean)
 	object_schema = schemes['ApplianceSchema']
 
 	def __init__(

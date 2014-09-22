@@ -101,6 +101,12 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 	def __repr__(self):
 		return '<Flavor %r>' % (self.name)
 
+	@property
+	def installed(self):
+		if self.locality == 2:
+			return False
+		return True
+
 	def check(self):
 		flavors = db.session.query(Flavors).all()
 

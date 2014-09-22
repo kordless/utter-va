@@ -5,7 +5,7 @@ import time
 
 from urllib2 import urlopen
 
-from flask import Blueprint, render_template, jsonify, flash, redirect, session, url_for, request
+from flask import Blueprint, render_template, jsonify, flash, redirect, session, url_for, request, make_response
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from sqlalchemy import or_
 
@@ -24,6 +24,7 @@ from webapp.libs.geoip import get_geodata
 from webapp.libs.utils import row2dict, generate_token, message
 from webapp.libs.coinbase import coinbase_generate_address, coinbase_get_quote
 from webapp.libs.twitterbot import oauth_initialize, oauth_complete, tweet_status
+from webapp.libs.openstack import flavor_verify_install, flavor_uninstall
 
 mod = Blueprint('configure', __name__)
 
@@ -78,19 +79,39 @@ def configure_flavors_collecting_creating(setting=None):
 	appliance.save()
 	return jsonify({"response": "success"})
 
-@mod.route('/configure/pool_flavors', methods=['GET', 'PUT'])
-def pool_flavors():
-	if request.method == 'GET':
-		# fetch all pool-merged flavors, the installed and non-installed ones
-		flavors = db.session.query(Flavors).filter(
-			or_(
-				Flavors.locality==2,
-				Flavors.locality==3)).all()
+@mod.route('/configure/pool_flavors', methods=['GET'])
+def pool_flavors_get():
+	# fetch all pool-merged flavors, the installed and non-installed ones
+	flavors = db.session.query(Flavors).filter(
+		or_(
+			Flavors.locality==2,
+			Flavors.locality==3)).all()
 
-		return render_template(
-			'/configure/pool_flavors.html',
-			settings=Status().check_settings(),
-			flavors=flavors)
+	return render_template(
+		'/configure/pool_flavors.html',
+		settings=Status().check_settings(),
+		flavors=flavors)
+
+@mod.route('/configure/pool_flavors/<int:flavor_id>/<string:action>', methods=['PUT'])
+def pool_flavors_put(flavor_id, action):
+	try:
+		flavor = Flavors.get_by_id(flavor_id)
+		if action == "install":
+			response = flavor_verify_install(flavor)
+			if not response['response'] == 'success':
+				raise Exception(response['result']['message'])
+			flavor.locality = 3
+		elif action == "uninstall":
+			response = flavor_uninstall(flavor)
+			if not response['response'] == 'success':
+				raise Exception(response['result']['message'])
+			flavor.locality = 2
+	except Exception as e:
+		response = jsonify({"response": "error", "result": {"message": str(e)}})
+		response.status_code = 500
+		return response
+	flavor.save()
+	return jsonify({"response": "success"})
 
 @mod.route('/configure/flavors/<int:flavor_id>', methods=['GET', 'PUT'])
 @login_required
@@ -411,7 +432,7 @@ def configure_instance_detail(instance_id):
 	if instance:
 		# page is PUT'ing data - coinop 0 mBTC
 		if request.method == 'PUT':
-			response = instance.coinop(0)
+			eesponse = instance.coinop(0)
 			return jsonify(response)
 		else:
 			# GET

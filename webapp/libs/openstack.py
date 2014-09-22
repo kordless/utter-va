@@ -310,11 +310,11 @@ def list_flavors(filter_by=None):
 		response['result']['message'] = "Error communicating with OpenStack cluster."
 	return response
 
-def flavor_error_response(message, flavor):
+def flavor_error_response(message, flavor=None):
 	# response
 	response['response'] = "error"
 	response['result']['flavor'] = row2dict(flavor)
-	response['result']['message'] = "%s" % messaage
+	response['result']['message'] = "%s" % message
 	
 	# disable flavor	
 	flavor.osid = ""
@@ -325,6 +325,26 @@ def flavor_error_response(message, flavor):
 	app.logger.error("Failed to install flavor=(%s) into the OpenStack cluster. %s" % (flavor.name, message))
 
 	return response
+
+def flavor_uninstall(flavor):
+	response = {"response": "error", "result": {"message": ""}}
+	# establish connection to openstack
+	try:
+		osflavor = nova_connection().flavors.get(flavor.osid)
+		if not flavor:
+			response['response'] = "error"
+			response['result']['messge'] = "Failed to get flavor."
+		else:
+			osflavor.delete()
+	except nova_exceptions.Forbidden:
+		response['response'] = "forbidden"
+		response['result']['message'] = "Forbidden to delete flavor due to lack of permissions."
+		return response
+	except Exception as ex:
+		# return error
+		response['response'] = "error"
+		response['result']['messge'] = str(ex)
+	return {"response": "success"}
 
 # used by instance start method to install a flavor if we don't have it
 # or re-install a flavor if the flavor doesn't match appliance specs
@@ -406,13 +426,6 @@ def flavor_verify_install(flavor):
 			except:
 				app.logger.info("Could not remove the old flavor=(%s) from the OpenStack cluster." % flavor.name)
 
-		# appliance
-		appliance = Appliance().get()
-		if install_flavor and not appliance.create_flavors:
-			response['response'] = "error"
-			response['result']['message'] = "Creation of flavors is not enabled"
-			return response
-
 		try:
 			# referenced from ticket #80 
 			# create the new flavor
@@ -429,7 +442,7 @@ def flavor_verify_install(flavor):
 			)
 		except nova_exceptions.Forbidden:
 			response['response'] = "forbidden"
-			response['result']['message'] = "Forbidden to create flavor."
+			response['result']['message'] = "Forbidden to create flavor due to lack of permissions."
 			return response
 		except:
 			response['response'] = "error"
@@ -437,8 +450,8 @@ def flavor_verify_install(flavor):
 			return response
 
 		# set bandwidth
-		targetflavor.set_keys({"quota:inbound_average": flavor.network})
-		targetflavor.set_keys({"quota:outbound_average": flavor.network})
+		targetflavor.set_keys({"quota:inbound_average": flavor.network_down})
+		targetflavor.set_keys({"quota:outbound_average": flavor.network_up})
 
 		app.logger.info("Installed flavor=(%s) into the OpenStack cluster." % flavor.name)
 
