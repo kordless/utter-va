@@ -96,21 +96,26 @@ def pool_flavors_get():
 def pool_flavors_put(flavor_id, action):
 	try:
 		flavor = Flavors.get_by_id(flavor_id)
+		#import pdb; pdb.set_trace()
 		if action == "install":
 			response = flavor_verify_install(flavor)
 			if not response['response'] == 'success':
 				raise Exception(response['result']['message'])
 			flavor.locality = 3
+			flavor.active = True
 		elif action == "uninstall":
 			response = flavor_uninstall(flavor)
 			if not response['response'] == 'success':
 				raise Exception(response['result']['message'])
 			flavor.locality = 2
+			flavor.active = False
 	except Exception as e:
 		response = jsonify({"response": "error", "result": {"message": str(e)}})
 		response.status_code = 500
 		return response
 	flavor.save()
+	instances = Instances()
+	instances.toggle(flavor.id, flavor.active)
 	return jsonify({"response": "success"})
 
 @mod.route('/configure/flavors/<int:flavor_id>', methods=['GET', 'PUT'])
