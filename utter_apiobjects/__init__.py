@@ -13,6 +13,6 @@ schemes = {
 	'FlavorListSchema': (flavor_list_schema, 'Flavorlist'),
 }
 
-# iterate over schemas to add some functions to them
+# iterate over schemes and create their according content-types
 for (k, v) in schemes.iteritems():
 	schemes[k] = getattr(pjs.ObjectBuilder(v[0]).build_classes(), v[1])

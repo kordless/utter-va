@@ -71,14 +71,6 @@ def configure_flavors():
 		appliance=appliance
 	)
 
-@mod.route('/configure/toggle/<string:setting>', methods=['PUT'])
-@login_required
-def configure_flavors_collecting_creating(setting=None):
-	appliance = Appliance().get()
-	setattr(appliance, setting, bool(int(request.form['enable'])))
-	appliance.save()
-	return jsonify({"response": "success"})
-
 @mod.route('/configure/pool_flavors', methods=['GET'])
 def pool_flavors_get():
 	# fetch all pool-merged flavors, the installed and non-installed ones

@@ -1,4 +1,3 @@
-
 flavor_schema = {
 	'type': 'object',
 	'title': 'Flavor',
