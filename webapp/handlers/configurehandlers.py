@@ -78,6 +78,20 @@ def configure_flavors_collecting_creating(setting=None):
 	appliance.save()
 	return jsonify({"response": "success"})
 
+@mod.route('/configure/pool_flavors', methods=['GET', 'PUT'])
+def pool_flavors():
+	if request.method == 'GET':
+		# fetch all pool-merged flavors, the installed and non-installed ones
+		flavors = db.session.query(Flavors).filter(
+			or_(
+				Flavors.locality==2,
+				Flavors.locality==3)).all()
+
+		return render_template(
+			'/configure/pool_flavors.html',
+			settings=Status().check_settings(),
+			flavors=flavors)
+
 @mod.route('/configure/flavors/<int:flavor_id>', methods=['GET', 'PUT'])
 @login_required
 def configure_flavors_detail(flavor_id):
