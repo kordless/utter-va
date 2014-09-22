@@ -104,7 +104,7 @@
         on: $(this).hasClass('installed')
       });
 
-			// submit the action
+      // submit the action
       $('#'+this.id).on('toggle', function(e, active){
         if (active) {
           action = 'install';
@@ -112,20 +112,25 @@
           action = 'uninstall';
         }
         ajax_toggle('/configure/pool_flavors/' + 
-            this.id.split("-").pop() + '/' + action , this.id);
+            this.id.split("-").pop() + '/' + action , this.id, action);
       });
 
-      function ajax_toggle(url, id) {
+      function ajax_toggle(url, id, action) {
+        if (action == 'install') {
+          msg_action = 'installed';
+        } else if (action == 'uninstall') {
+          msg_action = 'removed';
+        }
         $.ajax({
           url: url,
           type: 'PUT',
           data: {_csrf_token: csrf_token},
           success: function(data, textStatus, jqXHR) {
-						alertify.log("Flavor has been installed.", "info");
+            alertify.log("Flavor has been " + msg_action + ".", "info");
           },
           error: function(jqXHR, textStatus, errorThrown) {
-						alertify.log(jqXHR['responseJSON']['result']['message'], "error");
-					},
+            alertify.log(jqXHR['responseJSON']['result']['message'], "error");
+          },
         });
       }
     });
