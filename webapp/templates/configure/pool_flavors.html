@@ -66,8 +66,8 @@
           <div class="section-header">
             <h2><small>Flavor permissions</small></h2>
             <div class="bs-callout bs-callout-info bs-callout-top">
-							<p>On many <strong>OpenStack</strong> installations a normal user cannot create or delete falvors by default. In such a case <strong>StackMonkey</strong> will be <strong>unable</strong> to install a flavor unless it's <strong>OpenStack user</strong> is <strong>admin</strong>. If you don't feel comfortable making the user an <strong>admin</strong>, you can also allow the <strong>StackMonkey user</strong> to create and edit flavors by editing nova's <strong>policy.json</strong>.</p>
-							<p>For <strong>Example</strong> if your the OpenStack user's id is <strong><code>12345</code></strong>, you could <strong>grant</strong> her the necessary permissions by editing the following lines in <strong><code>/etc/nova/policy.json</code></strong> to look like this:
+							<p>On many <strong>OpenStack</strong> installations a normal user cannot create or delete flavors by default. In such a case <strong>StackMonkey</strong> will be <strong>unable</strong> to <strong>install</strong> a flavor unless it's <strong>OpenStack user</strong> is <strong>admin</strong> or especially <strong>granted</strong> to execute certain API calls. If you don't feel comfortable making the user an <strong>admin</strong>, you can also allow the <strong>StackMonkey user</strong> to create and edit flavors by editing nova's <strong>policy.json</strong>.</p>
+							<p>For <strong>Example</strong> if your the OpenStack user's <strong>id</strong> is <strong><code>12345</code></strong>, you could <strong>grant</strong> her the necessary permissions by editing the following lines in <strong><code>/etc/nova/policy.json</code></strong> to look like this:
 							</p>
 							<p>
 								<code>
@@ -76,6 +76,8 @@
 									"compute_extension:flavorextraspecs:delete": "rule:admin_api or user_id:12345",<br />
 									"compute_extension:flavormanage": "rule:admin_api or user_id:12345",
 								</code>
+							</p>
+							<p>After <strong>restarting</strong> the <strong><code>nova-api</code></strong> service, the user with the <strong>id</strong> <strong><code>12345</code></strong> should be able to <strong>install flavors</strong>.
 							</p>
             </div>
           </div>

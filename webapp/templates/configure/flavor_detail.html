@@ -74,9 +74,13 @@
                 <td>{% if flavor.network_down <= 0 %}Unlimited{% else %}{{ flavor.network_down }}{% endif %} / {% if flavor.network_up <= 0 %}Unlimited{% else %}{{ flavor.network_up }} Mb/sec{% endif %}</td>
                 <td>{{ flavor.ask }} μBTC/Hour</td>
                 <td>
+                  {% if flavor.locality == 2 %}
+                    Not Installed
+                  {% else %}
                   <div class="toggle-modern">
                     <div id="flavor-{{flavor.id}}" class="toggle{% if flavor.active %} enabled{% endif %}"></div>
                   </div>
+                  {% endif %}
                 </td>              
               </tr>
             </tbody>

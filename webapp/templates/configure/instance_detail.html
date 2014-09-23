@@ -81,8 +81,8 @@
                       <td colspan=2>{{ instance.flavor.disk }}GB</td>
                     </tr>
                     <tr>
-                      <td><strong>Network</strong></td>
-                      <td colspan="2">{% if instance.flavor.network < 0 %}Unlimited{% else %}{{ instance.flavor.network }} Mb/sec{% endif %}</td>
+                      <td><strong>Network Up/Down</strong></td>
+											<td colspan="2">{% if instance.flavor.network_up < 0 %}Unlimited{% else %}{{ instance.flavor.network_up }}{% endif %}/{% if instance.flavor.network_down < 0 %}Unlimited{% else %}{{ instance.flavor.network_down }}{% endif %} Mb/sec</td>
                     </tr>
                     <tr>
                       <td><strong>Ask</strong></td>
