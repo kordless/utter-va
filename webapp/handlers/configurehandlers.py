@@ -104,13 +104,13 @@ def pool_flavors_put(flavor_id, action):
 			flavor.active = False
 		else:
 			raise Exception("Bad action \"{0}\".".format(action))
+		flavor.save()
+		instances = Instances()
+		instances.toggle(flavor.id, flavor.active)
 	except Exception as e:
 		response = jsonify({"response": "error", "result": {"message": str(e)}})
 		response.status_code = 500
 		return response
-	flavor.save()
-	instances = Instances()
-	instances.toggle(flavor.id, flavor.active)
 	return jsonify({"response": "success"})
 
 @mod.route('/configure/flavors/<int:flavor_id>', methods=['GET', 'PUT'])
