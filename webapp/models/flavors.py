@@ -172,13 +172,13 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				flavor.copy_values_from_osflavor(osflavor)
 				# if a price is given, activate the new flavor
 				if flavor.ask > 0:
-					flavor.active = 1
+					flavor.active = True
 					flavor.save()
 			else:
 				if not flavor.is_same_as_osflavor(osflavor):
 					# flavor has changed
 					flavor.copy_values_from_osflavor(osflavor)
-					flavor.flags = 1
+					flavor.flags = 0
 					flavor.save()
 
 		osflavor_ids = [x.id for x in osflavors]
@@ -220,10 +220,10 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				continue
 
 			elif flavor is None:
-				# we don't have the flavor coming in from the server
+				# we don't have the flavor that's coming in from the pool
 				flavor = Flavors()
 			else:
-				# keep a few values that shouldn't be updated
+				# keep values that shouldn't be updated from pool
 				keep_values = {
 					'ask': flavor.ask,
 					'active': flavor.active,
@@ -235,9 +235,9 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 			for (k, v) in keep_values.items():
 				setattr(flavor, k, v)
 
-			flavor.update(flavor)
+			flavor.save()
 
-		# overload the results with the list of current flavors
+		# overwrite the results with the list of current flavors as dicts
 		response['result'] = {
 			'flavors': [
 				x.as_schema().as_dict()

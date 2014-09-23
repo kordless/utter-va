@@ -91,7 +91,8 @@ class OpenStack(CRUDMixin, db.Model):
 class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 	__tablename__ = 'appliance'
 	id = db.Column(db.Integer, primary_key=True)
-	apitoken = db.Column(db.String(100), unique=True)
+	# make it private to decorate and check for hidden flag
+	_apitoken = db.Column(db.String(100), unique=True)
 	ngroktoken = db.Column(db.String(100), unique=True)
 	subdomain = db.Column(db.String(100), unique=True)
 	dynamicimages = db.Column(db.Integer)
@@ -102,6 +103,7 @@ class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 	longitude = db.Column(db.String(100), unique=True)
 	local_ip = db.Column(db.String(100), unique=True)
 	object_schema = schemes['ApplianceSchema']
+	hide_token = False
 
 	def __init__(
 		self, 
@@ -130,6 +132,18 @@ class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 		self.local_ip = local_ip
 		self.create_flavors = create_flavors
 		self.collect_flavors = collect_flavors
+
+	@property
+	def apitoken(self):
+		# only return token if it is not hidden
+		if self.hide_token == False:
+			return self._apitoken
+		return ""
+
+	# set the private token via setter
+	@apitoken.setter
+	def apitoken(self, new_token):
+		self._apitoken = new_token
 
 	def initialize(self, ip):
 		# generate a new API token

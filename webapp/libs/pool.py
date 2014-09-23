@@ -1,5 +1,4 @@
 import json
-import types
 
 import abc
 from cgi import escape
@@ -9,8 +8,6 @@ from urllib2 import HTTPError
 
 from webapp import app
 from webapp.libs.utils import row2dict
-
-from utter_apiobjects import schemes
 
 # provides callback initiation for an instance to the pool operator/callback handler
 # calls InstancesHandler() in utter-pool's apihandlers.py 
@@ -22,13 +19,12 @@ def pool_instance(url=None, instance=None, next_state=None, appliance=None):
 	try:
 		pool_api = PoolApiInstancesUpdate()
 		if url:
-			pool_api.use_custom_url(url)
+			pool_api.custom_url = url
+			# mask our apitoken on subsequent redirects
+			appliance.hide_token = True
 		else:
-			pool_api.use_custom_url(
-				"%s/api/v1/instances/%s/" % (
-				app.config['POOL_APPSPOT_WEBSITE'],
-				instance.name
-			))
+			pool_api.custom_url = "%s/api/v1/instances/%s/" % (
+				app.config['POOL_APPSPOT_WEBSITE'], instance.name)
 
 		# send instance data to the pool and keep response
 		response['result']['instance'] = json.loads(
@@ -176,9 +172,9 @@ class PoolApiException(Exception):
 class PoolApiBase(object):
 	_uri_base = u'api'
 	_api_version = u'v1'
-	_content_type = u'application/json'
-	_timeout = 10
-	_custom_url = None
+	timeout = 10
+	content_type = u'application/json'
+	custom_url = None
 
 	# which object on the api should be selected
 	@abc.abstractproperty
@@ -192,8 +188,8 @@ class PoolApiBase(object):
 
 	# build the url to the api endpoint
 	def _api_url(self):
-		if self._custom_url:
-			return self._custom_url
+		if self.custom_url:
+			return self.custom_url
 		return u'{host}/{base}/{ver}/{api_object}/{action}'.format(
 			host=app.config['POOL_APPSPOT_WEBSITE'],
 			base=self._uri_base,
@@ -204,12 +200,8 @@ class PoolApiBase(object):
 	# get the request object
 	def _build_request(self, url):
 		request = Request(url)
-		request.add_header('Content-Type', self._content_type)
+		request.add_header('Content-Type', self.content_type)
 		return request
-
-	# use given url instead of the default one
-	def use_custom_url(self, url):
-		self._custom_url = url
 
 	# main entry, do the request
 	def request(self, data=None):
@@ -217,7 +209,7 @@ class PoolApiBase(object):
 			# submit request to the api
 			response = urlopen(
 					self._build_request(
-						self._api_url()), data, self._timeout)
+						self._api_url()), data, timeout=self.timeout)
 
 			# if reply code was 2xx
 			if str(response.getcode())[:1] == '2':

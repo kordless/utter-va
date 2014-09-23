@@ -331,7 +331,7 @@ def flavor_uninstall(flavor):
 	# establish connection to openstack
 	try:
 		osflavor = nova_connection().flavors.get(flavor.osid)
-		if not flavor:
+		if not osflavor:
 			response['response'] = "error"
 			response['result']['messge'] = "Failed to get flavor."
 		else:
@@ -341,7 +341,6 @@ def flavor_uninstall(flavor):
 		response['result']['message'] = "Forbidden to delete flavor due to lack of permissions."
 		return response
 	except Exception as ex:
-		# return error
 		response['response'] = "error"
 		response['result']['messge'] = str(ex)
 	return {"response": "success"}

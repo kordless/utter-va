@@ -88,7 +88,8 @@ def pool_flavors_get():
 def pool_flavors_put(flavor_id, action):
 	try:
 		flavor = Flavors.get_by_id(flavor_id)
-		#import pdb; pdb.set_trace()
+		if not flavor:
+			raise Exception("Flavor with id \"{0}\" not found.".format(flavor_id))
 		if action == "install":
 			response = flavor_verify_install(flavor)
 			if not response['response'] == 'success':
@@ -101,6 +102,8 @@ def pool_flavors_put(flavor_id, action):
 				raise Exception(response['result']['message'])
 			flavor.locality = 2
 			flavor.active = False
+		else:
+			raise Exception("Bad action \"{0}\".".format(action))
 	except Exception as e:
 		response = jsonify({"response": "error", "result": {"message": str(e)}})
 		response.status_code = 500

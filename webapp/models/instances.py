@@ -105,6 +105,11 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 	def appliance(self):
 		return Appliance.get()
 
+	# generate a list of private addresses with describing properties. this format
+	# is compatible with the schema that's being sent to the pool. actually i
+	# optimally the local schema would store IPs in a similar format as the one
+	# that's being generated here, but that can still be done later, so for now 
+	# i just add this method to "translate" and make everything compatible.
 	@property
 	def ip_addresses(self):
 		return [
@@ -129,6 +134,8 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			if addr['address'] != None
 		]
 
+	# generate a list of lines of console output. can be used as property to
+	# be 1:1 mapped to the instance api schema
 	@property
 	def console_output(self):
 		from webapp.libs.openstack import instance_console
@@ -139,6 +146,8 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			return response['result']['console']
 		return []
 
+	# get the address of this instance by joining with address table, also used
+	# as 1:1 mapping with instance api schema
 	@property
 	def address(self):
 		address = db.session.query(Addresses).join(
