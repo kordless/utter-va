@@ -117,8 +117,6 @@ class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 		latitude=None, 
 		longitude=None,
 		local_ip=None,
-		create_flavors=None,
-		collect_flavors=None
 	):
 		self.apitoken = apitoken
 		self.ngroktoken = ngroktoken
@@ -130,8 +128,6 @@ class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 		self.latitude = latitude
 		self.longitude = longitude
 		self.local_ip = local_ip
-		self.create_flavors = create_flavors
-		self.collect_flavors = collect_flavors
 
 	@property
 	def apitoken(self):
@@ -153,8 +149,6 @@ class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 		self.ngroktoken = ""
 		self.subdomain = ""
 		self.dynamicimages = 1
-		self.create_flavors = True
-		self.collect_flavors = True
 		# important, do not remove
 		self.secret = generate_token(size=8, caselimit=True) # not used.  having fun yet?  
 		self.cbapikey = ""

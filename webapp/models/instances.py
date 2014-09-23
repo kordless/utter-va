@@ -146,16 +146,23 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			return response['result']['console']
 		return []
 
-	# get the address of this instance by joining with address table, also used
-	# as 1:1 mapping with instance api schema
+	# property that returns the associated address model
 	@property
-	def address(self):
+	def address_model(self):
 		address = db.session.query(Addresses).join(
 			Instances,
 			Instances.id == Addresses.instance_id).filter(
 				Instances.id == self.id).first()
+		return address
+
+	# get the address string of this instance by joining with address table, also used
+	# as 1:1 mapping with instance api schema
+	@property
+	def address(self):
+		address = self.address_model
 		if address:
 			return address.address
+		return ""
 
 	def toggle(self, flavor_id, active):
 		# set active/inactive state for instances with a given flavor_id
@@ -438,9 +445,9 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 
 		# take the instance's flavor and verify install
 		flavor = Flavors().get_by_id(self.flavor.id)
-		osflavor = flavor_verify_install(flavor)
+		flavor_response = flavor_verify_install(flavor)
 
-		if osflavor['response'] == "error" or osflavor['response'] == "forbidden":
+		if flavor_response['response'] == "error" or flavor_response['response'] == "forbidden":
 			# we've failed to install flavor, so we disable it
 			flavor.osid = ""
 			flavor.active = 0
@@ -455,7 +462,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			self.expires = self.created # zeros out the payment
 			self.update()
 
-			if osflavor['response'] == "forbidden":
+			if flavor_response['response'] == "forbidden":
 				response['result']['message'] = \
 					"Not allowed to create flavor inside OpenStack, disabling flavor creation"
 
@@ -463,17 +470,13 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 				app.logger.error("Disabling all instances using flavor=(%s) and disabling "
 												 "creation of flavors due to lack of permissions." % flavor.name)
 
-				# disable creation of flavors for this appliance
-				appliance.create_flavors = False
-				appliance.update()
-
 			else:
 				# log it
 				app.logger.error("Disabling all instances using flavor=(%s) due to "
 												 "OpenStack failure." % flavor.name)
 
 				# build the response and return
-				response['result']['message'] = osflavor['result']['message']
+				response['result']['message'] = flavor_response['result']['message']
 
 			response['response'] = "error"
 			return response
@@ -783,9 +786,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			response['result']['message'] = "Terminating instance %s" % self.name
 		else:
 			# delete this instance into forever
-			### needs to be fixed!!!! address_id does not exist anymore
-			address = Addresses().get_by_id(self.address_id)
-			address.release()
+			self.address_model.release()
 			self.delete(self)
 			response['result']['message'] = "Instance %s has been deleted." % self.name
 
