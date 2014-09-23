@@ -129,9 +129,9 @@ class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 		self.longitude = longitude
 		self.local_ip = local_ip
 
+	# export the local apitoken only if it's not set to be hidden
 	@property
 	def apitoken(self):
-		# only return token if it is not hidden
 		if self.hide_token == False:
 			return self._apitoken
 		return ""
@@ -167,6 +167,7 @@ class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 		# create entry
 		self.update(self)
 
+	# version property to match appliance api schema
 	@property
 	def version(self):
 		return app.config['VERSION']

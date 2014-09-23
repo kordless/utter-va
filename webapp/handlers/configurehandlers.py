@@ -402,11 +402,7 @@ def configure_instances():
 	settings = Status().check_settings()
 
 	# load instances ordering by state
-	insts_addrs = db.session.query(
-		Instances, Addresses).join(
-			Addresses,
-			Addresses.instance_id == Instances.id).order_by(
-				"state desc").all()
+	instances = db.session.query(Instances).order_by("state desc").all()
 
 	# images
 	images = Images()
@@ -415,7 +411,7 @@ def configure_instances():
 	return render_template(
 		'configure/instances.html', 
 		settings=settings, 
-		insts_addrs=insts_addrs,
+		instances=instances,
 		images=images
 	)
 

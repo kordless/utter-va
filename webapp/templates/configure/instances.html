@@ -73,7 +73,7 @@
 
       <div class="row">
         <div class="col-md-12">
-          {% if insts_addrs %}
+          {% if instances %}
           <table class="table table-hover">
             <thead>
               <tr>
@@ -85,14 +85,14 @@
               </tr>
             </thead>
             <tbody>
-              {% for inst_addr in insts_addrs %}
-                <td>{% if inst_addr[0].state == 0 %}<span title="Inactive" class="glyphicon glyphicon-remove-sign"></span>{% elif inst_addr[0].state == 1 %}<span title="Waiting on payment." class="glyphicon glyphicon-time"></span>{% elif inst_addr[0].state == 2 %}<span title="Payment Received" class="glyphicon glyphicon-usd"></span>{% elif inst_addr.state == 3 %}<span title="Starting" class="glyphicon glyphicon-off"></span>{% elif inst_addr[0].state == 4 %}<span title="Running" class="glyphicon glyphicon-play"></span>{% elif inst_addr[0].state == 5 %}<span title="Suspended" class="glyphicon glyphicon-pause"></span>{% elif inst_addr[0].state == 6 %}<span title="Unsuspend" class="glyphicon glyphicon-fire"></span>{% elif inst_addr[0].state == 7 %}<span title="Decommission" class="glyphicon glyphicon-fullscreen"></span>{% elif inst_addr[0].state == 10 %}<span title="Reserved" class="glyphicon glyphicon-tag"></span>{% endif %}</td>
-                <td><a href="/configure/inst_addr[0]s/{{ inst_addr[0].id }}">{{ inst_addr[0].name }}</a></td>
-                <td><a href="/configure/flavors/{{ inst_addr[0].flavor.id }}">{{ inst_addr[0].flavor.name }}</a></td>                
-                <td id="instance-timer-{{inst_addr[0].id}}" data-state="{{ inst_addr[0].state }}" data-expires="{{ inst_addr[0].expires }}"><img src="/img/loading.gif"/></td>
+              {% for instance in instances %}
+                <td>{% if instance.state == 0 %}<span title="Inactive" class="glyphicon glyphicon-remove-sign"></span>{% elif instance.state == 1 %}<span title="Waiting on payment." class="glyphicon glyphicon-time"></span>{% elif instance.state == 2 %}<span title="Payment Received" class="glyphicon glyphicon-usd"></span>{% elif instance.state == 3 %}<span title="Starting" class="glyphicon glyphicon-off"></span>{% elif instance.state == 4 %}<span title="Running" class="glyphicon glyphicon-play"></span>{% elif instance.state == 5 %}<span title="Suspended" class="glyphicon glyphicon-pause"></span>{% elif instance.state == 6 %}<span title="Unsuspend" class="glyphicon glyphicon-fire"></span>{% elif instance.state == 7 %}<span title="Decommission" class="glyphicon glyphicon-fullscreen"></span>{% elif instance.state == 10 %}<span title="Reserved" class="glyphicon glyphicon-tag"></span>{% endif %}</td>
+                <td><a href="/configure/instances/{{ instance.id }}">{{ instance.name }}</a></td>
+                <td><a href="/configure/flavors/{{ instance.flavor.id }}">{{ instance.flavor.name }}</a></td>                
+                <td id="instance-timer-{{instance.id}}" data-state="{{ instance.state }}" data-expires="{{ instance.expires }}"><img src="/img/loading.gif"/></td>
                 <td>
-                  <button id="instance-start-{{ inst_addr[0].id }}" title="Start instance {{ inst_addr[0].name }}." data-instance="{{ inst_addr[0].id }}" data-flavor="{{ inst_addr[0].flavor.id }}" data-image="{{ inst_addr[0].image.id }}" data-description="{{ inst_addr[0].flavor.description }}" class="btn btn-xs btn-success {% if inst_addr[0].state > 1 %}disabled{% endif %}"><span class="glyphicon glyphicon-play"></span> Start</button>
-                  <button id="instance-payment-{{ inst_addr[1].address }}" title="Make a payment." data-ask="{{ inst_addr[0].flavor.ask }}" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-qrcode"></span> Payment</button>
+                  <button id="instance-start-{{ instance.id }}" title="Start instance {{ instance.name }}." data-instance="{{ instance.id }}" data-flavor="{{ instance.flavor.id }}" data-image="{{ instance.image.id }}" data-description="{{ instance.flavor.description }}" class="btn btn-xs btn-success {% if instance.state > 1 %}disabled{% endif %}"><span class="glyphicon glyphicon-play"></span> Start</button>
+                  <button id="instance-payment-{{ instance.address }}" title="Make a payment." data-ask="{{ instance.flavor.ask }}" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-qrcode"></span> Payment</button>
                 </td>
               </tr>
               {% endfor %}
