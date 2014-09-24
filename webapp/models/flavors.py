@@ -10,9 +10,9 @@ from webapp.libs.pool import pool_connect
 from webapp.libs.pool import PoolApiFlavorsList
 from webapp.libs.pool import PoolApiException
 
-from utter_apiobjects.model_mixin import ModelSchemaMixin
-from utter_apiobjects.helpers import ApiSchemaHelper
-from utter_apiobjects import schemes
+from utter_libs.schemes.model_mixin import ModelSchemaMixin
+from utter_libs.schemes.helpers import ApiSchemaHelper
+from utter_libs.schemes import schemes
 
 # flavors model
 class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
