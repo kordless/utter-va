@@ -10,9 +10,9 @@ from webapp.libs.pool import pool_connect
 from webapp.libs.pool import PoolApiFlavorsList
 from webapp.libs.pool import PoolApiException
 
-from utter_libs.schemes.model_mixin import ModelSchemaMixin
-from utter_libs.schemes.helpers import ApiSchemaHelper
-from utter_libs.schemes import schemes
+from utter_libs.schemas.model_mixin import ModelSchemaMixin
+from utter_libs.schemas.helpers import ApiSchemaHelper
+from utter_libs.schemas import schemas
 
 # flavors model
 class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
@@ -56,7 +56,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		('ask', 'extra_spec:int:stackmonkey:ask_price')]
 
 	# which schema should be used for validation and serialization
-	object_schema = schemes['FlavorSchema']
+	object_schema = schemas['FlavorSchema']
 
 	def __init__(
 		self,
@@ -193,7 +193,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 
 		try:
 			# validate the returned dictionary and unpack it into a dictionary
-			flavor_list_schema = schemes['FlavorListSchema']().from_json(
+			flavor_list_schema = schemas['FlavorListSchema']().from_json(
 				# grab flavor list from pool server
 				PoolApiFlavorsList().request())
 		except ValueError:

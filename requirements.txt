@@ -1,4 +1,4 @@
--e git+https://github.com/StackMonkey/utter-libs.git#egg=utter_libs==master
+-e git+https://github.com/StackMonkey/utter-libs.git#egg=utter-libs==master
 IPy
 gevent
 gunicorn

@@ -16,8 +16,8 @@ from webapp.libs.geoip import get_geodata
 from webapp.models.images import Images
 from webapp.models.flavors import Flavors
 
-from utter_libs.schemes.model_mixin import ModelSchemaMixin
-from utter_libs.schemes import schemes
+from utter_libs.schemas.model_mixin import ModelSchemaMixin
+from utter_libs.schemas import schemas
 
 # includes user, twitterbot, openstack, appliance, status models
 
@@ -102,7 +102,7 @@ class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 	latitude = db.Column(db.String(100), unique=True)
 	longitude = db.Column(db.String(100), unique=True)
 	local_ip = db.Column(db.String(100), unique=True)
-	object_schema = schemes['ApplianceSchema']
+	object_schema = schemas['ApplianceSchema']
 	hide_token = False
 
 	def __init__(
