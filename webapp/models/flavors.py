@@ -38,10 +38,10 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 	active = db.Column(db.Boolean)
 	locality = db.Column(db.Integer)
 	# possible localities are:
-	# 0 - created on pool
+	# 0 - originated on pool and not installed locally (excluding merges)
 	# 1 - openstack cluster
-	# 2 - merge generated in pool and not installed locally
-	# 3 - merge generated in pool and installed locally
+	# 2 - synced from pool and not installed locally (including merges)
+	# 3 - synced from pool and installed locally (including merges)
 
 	# mappings of names with openstack flavor properties and extra keys
 	# used in method get_values_from_osflavor

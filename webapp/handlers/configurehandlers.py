@@ -50,9 +50,10 @@ def configure_flavors():
 	# check configuration
 	settings = Status().check_settings()
 
-	# flavors without the ones that were results of merges on
-	# the pool and are not installed locally
-	flavors = db.session.query(Flavors).filter(Flavors.locality != 2).all()
+	# flavors without the ones that were synced from pool are not installed on 
+	# openstack cluster yet
+	flavors = db.session.query(Flavors).filter(
+		Flavors.locality != 2).filter(Flavors.locality != 0).all()
 
 	# load appliance
 	appliance = Appliance.get()
@@ -73,11 +74,8 @@ def configure_flavors():
 
 @mod.route('/configure/pool_flavors', methods=['GET'])
 def pool_flavors_get():
-	# fetch all pool-merged flavors, the installed and non-installed ones
-	flavors = db.session.query(Flavors).filter(
-		or_(
-			Flavors.locality==2,
-			Flavors.locality==3)).all()
+	# fetch all flavors that came from the pool, the installed and non-installed ones
+	flavors = db.session.query(Flavors).filter(Flavors.locality!=1).all()
 
 	return render_template(
 		'/configure/pool_flavors.html',
