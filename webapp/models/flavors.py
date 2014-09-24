@@ -188,7 +188,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				flavor.flags = 4
 				flavor.delete()
 
-	def sync(self, appliance):
+	def sync(self):
 		response = {'response': 'success', 'result': ''}
 
 		try:

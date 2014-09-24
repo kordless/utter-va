@@ -94,17 +94,18 @@ def pool_flavors_put(flavor_id, action):
 			response = flavor_verify_install(flavor)
 			if not response['response'] == 'success':
 				raise Exception(response['result']['message'])
-			flavor.locality = 3
-			flavor.active = True
+			flavor.update(
+				locality=3,
+				active=True)
 		elif action == "uninstall":
 			response = flavor_uninstall(flavor)
 			if not response['response'] == 'success':
 				raise Exception(response['result']['message'])
-			flavor.locality = 2
-			flavor.active = False
+			flavor.update(
+				locality=2,
+				active=False)
 		else:
 			raise Exception("Bad action \"{0}\".".format(action))
-		flavor.save()
 		instances = Instances()
 		instances.toggle(flavor.id, flavor.active)
 	except Exception as e:
