@@ -51,18 +51,19 @@ class CRUDMixin(object):
           hooks[prop]()
 
     def update(self, commit=True, **kwargs):
-        for attr, value in kwargs.iteritems():
-            setattr(self, attr, value)
-        return commit and self.save() or self
+      for attr, value in kwargs.iteritems():
+          setattr(self, attr, value)
+      return commit and self.save() or self
 
-    def save(self, commit=True):
-        db.session.add(self)
-        if commit:
-            db.session.commit()
-            self.call_property_hooks()
-            # reset the _changed_properties if syncing has been completed
-            self._changed_properties = set()
-        return self
+    def save(self, commit=True, ignore_hooks=False):
+      db.session.add(self)
+      if commit:
+        if not ignore_hooks:
+          self.call_property_hooks()
+          # reset the _changed_properties if syncing has been completed
+        self._changed_properties = set()
+        db.session.commit()
+      return self
 
     def delete(self, commit=True):
         db.session.delete(self)

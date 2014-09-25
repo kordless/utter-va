@@ -172,13 +172,15 @@ def configure_flavors_detail(flavor_id):
 			if os_ask != None:
 				response = jsonify({"response": "error", "result": {
 					"message": "Forbidden to update the asking price on OpenStack due"
-						"to lack of permissions."}})
+						"to lack of permissions, refusing to update."}})
 				response.status_code = 500
 				return response
 			# if open stack has no flavor price, only warn but don't error
 			response = jsonify({"response": "warning", "result": {
 				"message": "Forbidden to update the asking price on OpenStack due"
-					"to lack of permissions."}})
+					"to lack of permissions, only updating local db."}})
+			# do it again, but don't try to update openstack this time
+			flavor.save(ignore_hooks=True)
 			return response
 			# if there is no ask price set on os we don't need to warn if we can't update it
 		except nova_exceptions.ClientException as e:

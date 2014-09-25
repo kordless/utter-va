@@ -138,7 +138,7 @@
         url: '/configure/flavors/'+{{ flavor.id }}+'?_csrf_token='+csrf_token,
         type: 'PUT',
         data: {_csrf_token: csrf_token, ask: $('#askrate').val()},
-        success: function(jqXHR, textStatus, errorThrown) {
+        success: function(data, textStatus, jqXHR) {
           if (jqXHR['responseJSON']['response'] == "warning") {
             alertify.log(jqXHR['responseJSON']['result']['message'], "warning");
           }

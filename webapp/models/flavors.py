@@ -183,7 +183,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		from webapp.libs.openstack import list_flavors
 
 		# get all flavors that have the stackmonkey:ask_price key set in their extra_specs
-		response = list_flavors(filter_by='stackmonkey:ask_price')
+		response = list_flavors()
 		if response['response'] == "error":
 			app.logger.error("Failed to list flavors from OpenStack cluster")
 			return
@@ -202,13 +202,13 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				# if a price is given, activate the new flavor
 				if flavor.ask > 0:
 					flavor.active = True
-					flavor.save()
+					flavor.save(ignore_hooks=True)
 			else:
 				if not flavor.is_same_as_osflavor(osflavor):
 					# flavor has changed
 					flavor.copy_values_from_osflavor(osflavor)
 					flavor.flags = 0
-					flavor.save()
+					flavor.save(ignore_hooks=True)
 
 		osflavor_ids = [x.id for x in osflavors]
 		# delete all flavors that originally came from openstack but are deleted now
