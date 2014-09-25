@@ -138,15 +138,18 @@
         url: '/configure/flavors/'+{{ flavor.id }}+'?_csrf_token='+csrf_token,
         type: 'PUT',
         data: {_csrf_token: csrf_token, ask: $('#askrate').val()},
-        success: function() {
+        success: function(jqXHR, textStatus, errorThrown) {
+          if (jqXHR['responseJSON']['response'] == "warning") {
+            alertify.log(jqXHR['responseJSON']['result']['message'], "warning");
+          }
           // reload the page
           location.reload();
         },
-        error: function() {
+        error: function(jqXHR, textStatus, errorThrown) {
           // code failed, clear value and alert
           $('#askrate').val('');
           $('#askrate-form').addClass('has-error');
-          alertify.log("The ask rate is invalid.", "error");
+          alertify.log(jqXHR['responseJSON']['result']['message'], "error");
         }
       });
     });

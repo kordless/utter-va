@@ -9,6 +9,8 @@ from flask import Blueprint, render_template, jsonify, flash, redirect, session,
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from sqlalchemy import or_
 
+from novaclient import exceptions as nova_exceptions
+
 from webapp import app, db, bcrypt, login_manager
 
 from webapp.models.models import User, Appliance, OpenStack, Status
@@ -158,8 +160,38 @@ def configure_flavors_detail(flavor_id):
 		except:
 			pass
 
-		# update entry
-		flavor.update()
+		os_ask = 0
+		try:
+			# get current ask price on openstack
+			os_ask = flavor.ask_on_openstack
+			# update entry
+			flavor.update()
+		# forbidden due to permissions or policy
+		except nova_exceptions.Forbidden:
+			# warn because we couldn't update the ask price that's set on openstack
+			if os_ask != None:
+				response = jsonify({"response": "error", "result": {
+					"message": "Forbidden to update the asking price on OpenStack due"
+						"to lack of permissions."}})
+				response.status_code = 500
+				return response
+			# if open stack has no flavor price, only warn but don't error
+			response = jsonify({"response": "warning", "result": {
+				"message": "Forbidden to update the asking price on OpenStack due"
+					"to lack of permissions."}})
+			return response
+			# if there is no ask price set on os we don't need to warn if we can't update it
+		except nova_exceptions.ClientException as e:
+			response = jsonify({"response": "error", "result": {
+				"message": "Error in communication with OpenStack cluster."}})
+			response.status_code = 500
+			return response
+		except:
+			# warn because we couldn't talk to openstack
+			response = jsonify({"response": "error", "result": {
+				"message": "The ask rate is inavlid."}})
+			response.status_code = 500
+			return response
 
 		return jsonify({"response": "success", "flavor": row2dict(flavor)})
 

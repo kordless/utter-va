@@ -107,6 +107,35 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 			return False
 		return True
 
+	# retreive the ask price of this flavor that's set on openstack via keys
+	@property
+	def ask_on_openstack(self):
+		from webapp.libs.openstack import get_flavor_keys
+		if not self.osid:
+			return
+		keys = get_flavor_keys(self.osid)
+		if not 'stackmonkey:ask_price' in keys:
+			return
+		return int(keys['stackmonkey:ask_price'])
+
+	def _get_sync_hooks(self):
+		# return sync hooks for property updates
+		return {'ask': self._sync_ask_price}
+
+	# sync hook to push ask price to open stack on update
+	def _sync_ask_price(self):
+		from webapp.libs.openstack import set_flavor_ask_price
+
+		# if flavor doesn't exist on openstack we don't need to attempt to update it
+		if not self.osid:
+			return
+
+		# if price on openstack is already equal to new price just return
+		if self.ask == self.ask_on_openstack:
+			return
+
+		set_flavor_ask_price(self.osid, self.ask)
+
 	def check(self):
 		flavors = db.session.query(Flavors).all()
 

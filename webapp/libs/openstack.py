@@ -465,6 +465,14 @@ def flavor_verify_install(flavor):
 
 	return response
 
+def get_flavor_keys(os_flavor_id):
+	return nova_connection().flavors.get(os_flavor_id).get_keys()
+
+def set_flavor_ask_price(os_flavor_id, ask_price):
+	# attempt to update the flavor price on openstack
+	nova_connection().flavors.get(os_flavor_id).set_keys(
+		{"stackmonkey:ask_price": ask_price})
+
 def instance_start(instance):
 	# default response
 	response = {"response": "success", "result": {"message": "", "instance": {}}}
