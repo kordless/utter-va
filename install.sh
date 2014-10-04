@@ -38,7 +38,7 @@ unzip /tmp/ngrok.zip
 mv ngrok /usr/local/bin/ngrok
 
 # create a 10G datastore for the image cache
-apt-get install btrfs-tools
+apt-get install btrfs-tools -y
 IMG_CACHE_FILE="/var/image_cache.img"
 IMG_CACHE_MNT_PNT="/mnt/image_cache"
 dd if=/dev/zero of=${IMG_CACHE_FILE} bs=1024 count=10485760
@@ -49,7 +49,7 @@ echo "${IMG_CACHE_FILE}	${IMG_CACHE_MNT_PNT}	btrfs	user,loop,auto,nodev,noexec	0
 mount ${IMG_CACHE_MNT_PNT}
 
 # install nginx caching reverse proxy
-apt-get install nginx
+apt-get install nginx -y
 cp reverse_proxy.conf /etc/nginx/sites-available
 ln -s /etc/nginx/sites-available/reverse_proxy.conf /etc/nginx/sites-enabled/reverse_proxy.conf
 
