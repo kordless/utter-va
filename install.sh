@@ -37,6 +37,22 @@ wget -qO /tmp/ngrok.zip https://dl.ngrok.com/linux_386/ngrok.zip
 unzip /tmp/ngrok.zip
 mv ngrok /usr/local/bin/ngrok
 
+# create a 10G datastore for the image cache
+apt-get install btrfs-tools
+IMG_CACHE_FILE="/var/image_cache.img"
+IMG_CACHE_MNT_PNT="/mnt/image_cache"
+dd if=/dev/zero of=${IMG_CACHE_FILE} bs=1024 count=10485760
+losetup -f ${IMG_CACHE_FILE}
+LOOP_DEV=$(losetup -a | grep "${IMG_CACHE_FILE}" | awk -F ':' '{print $1}')
+mkfs.btrfs -L image_cache ${LOOP_DEV}
+echo "${IMG_CACHE_FILE}	${IMG_CACHE_MNT_PNT}	btrfs	user,loop,auto,nodev,noexec	0 0" >> /etc/fstab
+mount ${IMG_CACHE_MNT_PNT}
+
+# install nginx caching reverse proxy
+apt-get install nginx
+cp reverse_proxy.conf /etc/nginx/sites-available
+ln -s /etc/nginx/sites-available/reverse_proxy.conf /etc/nginx/sites-enabled/reverse_proxy.conf
+
 # add user and group to run services as
 groupadd ${GROUP}
 useradd -g ${GROUP} -m -d /var/lib/stackmonkey ${USER}
