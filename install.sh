@@ -52,7 +52,7 @@ mount ${IMG_CACHE_MNT_PNT}
 # install nginx caching reverse proxy
 apt-get install nginx -y
 cat <<EOF > /etc/nginx/sites-available/reverse_proxy.conf
-proxy_cache_path /mnt/image_cache levels=1:2 keys_zone=IMGCACHE:10m;
+proxy_cache_path /mnt/image_cache levels=1:2 keys_zone=IMGCACHE:10m inactive=14d;
 server {
 	listen 8080;
 
