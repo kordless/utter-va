@@ -59,6 +59,7 @@ server {
 	location ~* "^/([a-zA-Z0-9\.\-]+)/(.*)$" {
 		set \$host \$1;
 		set \$uri \$2;
+		resolver 8.8.8.8;
 		proxy_pass             http://\$host/\$uri;
 		proxy_set_header       Host \$host;
 		proxy_cache            IMGCACHE;
