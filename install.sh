@@ -45,6 +45,7 @@ dd if=/dev/zero of=${IMG_CACHE_FILE} bs=1024 count=10485760
 losetup -f ${IMG_CACHE_FILE}
 LOOP_DEV=$(losetup -a | grep "${IMG_CACHE_FILE}" | awk -F ':' '{print $1}')
 mkfs.btrfs -L image_cache ${LOOP_DEV}
+mkdir ${IMG_CACHE_MNT_PNT}
 echo "${IMG_CACHE_FILE}	${IMG_CACHE_MNT_PNT}	btrfs	user,loop,auto,nodev,noexec	0 0" >> /etc/fstab
 mount ${IMG_CACHE_MNT_PNT}
 
