@@ -51,7 +51,22 @@ mount ${IMG_CACHE_MNT_PNT}
 
 # install nginx caching reverse proxy
 apt-get install nginx -y
-cp reverse_proxy.conf /etc/nginx/sites-available
+cat <<EOF > /etc/nginx/sites-available/reverse_proxy.conf
+proxy_cache_path /mnt/image_cache levels=1:2 keys_zone=IMGCACHE:10g inactive=24h max_size=1g;
+server {
+	listen 8080;
+
+	location ~* "^/([a-zA-Z0-9\.\-]+)/(.*)$" {
+		set $host $1;
+		set $uri $2;
+		proxy_pass             http://$host/$uri;
+		proxy_set_header       Host $host;
+		proxy_cache            IMGCACHE;
+		proxy_cache_valid      200  1d;
+		proxy_cache_use_stale  error timeout invalid_header updating http_500 http_502 http_503 http_504;
+	}
+}
+EOF
 ln -s /etc/nginx/sites-available/reverse_proxy.conf /etc/nginx/sites-enabled/reverse_proxy.conf
 
 # add user and group to run services as
