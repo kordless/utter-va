@@ -37,6 +37,32 @@ wget -qO /tmp/ngrok.zip https://dl.ngrok.com/linux_386/ngrok.zip
 unzip /tmp/ngrok.zip
 mv ngrok /usr/local/bin/ngrok
 
+# create data directory for the image cache
+IMG_CACHE_DIR="/var/lib/image_cache"
+mkdir ${IMG_CACHE_DIR}
+
+# install nginx caching reverse proxy
+apt-get install nginx -y
+cat <<EOF > /etc/nginx/sites-available/reverse_proxy.conf
+proxy_cache_path ${IMG_CACHE_DIR} levels=1:2 keys_zone=IMGCACHE:10m inactive=14d;
+server {
+	listen 8080;
+
+	location ~* "^/([a-zA-Z0-9\.\-]+)/(.*)$" {
+		set \$real_host \$1;
+		set \$real_uri \$2;
+		resolver 8.8.8.8;
+		proxy_pass             http://\$real_host/\$real_uri;
+		proxy_set_header       Host \$real_host;
+		proxy_cache            IMGCACHE;
+		proxy_cache_valid      200  1d;
+		proxy_cache_use_stale  error timeout invalid_header updating http_500 http_502 http_503 http_504;
+	}
+}
+EOF
+ln -s /etc/nginx/sites-available/reverse_proxy.conf /etc/nginx/sites-enabled/reverse_proxy.conf
+nginx -s reload
+
 # add user and group to run services as
 groupadd ${GROUP}
 useradd -g ${GROUP} -m -d /var/lib/stackmonkey ${USER}
