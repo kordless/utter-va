@@ -16,10 +16,13 @@ from webapp.libs.geoip import get_geodata
 from webapp.models.images import Images
 from webapp.models.flavors import Flavors
 
+from utter_libs.schemas.model_mixin import ModelSchemaMixin
+from utter_libs.schemas import schemas
+
 # includes user, twitterbot, openstack, appliance, status models
 
 # user model
-class User(UserMixin, CRUDMixin,  db.Model):
+class User(UserMixin, CRUDMixin,  db.Model, ModelSchemaMixin):
 	__tablename__ = 'users'
 	id = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(100), unique=True)
@@ -85,10 +88,11 @@ class OpenStack(CRUDMixin, db.Model):
 
 
 # appliance model
-class Appliance(CRUDMixin, db.Model):
+class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 	__tablename__ = 'appliance'
 	id = db.Column(db.Integer, primary_key=True)
-	apitoken = db.Column(db.String(100), unique=True)
+	# make it private to decorate and check for hidden flag
+	_apitoken = db.Column(db.String(100), unique=True)
 	ngroktoken = db.Column(db.String(100), unique=True)
 	subdomain = db.Column(db.String(100), unique=True)
 	dynamicimages = db.Column(db.Integer)
@@ -98,6 +102,8 @@ class Appliance(CRUDMixin, db.Model):
 	latitude = db.Column(db.String(100), unique=True)
 	longitude = db.Column(db.String(100), unique=True)
 	local_ip = db.Column(db.String(100), unique=True)
+	object_schema = schemas['ApplianceSchema']
+	hide_token = False
 
 	def __init__(
 		self, 
@@ -110,7 +116,7 @@ class Appliance(CRUDMixin, db.Model):
 		cbapisecret=None, 
 		latitude=None, 
 		longitude=None,
-		local_ip=None
+		local_ip=None,
 	):
 		self.apitoken = apitoken
 		self.ngroktoken = ngroktoken
@@ -122,6 +128,18 @@ class Appliance(CRUDMixin, db.Model):
 		self.latitude = latitude
 		self.longitude = longitude
 		self.local_ip = local_ip
+
+	# export the local apitoken only if it's not set to be hidden
+	@property
+	def apitoken(self):
+		if self.hide_token == False:
+			return self._apitoken
+		return ""
+
+	# set the private token via setter
+	@apitoken.setter
+	def apitoken(self, new_token):
+		self._apitoken = new_token
 
 	def initialize(self, ip):
 		# generate a new API token
@@ -148,6 +166,11 @@ class Appliance(CRUDMixin, db.Model):
 
 		# create entry
 		self.update(self)
+
+	# version property to match appliance api schema
+	@property
+	def version(self):
+		return app.config['VERSION']
 
 	def token_refresh(self):
 		self.apitoken = generate_token(size=64)

@@ -92,7 +92,7 @@
                 <td id="instance-timer-{{instance.id}}" data-state="{{ instance.state }}" data-expires="{{ instance.expires }}"><img src="/img/loading.gif"/></td>
                 <td>
                   <button id="instance-start-{{ instance.id }}" title="Start instance {{ instance.name }}." data-instance="{{ instance.id }}" data-flavor="{{ instance.flavor.id }}" data-image="{{ instance.image.id }}" data-description="{{ instance.flavor.description }}" class="btn btn-xs btn-success {% if instance.state > 1 %}disabled{% endif %}"><span class="glyphicon glyphicon-play"></span> Start</button>
-                  <button id="instance-payment-{{ instance.address.address }}" title="Make a payment." data-ask="{{ instance.flavor.ask }}" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-qrcode"></span> Payment</button>
+                  <button id="instance-payment-{{ instance.address }}" title="Make a payment." data-ask="{{ instance.flavor.ask }}" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-qrcode"></span> Payment</button>
                 </td>
               </tr>
               {% endfor %}

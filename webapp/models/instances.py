@@ -16,8 +16,11 @@ from webapp.models.addresses import Addresses
 from webapp.models.images import Images
 from webapp.models.flavors import Flavors
 
+from utter_libs.schemas.model_mixin import ModelSchemaMixin
+from utter_libs.schemas import schemas
+
 # instance model
-class Instances(CRUDMixin, db.Model):
+class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 	__tablename__ = 'instances'
 	id = db.Column(db.Integer, primary_key=True)
 	created = db.Column(db.Integer)
@@ -51,12 +54,13 @@ class Instances(CRUDMixin, db.Model):
 	# foreign keys
 	flavor_id = db.Column(db.Integer, db.ForeignKey('flavors.id'))
 	image_id = db.Column(db.Integer, db.ForeignKey('images.id'))
-	address_id = db.Column(db.Integer, db.ForeignKey('addresses.id'))
 
 	# relationships
 	flavor = db.relationship('Flavors', foreign_keys='Instances.flavor_id')
 	image = db.relationship('Images', foreign_keys='Instances.image_id')
-	address = db.relationship('Addresses', foreign_keys='Instances.address_id')
+
+	# which schema should be used for validation and serialization
+	object_schema = schemas['InstanceSchema']
 
 	def __init__(self, 
 		created=None,
@@ -77,7 +81,6 @@ class Instances(CRUDMixin, db.Model):
 		message_count=0,
 		flavor_id=None,
 		image_id=None,
-		address_id=None
 	):
 		self.created = created
 		self.updated = updated
@@ -97,7 +100,69 @@ class Instances(CRUDMixin, db.Model):
 		self.message_count = message_count
 		self.flavor_id = flavor_id
 		self.image_id = image_id
-		self.address_id = address_id
+
+	@property
+	def appliance(self):
+		return Appliance.get()
+
+	# generate a list of private addresses with describing properties. this format
+	# is compatible with the schema that's being sent to the pool. actually i
+	# optimally the local schema would store IPs in a similar format as the one
+	# that's being generated here, but that can still be done later, so for now 
+	# i just add this method to "translate" and make everything compatible.
+	@property
+	def ip_addresses(self):
+		return [
+			{
+				'version': addr['version'],
+				'scope': addr['scope'],
+				'address': addr['address'],
+			} for addr in [
+				{
+					'version': 4,
+					'scope': 'public',
+					'address': self.publicipv4,
+				}, {
+					'version': 4,
+					'scope': 'private',
+					'address': self.privateipv4,
+				}, {
+					'version': 6,
+					'scope': 'public',
+					'address': self.publicipv6,
+				}]
+			if addr['address'] != None
+		]
+
+	# generate a list of lines of console output. can be used as property to
+	# be 1:1 mapped to the instance api schema
+	@property
+	def console_output(self):
+		from webapp.libs.openstack import instance_console
+		response = instance_console(self)
+		if response['response'] == "error":
+			raise Exception("Failed to get console_output.")
+		if response['response'] == "success":
+			return response['result']['console']
+		return []
+
+	# property that returns the associated address model
+	@property
+	def address_model(self):
+		address = db.session.query(Addresses).join(
+			Instances,
+			Instances.id == Addresses.instance_id).filter(
+				Instances.id == self.id).first()
+		return address
+
+	# get the address string of this instance by joining with address table, also used
+	# as 1:1 mapping with instance api schema
+	@property
+	def address(self):
+		address = self.address_model
+		if address:
+			return address.address
+		return ""
 
 	def toggle(self, flavor_id, active):
 		# set active/inactive state for instances with a given flavor_id
@@ -177,10 +242,7 @@ class Instances(CRUDMixin, db.Model):
 				# finally, assign a bitcoin address
 				addresses = Addresses()
 				address = addresses.assign(instance.id)
-				if address:
-					instance.address = address	
-					instance.update()
-				else:
+				if not address:
 					# we have no address, so delete what we made
 					instance.delete(instance)
 
@@ -190,9 +252,7 @@ class Instances(CRUDMixin, db.Model):
 		else:
 			# found enough instances - make sure they have addresses assigned to them
 			for instance in instances:
-				instance.address = Addresses().assign(instance.id)
-				instance.update()
-
+				Addresses().assign(instance.id)
 			response['result']['message'] = "Found existing instances and assigned addresses."
 
 		return response
@@ -385,9 +445,9 @@ class Instances(CRUDMixin, db.Model):
 
 		# take the instance's flavor and verify install
 		flavor = Flavors().get_by_id(self.flavor.id)
-		osflavor = flavor_verify_install(flavor)
+		flavor_response = flavor_verify_install(flavor)
 
-		if osflavor['response'] == "error":
+		if flavor_response['response'] == "error" or flavor_response['response'] == "forbidden":
 			# we've failed to install flavor, so we disable it
 			flavor.osid = ""
 			flavor.active = 0
@@ -402,12 +462,23 @@ class Instances(CRUDMixin, db.Model):
 			self.expires = self.created # zeros out the payment
 			self.update()
 
-			# log it
-			app.logger.error("Disabling all instances using flavor=(%s) due to OpenStack failure." % flavor.name)
+			if flavor_response['response'] == "forbidden":
+				response['result']['message'] = \
+					"Not allowed to create flavor inside OpenStack, disabling flavor creation"
 
-			# build the response and return
+				# log it
+				app.logger.error("Disabling all instances using flavor=(%s) and disabling "
+												 "creation of flavors due to lack of permissions." % flavor.name)
+
+			else:
+				# log it
+				app.logger.error("Disabling all instances using flavor=(%s) due to "
+												 "OpenStack failure." % flavor.name)
+
+				# build the response and return
+				response['result']['message'] = flavor_response['result']['message']
+
 			response['response'] = "error"
-			response['result']['message'] = "Error creating flavor inside OpenStack."
 			return response
 
 		# deal with creating dynamic image or use predefined one
@@ -715,8 +786,7 @@ class Instances(CRUDMixin, db.Model):
 			response['result']['message'] = "Terminating instance %s" % self.name
 		else:
 			# delete this instance into forever
-			address = Addresses().get_by_id(self.address_id)
-			address.release()
+			self.address_model.release()
 			self.delete(self)
 			response['result']['message'] = "Instance %s has been deleted." % self.name
 

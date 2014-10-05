@@ -112,9 +112,9 @@ def message(text=None, status="success", reloader=False):
 
 # check ngrok is up on port 4040
 def ngrok_checker(appliance=None):
-	# use the local port 4040 to test if we're running in debug
+	# use the local port 5000 to test if we're running in debug
 	if app.config['DEBUG'] == True:
-		url = "http://127.0.0.1:4040/"
+		url = "http://127.0.0.1:5000/"
 	else:
 		url = "https://%s.ngrok.com/" % appliance.subdomain
 

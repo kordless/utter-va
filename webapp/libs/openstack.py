@@ -14,6 +14,7 @@ import glanceclient
 
 from webapp import app, db
 from webapp.models.models import OpenStack
+from webapp.models.models import Appliance
 from webapp.libs.exceptions import OpenStackConfiguration, OpenStackError
 from webapp.libs.utils import message, row2dict
 
@@ -292,14 +293,28 @@ def image_delete(image):
 		response['result']['message'] = "Image delete failed: %s" % ex
 		
 		app.logger.error("Failed to delete image=(%s) from the OpenStack cluster." % image.name)
-
 	return response
 
-def flavor_error_response(message, flavor):
+def list_flavors(filter_by=None):
+	response = {"response": "success", "result": {"message": ""}}
+	try:
+		# get flavors from openstack cluster and filter them to only include ones
+		# that have a key matching the filter critera, or if filter_by is None just
+		# include all flavors.
+		response['result']['flavors'] = filter(
+			lambda flavor: not filter_by or filter_by in flavor.get_keys().keys(),
+			nova_connection().flavors.list())
+	except Exception:
+		# error communicating with openstack
+		response['response'] = "error"
+		response['result']['message'] = "Error communicating with OpenStack cluster."
+	return response
+
+def flavor_error_response(message, flavor=None):
 	# response
 	response['response'] = "error"
 	response['result']['flavor'] = row2dict(flavor)
-	response['result']['message'] = "%s" % messaage
+	response['result']['message'] = "%s" % message
 	
 	# disable flavor	
 	flavor.osid = ""
@@ -311,12 +326,30 @@ def flavor_error_response(message, flavor):
 
 	return response
 
+def flavor_uninstall(flavor):
+	response = {"response": "error", "result": {"message": ""}}
+	# establish connection to openstack
+	try:
+		osflavor = nova_connection().flavors.get(flavor.osid)
+		if not osflavor:
+			response['response'] = "error"
+			response['result']['messge'] = "Failed to get flavor."
+		else:
+			osflavor.delete()
+	except nova_exceptions.Forbidden:
+		response['response'] = "forbidden"
+		response['result']['message'] = "Forbidden to delete flavor due to lack of permissions."
+		return response
+	except Exception as ex:
+		response['response'] = "error"
+		response['result']['messge'] = str(ex)
+	return {"response": "success"}
+
 # used by instance start method to install a flavor if we don't have it
 # or re-install a flavor if the flavor doesn't match appliance specs
 def flavor_verify_install(flavor):
 	# build the response
 	response = {"response": "", "result": {"message": "", "flavor": {}}}
-	
 
 	# get the cluster configuration
 	try:
@@ -351,7 +384,6 @@ def flavor_verify_install(flavor):
 		# no flavor found
 		targetflavor = None
 
-
 	# check for install needed
 	install_flavor = False
 
@@ -364,25 +396,17 @@ def flavor_verify_install(flavor):
 		if targetflavor.ram != flavor.memory: # memory wrong
 			install_flavor = True
 
-		# get the flavor network quota keys (if required)
-		try:
-			if flavor.network > 0:
-				# get the flavor keys from openstack
-				# throws not found if they don't exist
-				osikeys = targetflavor.get_keys()
-
-				# check quotas match
-				if 'quota:inbound_average' in osikeys and 'quota:outbound_average' in osikeys:
-					if flavor.network != int(osikeys['quota:inbound_average']):
-						install_flavor = True
-					if flavor.network != int(osikeys['quota:outbound_average']):
-						install_flavor = True
-				else:
+		try: 
+			# get the flavor network quota keys and check quotas match
+			osikeys = targetflavor.get_keys()
+			if flavor.network_up > 0:
+				if 'quota:outbound_average' not in osikeys or \
+						flavor.network_up != int(osikeys['quota:outbound_average']):
 					install_flavor = True
-			else:
-				# do nothing
-				pass
-
+			if flavor.network_down > 0:
+				if 'quota:inbound_average' not in osikeys or \
+						flavor.network_down != int(osikeys['quota:inbound_average']):
+					install_flavor = True
 		except:
 			# just force install
 			install_flavor = True
@@ -401,23 +425,32 @@ def flavor_verify_install(flavor):
 			except:
 				app.logger.info("Could not remove the old flavor=(%s) from the OpenStack cluster." % flavor.name)
 
-		# referenced from ticket #80 
-		# create the new flavor
-		targetflavor = nova.flavors.create(
-			flavor.name,
-			flavor.memory,
-			flavor.vpus,
-			flavor.disk,
-			flavorid='auto',
-			ephemeral=0,
-			swap=0,
-			rxtx_factor=1.0,
-			is_public=True
-		)
+		try:
+			# referenced from ticket #80 
+			# create the new flavor
+			targetflavor = nova.flavors.create(
+				flavor.name,
+				flavor.memory,
+				flavor.vpus,
+				flavor.disk,
+				flavorid='auto',
+				ephemeral=0,
+				swap=0,
+				rxtx_factor=1.0,
+				is_public=True
+			)
+		except nova_exceptions.Forbidden:
+			response['response'] = "forbidden"
+			response['result']['message'] = "Forbidden to create flavor due to lack of permissions."
+			return response
+		except:
+			response['response'] = "error"
+			response['result']['message'] = "Error creating flavor inside OpenStack."
+			return response
 
 		# set bandwidth
-		targetflavor.set_keys({"quota:inbound_average": flavor.network})
-		targetflavor.set_keys({"quota:outbound_average": flavor.network})
+		targetflavor.set_keys({"quota:inbound_average": flavor.network_down})
+		targetflavor.set_keys({"quota:outbound_average": flavor.network_up})
 
 		app.logger.info("Installed flavor=(%s) into the OpenStack cluster." % flavor.name)
 
@@ -431,6 +464,14 @@ def flavor_verify_install(flavor):
 	response['result']['flavor'] = row2dict(flavor)
 
 	return response
+
+def get_flavor_keys(os_flavor_id):
+	return nova_connection().flavors.get(os_flavor_id).get_keys()
+
+def set_flavor_ask_price(os_flavor_id, ask_price):
+	# attempt to update the flavor price on openstack
+	nova_connection().flavors.get(os_flavor_id).set_keys(
+		{"stackmonkey:ask_price": ask_price})
 
 def instance_start(instance):
 	# default response

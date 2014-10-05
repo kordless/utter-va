@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- encoding:utf-8 -*-
 # manage.py
 
@@ -113,22 +113,20 @@ def install(app):
 		"""
 		Installs a new database configuration for the appliance.
 		"""
-		# run database reset script - use current path to run file
-		path = os.path.dirname(os.path.abspath(__file__))
 
-		# initialize database
-		os.system('sqlite3 "%s/utterio.db" < "%s/schema.sql"' % (path, path))
+		# create all tables
+		db.create_all()
 		
 		# initialize the appliance object
 		appliance = Appliance()
 		appliance.initialize(ip)
 		
 		# sync to remote database
-		images = Images()
-		response = images.sync(appliance)
+		Images().sync(appliance)
 
-		flavors = Flavors()
-		response = flavors.sync(appliance)
+		# sync flavors from pool
+		### can't sync from openstack yet because we don't have the user configured
+		flavors = Flavors().sync()
 
 		# configure output
 		configure_blurb()
@@ -338,7 +336,9 @@ def flavors(app):
 
 		# sync the flavors
 		flavors = Flavors()
-		response = flavors.sync(appliance)
+
+		flavors.sync()
+		flavors.sync_from_openstack(appliance)
 
 	return action
 
@@ -436,7 +436,9 @@ def housekeeper(app):
 		# MIXING
 		# make sure we have mixed an instance for each flavor
 		instances = Instances()
-		flavors = db.session.query(Flavors).filter_by(active=1).all()
+		flavors = db.session.query(Flavors).filter(
+			Flavors.active == 1).filter(
+				Flavors.locality != 2).all()
 		for flavor in flavors:
 			response = instances.mix(flavor)
 
