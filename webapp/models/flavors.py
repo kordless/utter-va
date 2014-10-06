@@ -134,7 +134,13 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		if self.ask == self.ask_on_openstack:
 			return
 
-		set_flavor_ask_price(self.osid, self.ask)
+		# attempt to update openstack with the correct price
+		try:
+			set_flavor_ask_price(self.osid, self.ask)
+		except Exception as e:
+			app.logger.info("Failed to update flavor=(%s) price on cluster. %s" % (self.name, str(e)))
+
+		return
 
 	def check(self):
 		flavors = db.session.query(Flavors).all()
@@ -185,7 +191,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		# get all flavors that have the stackmonkey:ask_price key set in their extra_specs
 		response = list_flavors()
 		if response['response'] == "error":
-			app.logger.error("Failed to list flavors from OpenStack cluster")
+			app.logger.error("Failed to list flavors from OpenStack cluster.")
 			return
 		osflavors = response['result']['flavors']
 
@@ -226,7 +232,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				# grab flavor list from pool server
 				PoolApiFlavorsList().request())
 		except ValueError:
-			app.logger.error("Received Flavor List in broken format from pool.")
+			app.logger.error("Received a broken format for flavors from pool.")
 			return
 		except PoolApiException as e:
 			app.logger.error(str(e))
