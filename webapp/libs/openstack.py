@@ -184,7 +184,7 @@ def image_verify_install(image):
 				is_public = False, 
 				disk_format = image.diskformat, 
 				container_format = image.containerformat,
-				copy_from = location
+				location = location
 			)
 
 			# check if installed
