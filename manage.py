@@ -347,7 +347,7 @@ def flavors(app):
 def images(app):
 	def action():
 		"""
-		Performs a sync from the pool's list of images to the appliance.
+		Cleans up images that aren't used anymore
 		
 		Cron: Every 15 minutes.
 		"""
@@ -355,7 +355,7 @@ def images(app):
 		# clear out old dynamic images
 		images = Images.get_all()
 		for image in images:
-			image.housekeeping()		
+			image.housekeeping()
 
 	return action
 
