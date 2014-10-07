@@ -46,8 +46,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 	# 7 - instance decommissioned (removed)
 	
 	callback_url = db.Column(db.String(1024))
-	image_url = db.Column(db.String(1024))
-	image_name = db.Column(db.String(1024))
+	image_id = db.Column(db.Integer, db.ForeignKey('images.id'))
 	post_creation = db.Column(db.String(8192))
 	message = db.Column(db.String(400))
 	message_count = db.Column(db.Integer)
@@ -367,12 +366,10 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			try:
 				callback_url = pool_response['result']['instance']['callback_url']
 				# run the loop again to call the callback url
-				continue 
+				if callback_url == '':
+					break
 			except:
-				# break out
 				break
-		
-		# for else returns a depth error
 		else:
 			response['response'] = "error"
 			response['result']['message'] = "Callback depth exceeded."
@@ -381,13 +378,26 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			self.update()
 			return response
 
+		# get dictionary from pool's reply
 		start_params = schemas['InstanceStartParametersSchema'](
 			**pool_response['result']['instance']).as_dict()
 
 		# and lo, callback_url is saved
 		self.callback_url = start_params['callback_url']
-		self.image_url = start_params['image_url']
-		self.image_name = start_params['image_name']
+
+		# lookup the image for this instance, or create it otherwise
+		image = Images.query.filter_by(url=start_params['image_url']).first()
+		if not image:
+			image = Images(url=start_params['image_url'],
+										 name=start_params['image_name'])
+			try:
+				image.save()
+			except Exception as e:
+				app.logger.error("Error creating flavor on OpenStack: \"{0}\"".format(str(e)))
+				response['response'] = "error"
+				response['result']['message'] = "Error creating image."
+				return response
+		self.image = image
 		self.update()
 
 		# post creation file is blank to start
@@ -461,37 +471,6 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 				response['result']['message'] = flavor_response['result']['message']
 
 			response['response'] = "error"
-			return response
-
-		# deal with creating dynamic image or use predefined one
-		#if self.image_url:
-			#image = Images().get_or_create_by_instance(self)
-		#else:
-			#image = Images().get_by_id(self.image.id)
-
-		#if not image:
-			#response['response'] = "error"
-			#response['result']['message'] = "Error creating dynamic image."
-			#return response
-		#else:
-			#self.image = image
-			#self.update()
-
-		# take the image and verify install
-		#osimage = image_verify_install(self.image_name, self.image_url)
-		image = Images.query.filter_by(url=self.image_url).first()
-		if not image:
-			image = Images(url=self.image_url, name=self.name)
-			try:
-				image.save()
-			except Exception as e:
-				app.logger.error("Error creating flavor on OpenStack: \"{0}\"".format(str(e)))
-				return
-
-			# handle failures of either flavor or image
-		if osimage['response'] == "error":
-			response['response'] = "error"
-			response['result']['message'] = "Error creating image."
 			return response
 
 		# tell openstack to start the instance

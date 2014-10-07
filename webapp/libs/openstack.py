@@ -33,6 +33,7 @@ def nova_connection():
 	return connection
 
 def keystone_client():
+	openstack = OpenStack.get()
 	# authenticate with keystone
 	return ksclient.Client(
 		auth_url = openstack.authurl, 
@@ -121,14 +122,19 @@ def get_stats():
 	return response		
 
 def create_os_image(**kwargs):
-	glance = glance_client()
-	return glance.images.create(
+	return glance_client().images.create(
 		name = kwargs['name'],
 		is_public = False,
 		disk_format = 'qcow2',
 		container_format = 'bare',
 		location = kwargs['url']
 	)
+
+def ensure_image_is_deleted(image_id):
+	glance = glance_client()
+	image = glance.images.get(image_id)
+	if image:
+		image.delete()
 
 # verify image is installed or install image correctly if it's not
 def image_verify_install(image):

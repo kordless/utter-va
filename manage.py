@@ -351,16 +351,6 @@ def images(app):
 		
 		Cron: Every 15 minutes.
 		"""
-		# get the appliance for api token (not required, but sent if we have it)
-		appliance = db.session.query(Appliance).first()
-
-		# sync up all the images
-		images = Images()
-		response = images.sync(appliance)
-
-		# now loop through and download non dynamic images if we don't have the files
-		images = db.session.query(Images).filter_by(cache=1).all()
-		download_images(appliance, images)
 
 		# clear out old dynamic images
 		images = db.session.query(Images).filter_by(cache=0).all()
