@@ -199,53 +199,6 @@ def configure_flavors_detail(flavor_id):
 		return jsonify({"response": "success", "flavor": row2dict(flavor)})
 
 
-# configure images page and dynamic images handler
-@mod.route('/configure/images', methods=['GET', 'PUT'])
-@login_required
-def configure_images():
-	# handle a GET
-	if request.method == 'GET':
-		# check configuration
-		settings = Status().check_settings()
-
-		# load images and appliance
-		images = db.session.query(Images).all()
-		appliance = Appliance().get()
-
-		return render_template(
-			'configure/images.html',
-			settings=settings,
-			appliance=appliance,
-			images=images
-		)
-
-	# handle a PUT
-	elif request.method == 'PUT':
-		# clear settings cache
-		Status().flush()
-		
-		# load appliance object
-		appliance = Appliance().get()
-
-		try:
-			state = request.form['dynamicimages']
-			appliance.dynamicimages = state
-			
-			# update entry
-			appliance.update()
-			
-			if state == 0:
-				state_out = "disabled"
-			else:
-				state_out = "enabled"
-
-			response = {"response": "success", "result": "dynamicimages %s" % state_out}
-		except:
-			response = {"response": "error", "result": "no valid parameters supplied"}
-
-		return jsonify(response)
-
-
 # configuration pages
 @mod.route('/configure', methods=['GET', 'POST'])
 @login_required
@@ -438,15 +391,10 @@ def configure_instances():
 	# load instances ordering by state
 	instances = db.session.query(Instances).order_by("state desc").all()
 
-	# images
-	images = Images()
-	images = images.get_all()
-
 	return render_template(
 		'configure/instances.html', 
 		settings=settings, 
 		instances=instances,
-		images=images
 	)
 
 # configure instances page

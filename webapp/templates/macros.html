@@ -24,11 +24,6 @@
         <span id="flavors-settings"class="glyphicon glyphicon-exclamation-sign{% if settings['flavors'] == True %}hidden{% endif %}"></span>
       </a>
     </li>
-    <li {% if active=="images" %}class="active"{% endif %}>
-      <a href="{{ url_for('configure.configure_images') }}">
-        System Images
-      </a>
-    </li>
     <li {% if active=="addresses" %}class="active"{% endif %}>
       <a href="{{ url_for('configure.configure_addresses') }}">
         Bitcoin Addresses

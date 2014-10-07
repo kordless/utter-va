@@ -73,12 +73,10 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		ssltunnel=None,
 		state=None,
 		callback_url=None,
-		image_url=None,
 		post_creation=None,
 		message=None,
 		message_count=0,
 		flavor_id=None,
-		image_id=None,
 	):
 		self.created = created
 		self.updated = updated
@@ -92,12 +90,10 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		self.ssltunnel = ssltunnel
 		self.state = state
 		self.callback_url = callback_url
-		self.image_url = image_url
 		self.post_creation = post_creation
 		self.message = message
 		self.message_count = message_count
 		self.flavor_id = flavor_id
-		self.image_id = image_id
 
 	@property
 	def appliance(self):
@@ -221,10 +217,6 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 				instance.name = "smi-%s" % generate_token(size=8, caselimit=True)
 				instance.flavor_id = flavor.id
 
-				# grab the first available image for a holder for the warm instance
-				image = db.session.query(Images).first()
-				instance.image_id = image.id
-
 				# timestamps
 				epoch_time = int(time.time())
 				instance.created = epoch_time
@@ -279,7 +271,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		# if we're suspended (state==5), set the run state to relight (to be unsuspended)
 		# cron jobs will take care of the rest of the job of starting/unsuspending
 		# NOTE: We're getting paid pennies for doing nothing until cronjob runs!
-		if self.state == 1 or self.state == 10: 
+		if self.state == 1 or self.state == 10:
 			self.state = 2
 			self.expires = epoch_time + purchased_seconds # starting from now
 			self.updated = epoch_time
@@ -309,7 +301,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		
 		pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
 
-		if pool_response['response'] == "success":	
+		if pool_response['response'] == "success":
 			# overload response
 			response['result']['message'] = "Added %s seconds to %s's expire time." % (purchased_seconds, self.name)
 			response['result']['instance'] = row2dict(self)

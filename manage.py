@@ -19,12 +19,11 @@ from webapp.models.models import User, Appliance, OpenStack, Status
 from webapp.models.twitter import TwitterBot, TweetCommands
 from webapp.models.images import Images 
 from webapp.models.flavors import Flavors
-from webapp.models.instances import Instances 
+from webapp.models.instances import Instances
 from webapp.models.addresses import Addresses
 
 from webapp.libs.utils import query_yes_no, pprinttable, message
 from webapp.libs.coinbase import coinbase_get_addresses, coinbase_checker
-from webapp.libs.images import download_images
 from webapp.libs.pool import pool_salesman, pool_connect
 
 # configuration file

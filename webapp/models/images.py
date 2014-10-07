@@ -9,7 +9,6 @@ from webapp import db
 from webapp.models.mixins import CRUDMixin
 
 from webapp.libs.utils import row2dict, generate_token
-from webapp.libs.images import uninstall_image
 from webapp.libs.pool import pool_connect
 from webapp.libs.openstack import glance_client
 from webapp.libs.openstack import create_os_image

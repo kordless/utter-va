@@ -219,7 +219,6 @@ class Status(CRUDMixin, db.Model):
 	coinbase_check = db.Column(db.Integer)
 	ngrok_check = db.Column(db.Integer)
 	flavors_check = db.Column(db.Integer)
-	images_check = db.Column(db.Integer)
 	token_check = db.Column(db.Integer)
 
 	# check settings for setup warning indicators
@@ -277,9 +276,6 @@ class Status(CRUDMixin, db.Model):
 			flavors_check = flavors.check()
 			status.flavors_check = flavors_check
 
-			# images aren't really checked
-			status.images_check = True
-
 			status.update()
 		
 		else:
@@ -298,16 +294,12 @@ class Status(CRUDMixin, db.Model):
 			flavors_check = flavors.check()
 			status.flavors_check = flavors_check
 
-			# images good?
-			status.images_check = True
-
 			# update
 			status.update()
 
 		# build the response object
 		settings = {
 			"flavors": status.flavors_check,
-			"images": 1, 
 			"openstack": status.openstack_check,
 			"coinbase": status.coinbase_check,
 			"ngrok": status.ngrok_check,
