@@ -13,8 +13,7 @@ import keystoneclient.v2_0.client as ksclient
 import glanceclient
 
 from webapp import app, db
-from webapp.models.models import OpenStack
-from webapp.models.models import Appliance
+from webapp.models.openstack import OpenStack
 from webapp.libs.exceptions import OpenStackConfiguration, OpenStackError
 from webapp.libs.utils import message, row2dict
 
@@ -32,6 +31,21 @@ def nova_connection():
 	)
 
 	return connection
+
+def keystone_client():
+	# authenticate with keystone
+	return ksclient.Client(
+		auth_url = openstack.authurl, 
+		username = openstack.osusername, 
+		password = openstack.ospassword, 
+		tenant_id = openstack.tenantid
+	)
+
+def glance_client():
+	keystone = keystone_client()
+	glance_endpoint = keystone.service_catalog.url_for(service_type='image')
+	# establish connection to glance
+	return glanceclient.Client('1', endpoint=glance_endpoint, token=keystone.auth_token, timeout=10)
 
 # get stats for appliance cluster
 def get_stats():
@@ -105,6 +119,16 @@ def get_stats():
 	response['result']['message'] = "OpenStack stats detail."
 	response['result']['stats'] = stats
 	return response		
+
+def create_os_image(**kwargs):
+	glance = glance_client()
+	return glance.images.create(
+		name = kwargs['name'],
+		is_public = False,
+		disk_format = 'qcow2',
+		container_format = 'bare',
+		location = kwargs['url']
+	)
 
 # verify image is installed or install image correctly if it's not
 def image_verify_install(image):

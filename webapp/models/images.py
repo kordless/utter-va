@@ -11,10 +11,23 @@ from webapp.models.mixins import CRUDMixin
 from webapp.libs.utils import row2dict, generate_token
 from webapp.libs.images import uninstall_image
 from webapp.libs.pool import pool_connect
+from webapp.libs.openstack import glance_client
 
 # images model
 class Images(CRUDMixin, db.Model):
 	__tablename__ = 'images'
+	osid = db.Column(db.String(100))
+	url = db.Column(db.String(1024), unique=True)
+	name = db.Column(db.String(1024))
+
+	def save(self, *args, **kwargs):
+		os_image = create_os_image(name=self.name, url=self.url)
+		self.osid = os_image.id
+		super(Images, self).save(*args, **kwargs)
+
+
+class OldImages(CRUDMixin, db.Model):
+	__tablename__ = 'oldimages'
 	id = db.Column(db.Integer, primary_key=True)
 	osid = db.Column(db.String(100))
 	created = db.Column(db.Integer)
