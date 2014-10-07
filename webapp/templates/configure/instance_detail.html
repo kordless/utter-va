@@ -89,10 +89,6 @@
                       <td>{{ instance.flavor.ask }} μBTC/Hour</td>
                       <td><a id="edit-ask-icon" href="#"><span class="glyphicon glyphicon-pencil"></span></a></td>
                     </tr>
-                    <tr>
-                      <td><strong>Image</strong></td>
-                      <td colspan="2"><a href="{{ instance.image.url }}">{{ instance.image.name }}</a></td>
-                    </tr>
                   </table>
                 </div>
               </div>
@@ -130,7 +126,7 @@
                     {% endif %}
                     {% if instance.image.url %}
                     <tr>
-                      <td><strong>Dynamic Image</strong></td>
+                      <td><strong>Image URL</strong></td>
                       <td class="text-left"><a href="{{ instance.image.url|safe }}">{{ instance.image.url|safe }}</a></td>
                     </tr>
                     {% endif %}
