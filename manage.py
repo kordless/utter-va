@@ -353,7 +353,7 @@ def images(app):
 		"""
 
 		# clear out old dynamic images
-		images = db.session.query(Images).filter_by(cache=0).all()
+		images = Images.get_all()
 		for image in images:
 			image.housekeeping()		
 

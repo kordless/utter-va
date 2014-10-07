@@ -33,5 +33,5 @@ class Images(CRUDMixin, db.Model):
 		super(Images, self).delete(*args, **kwargs)
 
 	def housekeeping(self):
-		# to be done
-		return True
+		if self.instances.count() == 0:
+			self.delete()

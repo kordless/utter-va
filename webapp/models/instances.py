@@ -328,7 +328,6 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 	# move instances from light to warm
 	def start(self):
 		from webapp.libs.openstack import flavor_verify_install
-		from webapp.libs.openstack import image_verify_install
 		from webapp.libs.openstack import instance_start
 	
 		# build the response
