@@ -44,7 +44,7 @@ mkdir ${IMG_CACHE_DIR}
 # install nginx caching reverse proxy
 apt-get install nginx -y
 cat <<EOF > /etc/nginx/sites-available/reverse_proxy.conf
-proxy_cache_path ${IMG_CACHE_DIR} levels=1:2 keys_zone=IMGCACHE:10m inactive=14d max_size=10g;
+proxy_cache_path ${IMG_CACHE_DIR} levels=1:2 keys_zone=IMGCACHE:10m inactive=3650d max_size=10g;
 server {
 	listen 8080;
 
@@ -55,7 +55,7 @@ server {
 		proxy_pass             http://\$real_host/\$real_uri;
 		proxy_set_header       Host \$real_host;
 		proxy_cache            IMGCACHE;
-		proxy_cache_valid      200  1d;
+		proxy_cache_valid      200 3650d;
 		proxy_cache_use_stale  error timeout invalid_header updating http_500 http_502 http_503 http_504;
 	}
 }

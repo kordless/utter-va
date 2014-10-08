@@ -22,14 +22,9 @@
             <div class="bs-callout bs-callout-info bs-callout-top">
               <h4>About Flavors</h4>
               <p><strong>Flavors</strong> are used by <strong>Appliances</strong> to describe <strong>Instance Type</strong> values for <strong># of Compute Cores</strong>, <strong>Memory</strong>, <strong>Disk</strong> and <strong>Network Speed</strong>. You can update this appliance's <strong>Ask Prices</strong> for flavors it advertises via <strong>Instance Asks</strong> by clicking on the <strong>Flavor Name</strong> link.</p>
-              <p>Flavors are synced every 15 minutes from the <strong>Pool Operator</strong> and are automatically installed into the <strong>OpenStack Cluster</strong> by the appliance.  You should only enable flavors your OpenStack cluster can readily support.</p>
+              <p>Flavors are synced every 15 minutes from the <strong>Pool Operator</strong> and are automatically installed into the <strong>OpenStack Cluster</strong> by the appliance.  You should only enable serving flavors your OpenStack cluster can readily support.</p>
             </div>
           </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-					<p>You can get <a href='/configure/pool_flavors'>more flavors</a> from the pool.</p>
         </div>
       </div>
       <div class="row">
@@ -37,51 +32,35 @@
           <table class="table table-hover">
             <thead>
               <tr>
-                <th>State</th>
                 <th>Flavor</th>
                 <th>VPUs</th>
                 <th>Memory</th>
                 <th>Disk</th>
 								<th>Network Down/Up</th>
                 <th>Ask Rate</th>
+                <th>Serving</th>
               </tr>
             </thead>
             <tbody>
               {% for flavor in flavors %}
               <tr>
-                <td>
-                  <div class="toggle-modern">
-                    <div id="flavor-{{flavor.id}}" class="toggle{% if flavor.active %} enabled{% endif %}"></div>
-                  </div>
-                </td>  
                 <td><a href="/configure/flavors/{{flavor.id}}">{{ flavor.name }}</a></td>
                 <td>{{ flavor.vpus }} Core{% if flavor.vpus > 1 %}s{% endif %}</td>
                 <td>{{ flavor.memory }}MB</td>
                 <td>{{ flavor.disk }}GB</td>
                 <td>{% if flavor.network_down < 0 %}Unlimited{% else %}{{ flavor.network_down }}{% endif %} / {% if flavor.network_up < 0 %}Unlimited{% else %}{{ flavor.network_up }} Mb/sec{% endif %}</td>
-                <td>{{ flavor.ask }} μBTC/Hour</td>      
+                <td>{{ flavor.ask }} μBTC/Hour</td>
+                <td>
+                  <div class="toggle-modern">
+                    <div id="flavor-{{flavor.id}}" class="toggle{% if flavor.active %} enabled{% endif %}"></div>
+                  </div>
+                </td>        
               </tr>
               {% endfor %}
             </tbody>
           </table>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
           <p><code>10 μBTC = ~US${{ '%0.6f'| format(quote*10|float) }}</code> <a href="https://coinbase.com" target="_blank">via Coinbase</a></p>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-          <div class="section-header">
-            <div class="bs-callout bs-callout-info bs-callout-top">
-              <h4>Flavor synchronization from OpenStack cluster</h4>
-							<p>You can sell the existing <strong>flavors</strong> of your OpenStack cluster via <strong>StackMonkey</strong> by marking them with an <strong>extra_specs</strong> key indicating that a flavor should be sold and the <strong>price</strong> you are asking for it</p>
-							<p>This <strong>example</strong> demonstrates how you would sell your <strong>flavor</strong> with the id <strong><code>1000</code></strong> for a price of <strong>5 μBTC</strong>. It needs to be run as a user with sufficient <strong>permissions</strong>, for example <strong>admin</strong>:<p>
-              <p><strong><code># nova flavor-key 1000 set stackmonkey:ask_price=5</code></strong></p>
-							<p><strong>After a few minutes</strong> the newly marked flavor should be <strong>synced</strong> and appear on this page with the defined <strong>price</strong>.</p>
-            </div>
-          </div>
+          <button id="install_flavors" class="btn btn-success">Install a New Flavor</button>
         </div>
       </div>
     </div>
@@ -94,6 +73,11 @@
 <script type="text/javascript">
   $().ready(function() {
     var csrf_token = "{{ csrf_token() }}";
+
+    // install button
+    $('#install_flavors').click(function() {
+      window.location = "{{ url_for('configure.pool_flavors_get') }}";
+    });
 
     // warn about needing some serving
     {% if settings['flavors'] == False %}
