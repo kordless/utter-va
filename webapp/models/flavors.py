@@ -246,6 +246,9 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 			flavor = db.session.query(Flavors).filter_by(
 				name=flavor_schema.name.as_dict()).first()
 
+			# values to not update
+			keep_values = {}
+
 			# check if we need to delete flavor from local db
 			# b'001000' indicates delete flavor
 			# TODO: need to cleanup OpenStack flavor if we uninstall
@@ -261,11 +264,14 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				# if active and installed on openstack, do not update price
 				if flavor.active == True and flavor.locality == 3:
 					# do not change ask price if flavor is enabled
-					flavor_schema.ask = None
+					keep_values['ask'] = flavor_schema.ask
 				# active flag should never be updated by pool
-				flavor_schema.active = None
+				keep_values['active'] = flavor_schema.active
 
 			ApiSchemaHelper.fill_object_from_schema(flavor_schema, flavor)
+
+			for k, v in keep_values.items():
+				setattr(flavor, k, v)
 
 			flavor.save()
 
