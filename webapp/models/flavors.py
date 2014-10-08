@@ -66,7 +66,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		vpus=None,
 		memory=None,
 		disk=None,
-		# the default network limitation if none is specified is 1
+		# the default network limitation if none is specified is -1
 		network_down=-1,
 		network_up=-1,
 		# the default price and rate is 0 if nothing is passed
@@ -258,18 +258,22 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				continue
 
 			elif flavor is None:
-				# we don't have the flavor that's coming in from the pool
+				# don't have it, create, and set not active
 				flavor = Flavors()
+				keep_values['active'] = 0
 			else:
 				# if active and installed on openstack, do not update price
 				if flavor.active == True and flavor.locality == 3:
 					# do not change ask price if flavor is enabled
 					keep_values['ask'] = flavor_schema.ask
-				# active flag should never be updated by pool
-				keep_values['active'] = flavor_schema.active
 
+				# keep whatever we currently have for active
+				keep_values['active'] = flavor.active
+				
+			# populate the object
 			ApiSchemaHelper.fill_object_from_schema(flavor_schema, flavor)
 
+			# @replay can we get some explaination on what this does?
 			for k, v in keep_values.items():
 				setattr(flavor, k, v)
 
