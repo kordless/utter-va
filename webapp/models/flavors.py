@@ -258,6 +258,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				# we don't have the flavor that's coming in from the pool
 				flavor = Flavors()
 			else:
+				# if active and installed on openstack, do not update price
 				if flavor.active == True and flavor.locality != 2:
 					# do not change ask price if flavor is enabled
 					flavor_schema.ask = None
