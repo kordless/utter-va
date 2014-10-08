@@ -13,7 +13,6 @@ from webapp.libs.pool import pool_connect
 from webapp.libs.utils import generate_token, ngrok_checker
 from webapp.libs.geoip import get_geodata
 
-from webapp.models.images import Images
 from webapp.models.flavors import Flavors
 
 from utter_libs.schemas.model_mixin import ModelSchemaMixin

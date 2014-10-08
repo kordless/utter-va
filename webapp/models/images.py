@@ -1,15 +1,10 @@
-import time
-import md5
+import re
 
-from urllib2 import urlopen
-
-from webapp import app
 from webapp import db
 
 from webapp.models.mixins import CRUDMixin
+from webapp.models.models import Appliance
 
-from webapp.libs.utils import row2dict, generate_token
-from webapp.libs.pool import pool_connect
 from webapp.libs.openstack import glance_client
 from webapp.libs.openstack import create_os_image
 from webapp.libs.openstack import ensure_image_is_deleted
@@ -21,9 +16,20 @@ class Images(CRUDMixin, db.Model):
 	url = db.Column(db.String(1024), unique=True)
 	name = db.Column(db.String(1024))
 	instances = db.relationship('Instances', backref='image', lazy='dynamic')
+	
+
+	@property
+	def cached_url(self):
+		# remove protocol from url
+		proto_search = re.compile('^http[s]{0,1}://(.*)$').search(self.url)
+		if proto_search:
+			cropped_url = proto_search.group(1)
+		else:
+			cropped_url = self.url
+		return 'http://' + Appliance.get().local_ip + ':8080/' + cropped_url
 
 	def save(self, *args, **kwargs):
-		os_image = create_os_image(name=self.name, url=self.url)
+		os_image = create_os_image(name=self.name, url=self.cached_url)
 		self.osid = os_image.id
 		super(Images, self).save(*args, **kwargs)
 
