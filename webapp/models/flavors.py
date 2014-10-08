@@ -252,11 +252,11 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				# we don't have the flavor that's coming in from the pool
 				flavor = Flavors()
 			else:
-				# keep values that shouldn't be updated from pool
-				keep_values = {
-					'ask': flavor.ask,
-					'active': flavor.active,
-				}
+				if flavor.active == True:
+					# do not change ask price if flavor is enabled
+					flavor_schema.ask = None
+				# active flag should never be updated by pool
+				flavor_schema.active = None
 
 			ApiSchemaHelper.fill_object_from_schema(flavor_schema, flavor)
 
