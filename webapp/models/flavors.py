@@ -266,10 +266,6 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 
 			ApiSchemaHelper.fill_object_from_schema(flavor_schema, flavor)
 
-			# restore those values that we don't want to update
-			for (k, v) in keep_values.items():
-				setattr(flavor, k, v)
-
 			flavor.save()
 
 		# overwrite the results with the list of current flavors as dicts
