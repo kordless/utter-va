@@ -75,7 +75,7 @@ chown ${USER}:${GROUP} /var/log/utterio/
 mkdir /var/www
 
 # clone appliance code
-git clone https://github.com/StackMonkey/utter-va.git ${BASE_DIR}
+git clone --branch always_pass_image_uri https://github.com/StackMonkey/utter-va.git ${BASE_DIR}
 
 # chown it all to the service user
 chown -R ${USER}:${GROUP} ${BASE_DIR}
