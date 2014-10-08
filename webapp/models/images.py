@@ -17,7 +17,6 @@ class Images(CRUDMixin, db.Model):
 	url = db.Column(db.String(1024), unique=True)
 	name = db.Column(db.String(1024))
 	instances = db.relationship('Instances', backref='image', lazy='dynamic')
-	
 
 	@property
 	def cached_url(self):
