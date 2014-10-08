@@ -1,4 +1,5 @@
 import re
+import urllib2
 
 from webapp import db
 
@@ -20,8 +21,11 @@ class Images(CRUDMixin, db.Model):
 
 	@property
 	def cached_url(self):
+		# resolve url to it's final destination
+		urlinfo = urllib2.build_opener().open(urllib2.Request(self.url))
+
 		# remove protocol from url
-		proto_search = re.compile('^http[s]{0,1}://(.*)$').search(self.url)
+		proto_search = re.compile('^http[s]{0,1}://(.*)$').search(urlinfo.url)
 		if proto_search:
 			cropped_url = proto_search.group(1)
 		else:
