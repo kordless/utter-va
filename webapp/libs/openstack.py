@@ -13,7 +13,7 @@ import keystoneclient.v2_0.client as ksclient
 import glanceclient
 
 from webapp import app, db
-from webapp.models.openstack import OpenStack
+from webapp.models.models import OpenStack
 from webapp.libs.exceptions import OpenStackConfiguration, OpenStackError
 from webapp.libs.utils import message, row2dict
 

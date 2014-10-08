@@ -116,12 +116,10 @@ def install(app):
 		# create all tables
 		db.create_all()
 		
-		# initialize the appliance object
-		appliance = Appliance()
-		appliance.initialize(ip)
-		
-		# sync to remote database
-		Images().sync(appliance)
+		if not Appliance.get():
+			# initialize the appliance object
+			appliance = Appliance()
+			appliance.initialize(ip)
 
 		# sync flavors from pool
 		### can't sync from openstack yet because we don't have the user configured
