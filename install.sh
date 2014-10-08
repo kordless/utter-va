@@ -61,6 +61,7 @@ server {
 }
 EOF
 ln -s /etc/nginx/sites-available/reverse_proxy.conf /etc/nginx/sites-enabled/reverse_proxy.conf
+rm /etc/nginx/sites-enabled/default
 nginx -s reload
 
 # add user and group to run services as
