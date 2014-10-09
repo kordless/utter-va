@@ -119,7 +119,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 			keys = get_flavor_keys(self.osid)
 		except nova_exceptions.NotFound:
 			# nebula only
-			pass
+			keys = {}
 		if not 'stackmonkey:ask_price' in keys:
 			return
 		return int(keys['stackmonkey:ask_price'])
@@ -162,7 +162,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		from webapp.libs.openstack import get_flavor_keys
 		key_spec = "extra_spec:"
 		try:
-			keys = get_flavor_keys(flavor.osid)
+			keys = get_flavor_keys(flavor.id)
 		except nova_exceptions.NotFound:
 			# nebula only
 			keys = {}
