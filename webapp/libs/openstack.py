@@ -131,10 +131,13 @@ def create_os_image(**kwargs):
 	)
 
 def ensure_image_is_deleted(image_id):
-	glance = glance_client()
-	image = glance.images.get(image_id)
-	if image:
-		image.delete()
+	try:
+		glance = glance_client()
+		image = glance.images.get(image_id)
+		if image:
+			image.delete()
+	except Exception:
+		app.logger.error("Failed to delete image {0}.".format(image_id))
 
 def list_flavors(filter_by=None):
 	response = {"response": "success", "result": {"message": ""}}

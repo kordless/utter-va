@@ -215,7 +215,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 				# create a new instance		
 				instance = Instances()
 				instance.name = "smi-%s" % generate_token(size=8, caselimit=True)
-				instance.flavor_id = flavor.id
+				instance.flavor = flavor
 
 				# timestamps
 				epoch_time = int(time.time())
