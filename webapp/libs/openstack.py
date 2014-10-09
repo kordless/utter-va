@@ -251,6 +251,10 @@ def flavor_verify_install(flavor):
 				if 'quota:inbound_average' not in osikeys or \
 						flavor.network_down != int(osikeys['quota:inbound_average']):
 					install_flavor = True
+		except nova_exceptions.NotFound:
+			# another special case for nebula, because they return 404 when asking keys
+			# ugly ugly, i don't like these special cases for one provider
+			pass
 		except:
 			# just force install
 			install_flavor = True
