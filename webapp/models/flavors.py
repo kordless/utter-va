@@ -11,6 +11,7 @@ from webapp.libs.utils import generate_token
 from webapp.libs.pool import pool_connect
 from webapp.libs.pool import PoolApiFlavorsList
 from webapp.libs.pool import PoolApiException
+from webapp.libs.openstack import get_flavor_keys
 
 from utter_libs.schemas.model_mixin import ModelSchemaMixin
 from utter_libs.schemas.helpers import ApiSchemaHelper
@@ -112,7 +113,6 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 	# retreive the ask price of this flavor that's set on openstack via keys
 	@property
 	def ask_on_openstack(self):
-		from webapp.libs.openstack import get_flavor_keys
 		if not self.osid:
 			return
 		try:
