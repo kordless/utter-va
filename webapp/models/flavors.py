@@ -260,7 +260,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 			elif flavor is None:
 				# don't have it, create, and set not active
 				flavor = Flavors()
-				keep_values['active'] = 0
+				keep_values['active'] = False
 			else:
 				# if active and installed on openstack, do not update price
 				if flavor.active == True and flavor.locality == 3:
@@ -273,7 +273,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 			# populate the object
 			ApiSchemaHelper.fill_object_from_schema(flavor_schema, flavor)
 
-			# @replay can we get some explaination on what this does?
+			# iterate over values that should be kept and set them on flavor object
 			for k, v in keep_values.items():
 				setattr(flavor, k, v)
 
