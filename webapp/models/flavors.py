@@ -3,6 +3,8 @@ import json
 from webapp import app
 from webapp import db
 
+from novaclient import exceptions as nova_exceptions
+
 from webapp.models.mixins import CRUDMixin
 
 from webapp.libs.utils import generate_token
@@ -113,7 +115,11 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		from webapp.libs.openstack import get_flavor_keys
 		if not self.osid:
 			return
-		keys = get_flavor_keys(self.osid)
+		try:
+			keys = get_flavor_keys(self.osid)
+		except nova_exceptions.NotFound:
+			# nebula only
+			pass
 		if not 'stackmonkey:ask_price' in keys:
 			return
 		return int(keys['stackmonkey:ask_price'])
@@ -134,7 +140,11 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		if self.ask == self.ask_on_openstack:
 			return
 
-		set_flavor_ask_price(self.osid, self.ask)
+		try:
+			set_flavor_ask_price(self.osid, self.ask)
+		except nova_exceptions.NotFound:
+			# nebula only
+			pass
 
 	def check(self):
 		flavors = db.session.query(Flavors).all()
@@ -150,7 +160,11 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 	# extract values and keys from osflavor and return them as simple dict
 	def get_values_from_osflavor(self, flavor):
 		key_spec = "extra_spec:"
-		keys = flavor.get_keys()
+		try:
+			keys = get_flavor_keys(flavor.osid)
+		except nova_exceptions.NotFound:
+			# nebula only
+			keys = {}
 		ret_value = {}
 		for property in self.os_property_mapping:
 			if property[1][:len(key_spec)] == key_spec:
