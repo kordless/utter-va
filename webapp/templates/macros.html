@@ -5,7 +5,7 @@
     <li {% if active=="appliance" %}class="active"{% endif %}>
       <a href="{{ url_for('configure.configure') }}">
         Appliance
-        {% if settings['token'] == False or settings['coinbase'] == False or settings['ngrok'] == False %}
+        {% if settings['token'] == 0 or settings['coinbase'] == 0 or settings['ngrok'] == 0 %}
           <span id="appliance-settings" class="glyphicon glyphicon-exclamation-sign"></span>
         {% endif %}
       </a>
@@ -13,7 +13,7 @@
     <li {% if active=="openstack" %}class="active"{% endif %}>
       <a href="{{ url_for('configure.configure_openstack') }}">
         OpenStack
-        {% if settings['openstack'] == False %}
+        {% if settings['openstack'] == 0 %}
           <span id="openstack-settings"class="glyphicon glyphicon-exclamation-sign"></span>
         {% endif %}
       </a>
@@ -21,7 +21,11 @@
     <li {% if active=="systems" %}class="active"{% endif %}>
       <a href="{{ url_for('configure.configure_flavors') }}">
         Flavors & Ask Prices
-        <span id="flavors-settings"class="glyphicon glyphicon-exclamation-sign{% if settings['flavors'] == True %}hidden{% endif %}"></span>
+        {% if settings['flavors'] == 0 %}
+          <span id="flavors-settings"class="glyphicon glyphicon-exclamation-sign"></span>
+        {% else %}
+          <span id="flavors-settings"class="glyphicon glyphicon-exclamation-sign hidden"></span>
+        {% endif %}
       </a>
     </li>
     <li {% if active=="addresses" %}class="active"{% endif %}>

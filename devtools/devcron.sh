@@ -42,4 +42,5 @@ do
   sleep 1
   echo "Running in 1"
   sleep 1
+  git pull
 done
