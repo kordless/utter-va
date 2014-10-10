@@ -46,18 +46,16 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 	# 7 - instance decommissioned (removed)
 	
 	callback_url = db.Column(db.String(1024))
-	dynamic_image_url = db.Column(db.String(1024))
+	image_id = db.Column(db.Integer, db.ForeignKey('images.id'))
 	post_creation = db.Column(db.String(8192))
 	message = db.Column(db.String(400))
 	message_count = db.Column(db.Integer)
 
 	# foreign keys
 	flavor_id = db.Column(db.Integer, db.ForeignKey('flavors.id'))
-	image_id = db.Column(db.Integer, db.ForeignKey('images.id'))
 
 	# relationships
 	flavor = db.relationship('Flavors', foreign_keys='Instances.flavor_id')
-	image = db.relationship('Images', foreign_keys='Instances.image_id')
 
 	# which schema should be used for validation and serialization
 	object_schema = schemas['InstanceSchema']
@@ -75,12 +73,10 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		ssltunnel=None,
 		state=None,
 		callback_url=None,
-		dynamic_image_url=None,
 		post_creation=None,
 		message=None,
 		message_count=0,
 		flavor_id=None,
-		image_id=None,
 	):
 		self.created = created
 		self.updated = updated
@@ -94,12 +90,10 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		self.ssltunnel = ssltunnel
 		self.state = state
 		self.callback_url = callback_url
-		self.dynamic_image_url = dynamic_image_url
 		self.post_creation = post_creation
 		self.message = message
 		self.message_count = message_count
 		self.flavor_id = flavor_id
-		self.image_id = image_id
 
 	@property
 	def appliance(self):
@@ -221,11 +215,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 				# create a new instance		
 				instance = Instances()
 				instance.name = "smi-%s" % generate_token(size=8, caselimit=True)
-				instance.flavor_id = flavor.id
-
-				# grab the first available image for a holder for the warm instance
-				image = db.session.query(Images).first()
-				instance.image_id = image.id
+				instance.flavor = flavor
 
 				# timestamps
 				epoch_time = int(time.time())
@@ -281,7 +271,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		# if we're suspended (state==5), set the run state to relight (to be unsuspended)
 		# cron jobs will take care of the rest of the job of starting/unsuspending
 		# NOTE: We're getting paid pennies for doing nothing until cronjob runs!
-		if self.state == 1 or self.state == 10: 
+		if self.state == 1 or self.state == 10:
 			self.state = 2
 			self.expires = epoch_time + purchased_seconds # starting from now
 			self.updated = epoch_time
@@ -311,7 +301,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		
 		pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
 
-		if pool_response['response'] == "success":	
+		if pool_response['response'] == "success":
 			# overload response
 			response['result']['message'] = "Added %s seconds to %s's expire time." % (purchased_seconds, self.name)
 			response['result']['instance'] = row2dict(self)
@@ -330,7 +320,6 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 	# move instances from light to warm
 	def start(self):
 		from webapp.libs.openstack import flavor_verify_install
-		from webapp.libs.openstack import image_verify_install
 		from webapp.libs.openstack import instance_start
 	
 		# build the response
@@ -368,12 +357,10 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			try:
 				callback_url = pool_response['result']['instance']['callback_url']
 				# run the loop again to call the callback url
-				continue 
+				if callback_url == '':
+					break
 			except:
-				# break out
 				break
-		
-		# for else returns a depth error
 		else:
 			response['response'] = "error"
 			response['result']['message'] = "Callback depth exceeded."
@@ -381,29 +368,28 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			self.message_count = self.message_count + 1
 			self.update()
 			return response
-		
-		# and lo, callback_url is saved
-		self.callback_url = callback_url
-		self.update()
 
-		# get the image name if it exists in the response 
-		try:
-			image_name = pool_response['result']['instance']['image']
-			image = db.session.query(Images).filter_by(name=image_name).first()
-			self.image_id = image.id
-			self.update()
-		except:
-			image_name = None
-			# get the dynamic image url if it exists in the response
+		# get dictionary from pool's reply
+		start_params = schemas['InstanceStartParametersSchema'](
+			**pool_response['result']['instance']).as_dict()
+
+		# and lo, callback_url is saved
+		self.callback_url = start_params['callback_url']
+
+		# lookup the image for this instance, or create it otherwise
+		image = Images.query.filter_by(url=start_params['image_url']).first()
+		if not image:
+			image = Images(url=start_params['image_url'],
+										 name=start_params['image_name'])
 			try:
-				dynamic_image_url = pool_response['result']['instance']['dynamic_image_url']
-				self.dynamic_image_url = dynamic_image_url
-				self.update()
-			except:
-				# not good, but we can use a default
-				image = db.session.query(Images).first()
-				self.image_id = image.id
-				self.update()
+				image.save()
+			except Exception as e:
+				app.logger.error("Error creating flavor on OpenStack: \"{0}\"".format(str(e)))
+				response['response'] = "error"
+				response['result']['message'] = "Error creating image."
+				return response
+		self.image = image
+		self.update()
 
 		# post creation file is blank to start
 		post_creation_ssh_key_combo = ""
@@ -413,13 +399,11 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 
 		# ssh_key unrolling
 		try:
-			ssh_key = pool_response['result']['instance']['ssh_key'] # an array
-
 			# loop through both strings and cat onto post_creation_ssh_key_combo
 			# using prefered method of injecting keys with cloud-init
 			post_creation_ssh_key_combo += "#cloud-config\n"
 			post_creation_ssh_key_combo += "ssh_authorized_keys:\n"
-			for line in ssh_key:
+			for line in start_params['ssh_keys']:
 				post_creation_ssh_key_combo += " - %s\n" % h.unescape(line)
 			post_creation_ssh_key_combo += "\n"
 
@@ -429,9 +413,8 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 
 		# post creation configuration handling
 		try:
-			post_creation = pool_response['result']['instance']['post_creation'] # an array
 
-			for line in post_creation:
+			for line in start_params['post_create']:
 				# import what the user put in the textbox for their wisp
 				post_creation_ssh_key_combo += "%s\n" % h.unescape(line)
 
@@ -479,29 +462,6 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 				response['result']['message'] = flavor_response['result']['message']
 
 			response['response'] = "error"
-			return response
-
-		# deal with creating dynamic image or use predefined one
-		if self.dynamic_image_url:
-			image = Images().get_or_create_by_instance(self)
-		else:
-			image = Images().get_by_id(self.image.id)
-
-		if not image:
-			response['response'] = "error"
-			response['result']['message'] = "Error creating dynamic image."
-			return response
-		else:
-			self.image = image
-			self.update()
-
-		# take the image and verify install
-		osimage = image_verify_install(self.image)
-
-			# handle failures of either flavor or image
-		if osimage['response'] == "error":
-			response['response'] = "error"
-			response['result']['message'] = "Error creating image."
 			return response
 
 		# tell openstack to start the instance

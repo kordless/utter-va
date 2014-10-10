@@ -91,7 +91,7 @@
                 <td><a href="/configure/flavors/{{ instance.flavor.id }}">{{ instance.flavor.name }}</a></td>                
                 <td id="instance-timer-{{instance.id}}" data-state="{{ instance.state }}" data-expires="{{ instance.expires }}"><img src="/img/loading.gif"/></td>
                 <td>
-                  <button id="instance-start-{{ instance.id }}" title="Start instance {{ instance.name }}." data-instance="{{ instance.id }}" data-flavor="{{ instance.flavor.id }}" data-image="{{ instance.image.id }}" data-description="{{ instance.flavor.description }}" class="btn btn-xs btn-success {% if instance.state > 1 %}disabled{% endif %}"><span class="glyphicon glyphicon-play"></span> Start</button>
+                  <button id="instance-start-{{ instance.id }}" title="Start instance {{ instance.name }}." data-instance="{{ instance.id }}" data-flavor="{{ instance.flavor.id }}" data-description="{{ instance.flavor.description }}" class="btn btn-xs btn-success {% if instance.state > 1 %}disabled{% endif %}"><span class="glyphicon glyphicon-play"></span> Start</button>
                   <button id="instance-payment-{{ instance.address }}" title="Make a payment." data-ask="{{ instance.flavor.ask }}" class="btn btn-xs btn-danger"><span class="glyphicon glyphicon-qrcode"></span> Payment</button>
                 </td>
               </tr>
@@ -152,12 +152,10 @@
         $('#flavor-description').html(description);
         $('#instance-start-modal').modal();
 
-        // load the instance_id, flavor_id, and image_id into the button
+        // load the instance_id, and flavor_id into the button
         var instance_id = $('#'+this.id).attr('data-instance');
         var flavor_id = $('#'+this.id).attr('data-flavor');
-        var image_id = $('#'+this.id).attr('data-image');
         $('#instance-start-button').attr('data-flavor', flavor_id);
-        $('#instance-start-button').attr('data-image', image_id);
         $('#instance-start-button').attr('data-instance', instance_id);
       })
     });
@@ -167,13 +165,12 @@
       // reload our variables
       var instance_id = $('#instance-start-button').attr('data-instance');
       var flavor_id = $('#instance-start-button').attr('data-flavor');
-      var image_id = $('#instance-start-button').attr('data-image');
       
       // fire the call to start from the start buttons
       $.ajax({
         url: '/configure/instances/'+instance_id,
         type: 'PUT',
-        data: {_csrf_token: csrf_token, action: 'start', flavor: flavor_id, image: image_id},
+        data: {_csrf_token: csrf_token, action: 'start', flavor: flavor_id},
         success: function(data) {
           // convert to alerify terms
           console.log(data.response)

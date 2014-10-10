@@ -5,7 +5,6 @@ from webapp import db
 
 from webapp.models.mixins import CRUDMixin
 
-from webapp.models.images import Images
 from webapp.models.flavors import Flavors
 from webapp.models.instances import Instances
 
