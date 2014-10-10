@@ -28,13 +28,18 @@ def pool_instances(is_list=False, **kwargs):
 			if not is_list:
 				pool_api.custom_url = pool_api.custom_url + kwargs['instance'].name + "/"
 
+		data = {
+			'appliance': kwargs['appliance'].as_schema().as_dict(),
+			'is_list': is_list}
+
+		if not is_list:
+			data['instance'] = kwargs['instance'].as_schema()
+		else:
+			data['instances'] = kwargs['instances'].as_schema_list()
+
 		# send instance data to the pool and keep response
 		response['result']['instance'] = json.loads(
-			pool_api.request(json.dumps({
-				'appliance': kwargs['appliance'].as_schema().as_dict(),
-				'instances': kwargs['instance'].as_schema().as_dict(),
-				'is_list': is_list
-			})))
+			pool_api.request(json.dumps(data)))
 
 	except PoolApiException as e:
 		response['response'] = "error"
