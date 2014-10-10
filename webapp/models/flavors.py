@@ -68,7 +68,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		vpus=None,
 		memory=None,
 		disk=None,
-		# the default network limitation if none is specified is 1
+		# the default network limitation if none is specified is -1
 		network_down=-1,
 		network_up=-1,
 		# the default price and rate is 0 if nothing is passed
@@ -119,7 +119,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 			keys = get_flavor_keys(self.osid)
 		except nova_exceptions.NotFound:
 			# nebula only
-			keys = {}
+			return
 		if not 'stackmonkey:ask_price' in keys:
 			return
 		return int(keys['stackmonkey:ask_price'])
@@ -145,6 +145,8 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		except nova_exceptions.NotFound:
 			# nebula only
 			pass
+		except Exception as e:
+			app.logger.info("Failed to update flavor=(%s) price on cluster. %s" % (self.name, str(e)))
 
 	def check(self):
 		flavors = db.session.query(Flavors).all()
@@ -200,7 +202,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		# get all flavors that have the stackmonkey:ask_price key set in their extra_specs
 		response = list_flavors()
 		if response['response'] == "error":
-			app.logger.error("Failed to list flavors from OpenStack cluster")
+			app.logger.error("Failed to list flavors from OpenStack cluster.")
 			return
 		osflavors = response['result']['flavors']
 
@@ -241,7 +243,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				# grab flavor list from pool server
 				PoolApiFlavorsList().request())
 		except ValueError:
-			app.logger.error("Received Flavor List in broken format from pool.")
+			app.logger.error("Received a broken format for flavors from pool.")
 			return
 		except PoolApiException as e:
 			app.logger.error(str(e))
@@ -255,6 +257,9 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 			flavor = db.session.query(Flavors).filter_by(
 				name=flavor_schema.name.as_dict()).first()
 
+			# values to not update
+			keep_values = {}
+
 			# check if we need to delete flavor from local db
 			# b'001000' indicates delete flavor
 			# TODO: need to cleanup OpenStack flavor if we uninstall
@@ -264,19 +269,23 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				continue
 
 			elif flavor is None:
-				# we don't have the flavor that's coming in from the pool
+				# don't have it, create, and set not active
 				flavor = Flavors()
+				keep_values['active'] = False
 			else:
-				# keep values that shouldn't be updated from pool
-				keep_values = {
-					'ask': flavor.ask,
-					'active': flavor.active,
-				}
+				# if active and installed on openstack, do not update price
+				if flavor.active == True and flavor.locality == 3:
+					# do not change ask price if flavor is enabled
+					keep_values['ask'] = flavor_schema.ask
 
+				# keep whatever we currently have for active
+				keep_values['active'] = flavor.active
+				
+			# populate the object
 			ApiSchemaHelper.fill_object_from_schema(flavor_schema, flavor)
 
-			# restore those values that we don't want to update
-			for (k, v) in keep_values.items():
+			# iterate over values that should be kept and set them on flavor object
+			for k, v in keep_values.items():
 				setattr(flavor, k, v)
 
 			flavor.save()

@@ -18,11 +18,11 @@
       <div class="row">
         <div class="col-md-12">
           <div class="section-header">
-            <h2><small>Auto-generated Flavors</small></h2>
+            <h2><small>Install New Flavors</small></h2>
             <div class="bs-callout bs-callout-info bs-callout-top">
-              <h4>About auto-generated Flavors</h4>
-              <p><strong>Auto-generated Flavors</strong> are the result of a merge process that happens on the StackMonkey Pool by merging various flavors from different <strong>OpenStack installations</strong>.</p>
-              <p>You can <strong>install</strong> them into your <strong>OpenStack cluster</strong> using the <strong>install</strong> button</p>
+              <h4>Installing Recommended Flavors</h4>
+              <p>The following <strong>Instance Flavors</strong> may be installed on your <strong>OpenStack Cluster</strong>. Installing a new flavor requires the <strong>Appliance's User</strong> to have flavor create privledges on the cluster.</p>
+              <p>More information regarding <strong>OpenStack Permissions</strong> is <a href="{{ config['APP_WEBSITE'] }}/docs/#appliance-operation-flavors">available in the documentation</a> located on the pool's website.</p>
             </div>
           </div>
         </div>
@@ -50,37 +50,13 @@
                 <td>{{ flavor.disk }}GB</td>
                 <td>{% if flavor.network_down < 0 %}Unlimited{% else %}{{ flavor.network_down }}{% endif %} / {% if flavor.network_up < 0 %}Unlimited{% else %}{{ flavor.network_up }} Mb/sec{% endif %}</td>
                 <td>{{ flavor.ask }} μBTC/Hour</td>      
-								<td>
-									<div class="toggle-modern">
-										<div id="flavor-install-{{flavor.id}}" class="toggle {% if flavor.locality == 3 %}installed{% endif %}"></div>
-									</div>
-                </td>
+								<td><button id="flavor-install-{{ flavor.id }}" title="Install flavor {{ flavor.name }}." data-flavor="{{ flavor.id }}" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-floppy-open"></span> Install</button></td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
+          <button id="back_to_flavors" class="btn btn-info"><span class="glyphicon glyphicon-arrow-left"></span> Back to Flavors</button>
         </div>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-          <div class="section-header">
-            <h2><small>Flavor permissions</small></h2>
-            <div class="bs-callout bs-callout-info bs-callout-top">
-							<p>On many <strong>OpenStack</strong> installations a normal user cannot create or delete flavors by default. In such a case <strong>StackMonkey</strong> will be <strong>unable</strong> to <strong>install</strong> a flavor unless it's <strong>OpenStack user</strong> is <strong>admin</strong> or especially <strong>granted</strong> to execute certain API calls. If you don't feel comfortable making the user an <strong>admin</strong>, you can also allow the <strong>StackMonkey user</strong> to create and edit flavors by editing nova's <strong>policy.json</strong>.</p>
-							<p>For <strong>Example</strong> if your the OpenStack user's <strong>id</strong> is <strong><code>12345</code></strong>, you could <strong>grant</strong> her the necessary permissions by editing the following lines in <strong><code>/etc/nova/policy.json</code></strong> to look like this:
-							</p>
-							<p>
-								<code>
-									"compute_extension:flavorextraspecs:create": "rule:admin_api or user_id:12345",<br />
-									"compute_extension:flavorextraspecs:update": "rule:admin_api or user_id:12345",<br />
-									"compute_extension:flavorextraspecs:delete": "rule:admin_api or user_id:12345",<br />
-									"compute_extension:flavormanage": "rule:admin_api or user_id:12345",
-								</code>
-							</p>
-							<p>After <strong>restarting</strong> the <strong><code>nova-api</code></strong> service, the user with the <strong>id</strong> <strong><code>12345</code></strong> should be able to <strong>install flavors</strong>.
-							</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -93,6 +69,11 @@
 <script type="text/javascript">
   $().ready(function() {
     var csrf_token = "{{ csrf_token() }}";
+
+    // back to flavors
+    $('#back_to_flavors').click(function() {
+      window.location = "{{ url_for('configure.configure_flavors') }}";
+    });
 
     // install toggle
     $('div[id^="flavor-install-"]').each(function(index){
