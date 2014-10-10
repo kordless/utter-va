@@ -14,7 +14,6 @@ import glanceclient
 
 from webapp import app, db
 from webapp.models.models import OpenStack
-from webapp.models.models import Appliance
 from webapp.libs.exceptions import OpenStackConfiguration, OpenStackError
 from webapp.libs.utils import message, row2dict
 
@@ -32,6 +31,22 @@ def nova_connection():
 	)
 
 	return connection
+
+def keystone_client():
+	openstack = OpenStack.get()
+	# authenticate with keystone
+	return ksclient.Client(
+		auth_url = openstack.authurl, 
+		username = openstack.osusername, 
+		password = openstack.ospassword, 
+		tenant_id = openstack.tenantid
+	)
+
+def glance_client():
+	keystone = keystone_client()
+	glance_endpoint = keystone.service_catalog.url_for(service_type='image')
+	# establish connection to glance
+	return glanceclient.Client('1', endpoint=glance_endpoint, token=keystone.auth_token, timeout=10)
 
 # get stats for appliance cluster
 def get_stats():
@@ -106,194 +121,23 @@ def get_stats():
 	response['result']['stats'] = stats
 	return response		
 
-# verify image is installed or install image correctly if it's not
-def image_verify_install(image):
-	# build the response
-	response = {"response": "", "result": {"message": "", "image": {}}}
-
-	# get the cluster configuration
-	openstack = db.session.query(OpenStack).first()
-
-	# no openstack settings
-	if not openstack:
-		response['response'] = "success"
-		response['result']['message'] = "OpenStack configuration isn't complete."
-		return response
-
-	# authenticate with keystone to get glance endpoint
-	keystone = ksclient.Client(
-		auth_url = openstack.authurl, 
-		username = openstack.osusername, 
-		password = openstack.ospassword, 
-		tenant_id = openstack.tenantid
+def create_os_image(**kwargs):
+	return glance_client().images.create(
+		name = kwargs['name'],
+		is_public = False,
+		disk_format = 'qcow2',
+		container_format = 'bare',
+		location = kwargs['url']
 	)
 
-	# establish connection to glance
-	glance_endpoint = keystone.service_catalog.url_for(service_type='image')
-	glance = glanceclient.Client('1', endpoint=glance_endpoint, token=keystone.auth_token, timeout=10)
-
-	# flags, bleh. glance, double bleh.
-	install_image = False
-	installed = False
-
-	# see if we have the image already
+def ensure_image_is_deleted(image_id):
 	try:
-		osimage = glance.images.get(image.osid)
-
-		if osimage:
-			app.logger.info("OpenStack shows an image matching image=(%s)" % image.name)
-		
-		# os image was deleted somehow
-		if osimage.deleted == True:
-			osimage = None
-			app.logger.info("OpenStack shows image=(%s) has been deleted." % image.name)
-			install_image = True
-
-	except Exception as ex:
-		# thrown if we don't have it installed
-		osimage = None
-		app.logger.info("Image=(%s) needs to be installed." % (image.name))
-		install_image = True
-
-	# check if it's old
-	if osimage:
-		# check update times
-		pattern = '%Y-%m-%dT%H:%M:%S'
-		image_epoch = int(time.mktime(time.strptime(osimage.created_at, pattern)))
-
-		# if we have an old copy in openstack, we delete it and install new
-		if image_epoch < image.updated:
-			app.logger.info("Deleting image=(%s) from the OpenStack cluster.  It was old." % image.name)
-			install_image = True
-			glance.images.delete(image.osid)
-		else:
-			installed = True
-
-	# check if we have to install
-	if install_image:
-		# test for a local url and set location
-		if image.local_url == "" or image.local_url is None:
-			location = image.url
-		else:
-			location = image.local_url
-
-		# try to install with either local or remote image
-		try:
-			osimage = glance.images.create(
-				name = image.name, 
-				is_public = False, 
-				disk_format = image.diskformat, 
-				container_format = image.containerformat,
-				location = location
-			)
-
-			# check if installed
-			if osimage:
-				installed = True
-		
-		except Exception as ex:
-			# glance threw an error, so we assume it was because of the URL
-			app.logger.info("Trying to use the remote URL for installing the image=(%s)" % image.name)
-			
-			if location == image.local_url:
-				# failure to grab local copy, so try original
-				try:
-					osimage = glance.images.create(
-						name = image.name, 
-						is_public = False, 
-						disk_format = image.diskformat, 
-						container_format = image.containerformat,
-						location = image.url
-					)
-
-					# check if installed
-					if osimage:
-						app.logger.info("Image=(%s) was installed." % image.name)
-						installed = True
-
-				except Exception as ex:
-					# nothing can be done
-					installed == False
-					app.logger.info("Glance can't install image=(%s): %s" % (image.name, ex))
-			else:
-				# we already tried the original URL and it's not working
-				installed == False
-				app.logger.info("Glance can't install image=(%s)." % image.name)
-
-	# check if we got it installed
-	if installed == False:
-		try:
-			app.logger.info("The image=(%s) is being deleted from the OpenStack cluster." % image.name)
-			glance.images.delete(image.osid)
-		except Exception as ex:
-			# image.osid didn't exist, or image wasn't installed
-			pass
-
-		# zero this image on the appliance
-		image.osid = ""
-		image.active = 0
-		image.update()
-
-		# response
-		response['response'] = "error"
-		response['result']['image'] = row2dict(image)
-		response['result']['message'] = "Failed to install image into the cluster."
-
-		app.logger.error("Failed to install image=(%s) into the OpenStack cluster." % (image.name))
-
-	else:
-		# install success! update updated time for image
-		pattern = '%Y-%m-%dT%H:%M:%S'
-		image.updated = int(time.mktime(time.strptime(osimage.created_at, pattern)))
-		image.osid = osimage.id
-		image.update()
-
-		# response
-		response['response'] = "success"
-		response['result']['image'] = row2dict(image)
-		response['result']['message'] = "Image installed."
-
-	return response
-
-# delete images
-def image_delete(image):
-	# build the response
-	response = {"response": "", "result": {"message": ""}}
-
-	# get the cluster configuration
-	openstack = db.session.query(OpenStack).first()
-
-	try:
-		# no configuration present
-		if not openstack:
-			raise OpenStackConfiguration("OpenStack configuration isn't complete.")
-	
-		# proper way of getting glance image via python
-		keystone = ksclient.Client(
-			auth_url = openstack.authurl, 
-			username = openstack.osusername, 
-			password = openstack.ospassword, 
-			tenant_id = openstack.tenantid
-		)
-
-		glance_endpoint = keystone.service_catalog.url_for(service_type='image')
-		glance = glanceclient.Client('1', endpoint=glance_endpoint, token=keystone.auth_token)
-
-		# try to delete the sucker
-		app.logger.info("Deleting image=(%s) from delete image method." % image.name)
-		glance.images.delete(image.osid)
-
-		# response
-		response['response'] = "success"
-		response['result']['message'] = "Image deleted."
-
-	except Exception as ex:
-		# response
-		response['response'] = "error"
-		response['result']['message'] = "Image delete failed: %s" % ex
-		
-		app.logger.error("Failed to delete image=(%s) from the OpenStack cluster." % image.name)
-	return response
+		glance = glance_client()
+		image = glance.images.get(image_id)
+		if image:
+			image.delete()
+	except Exception:
+		app.logger.error("Failed to delete image {0}.".format(image_id))
 
 def list_flavors(filter_by=None):
 	response = {"response": "success", "result": {"message": ""}}
@@ -407,6 +251,10 @@ def flavor_verify_install(flavor):
 				if 'quota:inbound_average' not in osikeys or \
 						flavor.network_down != int(osikeys['quota:inbound_average']):
 					install_flavor = True
+		except nova_exceptions.NotFound:
+			# another special case for nebula, because they return 404 when asking keys
+			# ugly ugly, i don't like these special cases for one provider
+			pass
 		except:
 			# just force install
 			install_flavor = True

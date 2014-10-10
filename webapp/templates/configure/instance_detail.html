@@ -63,7 +63,7 @@
                 <div class="text-center" id="address"><a href="https://blockchain.info/address/{{ instance.address.address }}" target="_blank">{{ instance.address.address }}</a></div>
               </div>
             </div>
-            <div class="row {% if instance.callback_url or instance.dynamic_image_url %}instance-detail-row{% endif %}">
+            <div class="row {% if instance.callback_url or instance.image.url %}instance-detail-row{% endif %}">
               <div class="col-md-6">
                 <div><h3><small>Instance Attributes</small></h3></div>
                 <div>
@@ -89,10 +89,6 @@
                       <td>{{ instance.flavor.ask }} μBTC/Hour</td>
                       <td><a id="edit-ask-icon" href="#"><span class="glyphicon glyphicon-pencil"></span></a></td>
                     </tr>
-                    <tr>
-                      <td><strong>Image</strong></td>
-                      <td colspan="2">{% if instance.image.name %}<a href="{{ instance.image.url }}">{{ instance.image.name }}</a>{% else %}Dynamic{% endif %}</td>
-                    </tr>
                   </table>
                 </div>
               </div>
@@ -116,7 +112,7 @@
                 </table>
               </div>
             </div>
-            {% if instance.callback_url or instance.dynamic_image_url %}
+            {% if instance.callback_url or instance.image.url %}
             <div class="row">
               <div class="col-md-12">
                 <div><h3><small>External Instance Resources</small></h3></div>
@@ -128,10 +124,10 @@
                       <td>{{ instance.callback_url|safe }}</td>
                     </tr>
                     {% endif %}
-                    {% if instance.dynamic_image_url %}
+                    {% if instance.image.url %}
                     <tr>
-                      <td><strong>Dynamic Image</strong></td>
-                      <td class="text-left"><a href="{{ instance.dynamic_image_url|safe }}">{{ instance.dynamic_image_url|safe }}</a></td>
+                      <td><strong>Image URL</strong></td>
+                      <td class="text-left"><a href="{{ instance.image.url|safe }}">{{ instance.image.url|safe }}</a></td>
                     </tr>
                     {% endif %}
                   </table>

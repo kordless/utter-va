@@ -7,7 +7,8 @@ from flask.ext.login import login_user, logout_user, current_user, login_require
 
 from webapp import app, db, csrf, bcrypt, socketio, login_manager
 
-from webapp.models.models import User, Appliance, OpenStack, Status
+from webapp.models.models import User, Appliance, Status
+from webapp.models.models import OpenStack
 from webapp.models.images import Images 
 from webapp.models.flavors import Flavors
 from webapp.models.instances import Instances 

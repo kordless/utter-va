@@ -19,12 +19,11 @@ from webapp.models.models import User, Appliance, OpenStack, Status
 from webapp.models.twitter import TwitterBot, TweetCommands
 from webapp.models.images import Images 
 from webapp.models.flavors import Flavors
-from webapp.models.instances import Instances 
+from webapp.models.instances import Instances
 from webapp.models.addresses import Addresses
 
 from webapp.libs.utils import query_yes_no, pprinttable, message
 from webapp.libs.coinbase import coinbase_get_addresses, coinbase_checker
-from webapp.libs.images import download_images
 from webapp.libs.pool import pool_salesman, pool_connect
 
 # configuration file
@@ -117,12 +116,10 @@ def install(app):
 		# create all tables
 		db.create_all()
 		
-		# initialize the appliance object
-		appliance = Appliance()
-		appliance.initialize(ip)
-		
-		# sync to remote database
-		Images().sync(appliance)
+		if not Appliance.get():
+			# initialize the appliance object
+			appliance = Appliance()
+			appliance.initialize(ip)
 
 		# sync flavors from pool
 		### can't sync from openstack yet because we don't have the user configured
@@ -347,25 +344,15 @@ def flavors(app):
 def images(app):
 	def action():
 		"""
-		Performs a sync from the pool's list of images to the appliance.
+		Cleans up images that aren't used anymore
 		
 		Cron: Every 15 minutes.
 		"""
-		# get the appliance for api token (not required, but sent if we have it)
-		appliance = db.session.query(Appliance).first()
-
-		# sync up all the images
-		images = Images()
-		response = images.sync(appliance)
-
-		# now loop through and download non dynamic images if we don't have the files
-		images = db.session.query(Images).filter_by(cache=1).all()
-		download_images(appliance, images)
 
 		# clear out old dynamic images
-		images = db.session.query(Images).filter_by(cache=0).all()
+		images = Images.get_all()
 		for image in images:
-			image.housekeeping()		
+			image.housekeeping()
 
 	return action
 
@@ -437,8 +424,9 @@ def housekeeper(app):
 		# make sure we have mixed an instance for each flavor
 		instances = Instances()
 		flavors = db.session.query(Flavors).filter(
-			Flavors.active == 1).filter(
-				Flavors.locality != 2).all()
+			Flavors.active == True).filter(
+				Flavors.locality != 2).filter(
+					Flavors.locality != 0).all()
 		for flavor in flavors:
 			response = instances.mix(flavor)
 

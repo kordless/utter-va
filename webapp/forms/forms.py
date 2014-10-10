@@ -5,8 +5,6 @@ from wtforms.validators import Required, Email, EqualTo
 from webapp import db, bcrypt
 
 from webapp.models.models import User 
-from webapp.models.flavors import Flavors
-from webapp.models.twitter import TwitterBot
 
 def validate_login(form, field):
 	user = form.get_user()
