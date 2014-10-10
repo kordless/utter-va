@@ -9,7 +9,7 @@ from webapp import db
 from webapp.models.mixins import CRUDMixin
 
 from webapp.libs.utils import generate_token, row2dict
-from webapp.libs.pool import pool_instance
+from webapp.libs.pool import pool_instances
 
 from webapp.models.models import Appliance
 from webapp.models.addresses import Addresses
@@ -59,6 +59,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 
 	# which schema should be used for validation and serialization
 	object_schema = schemas['InstanceSchema']
+	object_list_schema = schemas['InstanceListSchema']
 
 	def __init__(self, 
 		created=None,
@@ -163,7 +164,6 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		# we only set instances that are in state 0 - inactive, or 1 - waiting on payment
 		state = 0 if int(active) == 1 else 1
 		instances = db.session.query(Instances).filter_by(flavor_id=flavor_id, state=state).all()
-
 		# set to active/inactive
 		for instance in instances:
 			instance.state = int(active)
@@ -188,7 +188,10 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 
 			# tell the pool we're using it (url must be empty string to tell pool)
 			appliance = Appliance().get()
-			pool_response = pool_instance(url="", instance=self, appliance=appliance)
+			pool_response = pool_instances(
+				url="",
+				instances=self.in_schema_list().as_dict(),
+				appliance=appliance)
 			
 			# response
 			response['result']['message'] = "Instance %s marked as reserved." % instance.name
@@ -299,7 +302,10 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		callback_url = self.callback_url
 		appliance = Appliance().get()
 		
-		pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
+		pool_response = pool_instances(
+			url=callback_url,
+			instances=self.in_schema_list().as_dict(),
+			appliance=appliance)
 
 		if pool_response['response'] == "success":
 			# overload response
@@ -344,7 +350,11 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		for loop_count in range(7):
 			# make a call to the callback url to get instance details
 			next_state = 3 # hack the expected next state into the pool packet
-			pool_response = pool_instance(url=callback_url, instance=self, next_state=next_state, appliance=appliance)
+			pool_response = pool_instances(
+				url=callback_url,
+				instances=self.in_schema_list().as_dict(),
+				next_state=next_state,
+				appliance=appliance)
 
 			# check for a failure to contact the callback server
 			if pool_response['response'] == "error":
@@ -622,7 +632,10 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		if self.state != start_state:
 			appliance = Appliance().get()
 			callback_url = self.callback_url
-			pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
+			pool_response = pool_instances(
+				url=callback_url,
+				instances=self.in_schema_list().as_dict(),
+				appliance=appliance)
 
 		return response
 
@@ -725,7 +738,10 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		if self.state != start_state:			
 			appliance = Appliance().get()
 			callback_url = self.callback_url
-			pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
+			pool_response = pool_instances(
+				url=callback_url,
+				instances=self.in_schema_list().as_dict(),
+				appliance=appliance)
 
 		return response
 
@@ -753,7 +769,10 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		# make a call to the callback url to report instance details
 		appliance = Appliance().get()
 		callback_url = self.callback_url
-		pool_response = pool_instance(url=callback_url, instance=self, appliance=appliance)
+		pool_response = pool_instances(
+			url=callback_url,
+			instances=self.in_schema_list().as_dict(),
+			appliance=appliance)
 
 		return response
 

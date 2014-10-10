@@ -11,6 +11,7 @@ from webapp.models.models import Appliance
 from webapp.libs.openstack import glance_client
 from webapp.libs.openstack import create_os_image
 from webapp.libs.openstack import ensure_image_is_deleted
+from webapp.libs.openstack import os_image_exists
 
 # images model
 class Images(CRUDMixin, db.Model):
@@ -34,8 +35,8 @@ class Images(CRUDMixin, db.Model):
 		return 'http://' + Appliance.get().local_ip + ':8080/' + cropped_url
 
 	def save(self, *args, **kwargs):
-		os_image = create_os_image(name=self.name, url=self.cached_url)
-		self.osid = os_image.id
+		if self.osid == None or not os_image_exists(self.osid):
+			self.osid = create_os_image(name=self.name, url=self.cached_url).id
 		super(Images, self).save(*args, **kwargs)
 
 	def delete(self, *args, **kwargs):

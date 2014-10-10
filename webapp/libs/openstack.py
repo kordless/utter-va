@@ -8,6 +8,7 @@ from flask import jsonify
 
 from novaclient.v1_1 import client as novaclient
 from novaclient import exceptions as nova_exceptions
+from glanceclient import exc as glance_exceptions
 from cinderclient import client as cclient
 import keystoneclient.v2_0.client as ksclient
 import glanceclient
@@ -120,6 +121,13 @@ def get_stats():
 	response['result']['message'] = "OpenStack stats detail."
 	response['result']['stats'] = stats
 	return response		
+
+def os_image_exists(id):
+	try:
+		glance_client().images.get(id)
+	except glance_exceptions.NotFound:
+		return False
+	return True
 
 def create_os_image(**kwargs):
 	return glance_client().images.create(
