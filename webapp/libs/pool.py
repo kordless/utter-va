@@ -11,26 +11,29 @@ from webapp.libs.utils import row2dict
 
 # provides callback initiation for an instance to the pool operator/callback handler
 # calls InstancesHandler() in utter-pool's apihandlers.py 
-def pool_instances(url=None, instances=[], next_state=None, appliance=None):
+def pool_instances(is_list=False, **kwargs):
 
 	# response template for if things go wrong
 	response = {"response": "success", "result": {"message": ""}}
 
 	try:
 		pool_api = PoolApiInstancesUpdate()
-		if url:
-			pool_api.custom_url = url
+		if kwargs.has_key('url') and kwargs['url'] != None:
+			pool_api.custom_url = kwargs['url']
 			# mask our apitoken on subsequent redirects
-			appliance.hide_token = True
+			kwargs['appliance'].hide_token = True
 		else:
 			pool_api.custom_url = "%s/api/v1/instances/" % (
 				app.config['POOL_APPSPOT_WEBSITE'])
+			if not is_list:
+				pool_api.custom_url = pool_api.custom_url + kwargs['instance'].name + "/"
 
 		# send instance data to the pool and keep response
 		response['result']['instance'] = json.loads(
 			pool_api.request(json.dumps({
-				'appliance': appliance.as_schema().as_dict(),
-				'instances': instances
+				'appliance': kwargs['appliance'].as_schema().as_dict(),
+				'instances': kwargs['instance'].as_schema().as_dict(),
+				'is_list': is_list
 			})))
 
 	except PoolApiException as e:

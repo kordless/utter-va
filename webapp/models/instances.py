@@ -189,8 +189,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			# tell the pool we're using it (url must be empty string to tell pool)
 			appliance = Appliance().get()
 			pool_response = pool_instances(
-				url="",
-				instances=self.in_schema_list().as_dict(),
+				instance=self,
 				appliance=appliance)
 			
 			# response
@@ -304,7 +303,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		
 		pool_response = pool_instances(
 			url=callback_url,
-			instances=self.in_schema_list().as_dict(),
+			instance=self,
 			appliance=appliance)
 
 		if pool_response['response'] == "success":
@@ -352,7 +351,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			next_state = 3 # hack the expected next state into the pool packet
 			pool_response = pool_instances(
 				url=callback_url,
-				instances=self.in_schema_list().as_dict(),
+				instance=self,
 				next_state=next_state,
 				appliance=appliance)
 
@@ -634,7 +633,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			callback_url = self.callback_url
 			pool_response = pool_instances(
 				url=callback_url,
-				instances=self.in_schema_list().as_dict(),
+				instance=self,
 				appliance=appliance)
 
 		return response
@@ -740,7 +739,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			callback_url = self.callback_url
 			pool_response = pool_instances(
 				url=callback_url,
-				instances=self.in_schema_list().as_dict(),
+				instance=self,
 				appliance=appliance)
 
 		return response
@@ -771,7 +770,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		callback_url = self.callback_url
 		pool_response = pool_instances(
 			url=callback_url,
-			instances=self.in_schema_list().as_dict(),
+			instance=self,
 			appliance=appliance)
 
 		return response
