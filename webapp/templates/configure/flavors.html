@@ -29,6 +29,7 @@
       </div>
       <div class="row">
         <div class="col-md-12">
+          {% if flavors %}
           <table class="table table-hover">
             <thead>
               <tr>
@@ -61,6 +62,9 @@
           </table>
           <p><code>10 μBTC = ~US${{ '%0.6f'| format(quote*10|float) }}</code> <a href="https://coinbase.com" target="_blank">via Coinbase</a></p>
           <button id="install_flavors" class="btn btn-success">Install a New Flavor</button>
+          {% else %}
+          <button id="reload" class="btn btn-danger"><span class="glyphicon glyphicon-time"></span> Please wait while flavors are generated.</button>
+          {% endif %}
         </div>
       </div>
     </div>
