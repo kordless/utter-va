@@ -102,12 +102,10 @@
           data: {_csrf_token: csrf_token, enable: enabled},
           success: function() {
             var num_enabled = 0;
-            console.log("ready to run");
             $('div[id^="flavor-"]').each(function(){
               flavor_id = this.id.split("-").pop();
               if ($('#flavor-'+flavor_id).children('.active').length) {
                 num_enabled = num_enabled + 1;
-                console.log(num_enabled);
               }
             });
             if (num_enabled < 1){
