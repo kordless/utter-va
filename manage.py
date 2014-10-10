@@ -67,9 +67,6 @@ def reset(app):
 				appliance.initialize(ip)
 
 				# sync with pool database
-				images = Images()
-				iresponse = images.sync(appliance)
-
 				flavors = Flavors()
 				fresponse = flavors.sync(appliance)
 
