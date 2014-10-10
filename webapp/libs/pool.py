@@ -33,9 +33,9 @@ def pool_instances(is_list=False, **kwargs):
 			'is_list': is_list}
 
 		if not is_list:
-			data['instance'] = kwargs['instance'].as_schema()
+			data['instance'] = kwargs['instance'].as_schema().as_dict()
 		else:
-			data['instances'] = kwargs['instances'].as_schema_list()
+			data['instances'] = kwargs['instances'].as_schema_list().as_dict()
 
 		# send instance data to the pool and keep response
 		response['result']['instance'] = json.loads(
