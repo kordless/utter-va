@@ -25,8 +25,6 @@ def pool_instances(is_list=False, **kwargs):
 		else:
 			pool_api.custom_url = "%s/api/v1/instances/" % (
 				app.config['POOL_APPSPOT_WEBSITE'])
-			if not is_list:
-				pool_api.custom_url = pool_api.custom_url + kwargs['instance'].name + "/"
 
 		data = {
 			'appliance': kwargs['appliance'].as_schema().as_dict(),
@@ -249,6 +247,11 @@ class PoolApiInstancesBase(PoolApiBase):
 # update instance objects on pool
 class PoolApiInstancesUpdate(PoolApiInstancesBase):
 	_action = "update"
+
+
+# list instance objects on pool
+class PoolApiInstancesList(PoolApiInstancesBase):
+	_action = "list"
 
 
 # interact with flavor objects on pool api
