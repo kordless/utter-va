@@ -31,7 +31,7 @@ class Images(CRUDMixin, db.Model):
 		if proto_search:
 			proto = proto_search.group(1)
 			host_path = proto_search.group(2)
-			url = '%s://%s:8080/%s' % (proto, Appliance.get().local_ip, host_path)
+			url = '{0}://{1}:8080/{2}'.format(proto, Appliance.get().local_ip, host_path)
 		else:
 			url = self.url
 			
