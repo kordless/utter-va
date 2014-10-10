@@ -27,12 +27,15 @@ class Images(CRUDMixin, db.Model):
 		urlinfo = urllib2.build_opener().open(urllib2.Request(self.url))
 
 		# remove protocol from url
-		proto_search = re.compile('^http[s]{0,1}://(.*)$').search(urlinfo.url)
+		proto_search = re.compile('^(http|https)://(.*)$').search(urlinfo.url)
 		if proto_search:
-			cropped_url = proto_search.group(1)
+			proto = proto_search.group(1)
+			host_path = proto_search.group(2)
+			url = '%s://%s:8080/%s' % (proto, Appliance.get().local_ip, host_path)
 		else:
-			cropped_url = self.url
-		return 'http://' + Appliance.get().local_ip + ':8080/' + cropped_url
+			url = self.url
+			
+		return url
 
 	def save(self, *args, **kwargs):
 		if self.osid == None or not os_image_exists(self.osid):
