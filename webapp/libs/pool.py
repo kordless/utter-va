@@ -8,6 +8,8 @@ from urllib2 import HTTPError
 
 from webapp import app
 from webapp.libs.utils import row2dict
+from utter_libs.schemas.helpers import ApiSchemaHelper
+from utter_libs.schemas import schemas
 
 # provides callback initiation for an instance to the pool operator/callback handler
 # calls InstancesHandler() in utter-pool's apihandlers.py 
@@ -88,8 +90,7 @@ def pool_salesman(instances=None, appliance=None):
 			pool_instance['flavor'] = instance.flavor.name
 			pool_instance['ask'] = instance.flavor.ask
 			pool_instance['state'] = instance.state
-			pool_instance['image'] = instance.image.name
-			pool_instance['address'] = instance.address.address
+			pool_instance['address'] = instance.address
 
 			# add instances to the data packet
 			packet['instances'].append(pool_instance)
@@ -182,6 +183,9 @@ class PoolApiBase(object):
 	content_type = u'application/json'
 	custom_url = None
 
+	def __init__(self, appliance=None):
+		self.appliance = appliance
+
 	# which object on the api should be selected
 	@abc.abstractproperty
 	def _api_object():
@@ -196,7 +200,7 @@ class PoolApiBase(object):
 	def _api_url(self):
 		if self.custom_url:
 			return self.custom_url
-		return u'{host}/{base}/{ver}/{api_object}/{action}'.format(
+		return u'{host}/{base}/{ver}/{api_object}/{action}/'.format(
 			host=app.config['POOL_APPSPOT_WEBSITE'],
 			base=self._uri_base,
 			ver=self._api_version,
@@ -207,6 +211,8 @@ class PoolApiBase(object):
 	def _build_request(self, url):
 		request = Request(url)
 		request.add_header('Content-Type', self.content_type)
+		if self.appliance:
+			request.add_header('Appliance-Token', str(self.appliance.apitoken))
 		return request
 
 	# main entry, do the request
@@ -249,9 +255,9 @@ class PoolApiInstancesUpdate(PoolApiInstancesBase):
 	_action = "update"
 
 
-# list instance objects on pool
-class PoolApiInstancesList(PoolApiInstancesBase):
-	_action = "list"
+# get startup parameters for instance
+class PoolApiInstancesGetStartupParameters(PoolApiInstancesBase):
+	_action = "get_startup_parameters"
 
 
 # interact with flavor objects on pool api
@@ -262,3 +268,34 @@ class PoolApiFlavorsBase(PoolApiBase):
 # list flavor flavor objects on pool
 class PoolApiFlavorsList(PoolApiFlavorsBase):
 	_action = "list"
+
+
+# logic related to communication with the pool
+class Pool(object):
+
+	# provides callback initiation for an instance to the pool operator/callback handler
+	# calls InstancesHandler() in utter-pool's apihandlers.py 
+	@classmethod
+	def update_instance_info(cls, *args, **kwargs):
+		pool_api = PoolApiInstancesUpdate(appliance=kwargs['appliance'])
+
+		if kwargs.has_key('url') and kwargs['url'] != None:
+			pool_api.custom_url = kwargs['url']
+			# mask our apitoken on subsequent redirects
+			kwargs['appliance'].hide_token = True
+
+		pool_api.request(
+				json.dumps(
+					ApiSchemaHelper.build_schema_list(
+						kwargs['instances'],
+						schemas['InstanceListSchema'],
+						schemas['InstanceSchema']).as_dict()))
+
+	@classmethod
+	def get_startup_parameters(cls, name):
+		pool_api = PoolApiInstancesGetStartupParameters()
+		request_body = schemas['InstanceStartupParametersRequestSchema'](name=name)
+
+		response = pool_api.request(
+				json.dumps(
+						request_body.as_dict()))

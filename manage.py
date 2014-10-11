@@ -24,7 +24,7 @@ from webapp.models.addresses import Addresses
 
 from webapp.libs.utils import query_yes_no, pprinttable, message
 from webapp.libs.coinbase import coinbase_get_addresses, coinbase_checker
-from webapp.libs.pool import pool_salesman, pool_connect
+from webapp.libs.pool import pool_salesman, pool_connect, Pool
 
 # configuration file
 if os.path.isfile('./DEV'): 
@@ -395,10 +395,19 @@ def salesman(app):
 		appliance = db.session.query(Appliance).first()
 
 		# instances for sale, get 'em while they're hot
-		instances = db.session.query(Instances).filter_by(state=1).all()
+		instances_query = db.session.query(Instances).filter_by(state=1)
+
+		if instances_query.count() == 0:
+			return
 
 		# call the pool with instances for sale
-		response = pool_salesman(instances, appliance)
+		#response = pool_salesman(instances, appliance)
+		try:
+			Pool.update_instance_info(
+				appliance=appliance,
+				instances=instances_query.all())
+		except Exception as e:
+			app.logger.error("Error in sending instance info to pool")
 
 	return action
 
