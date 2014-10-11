@@ -197,7 +197,7 @@
     });
 
     // build the QR code for the instance address
-    var qrcode_string = "bitcoin:{{instance.address.address}}?amount="+(parseInt({{instance.flavor.ask}})/1000000);
+    var qrcode_string = "bitcoin:{{instance.address}}?amount="+(parseInt({{instance.flavor.ask}})/1000000);
     $('#qrcode').qrcode({text: qrcode_string});
   });
 </script>
