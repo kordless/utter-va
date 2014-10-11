@@ -87,11 +87,15 @@ def pool_salesman(instances=None, appliance=None):
 			pool_instance = row2dict(instance)
 
 			# patch in flavor, ask, default image, address
-			pool_instance['flavor'] = instance.flavor.name
-			pool_instance['ask'] = instance.flavor.ask
+			pool_instance['flavor'] = {
+				"vpus": instance.flavor.vpus,
+				"memory": instance.flavor.memory,
+				"disk": instance.flavor.disk,
+				"network_up": instance.flavor.network_up,
+				"network_down": instance.flavor.network_down,
+				"ask": instance.flavor.ask}
 			pool_instance['state'] = instance.state
-			pool_instance['image'] = instance.image.name
-			pool_instance['address'] = instance.address.address
+			pool_instance['address'] = instance.address
 
 			# add instances to the data packet
 			packet['instances'].append(pool_instance)
