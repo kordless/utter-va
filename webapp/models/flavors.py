@@ -148,6 +148,27 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		except Exception as e:
 			app.logger.info("Failed to update flavor=(%s) price on cluster. %s" % (self.name, str(e)))
 
+	@classmethod
+	def pool_flavors_mark_installed(cls):
+		installed_flavor_specs = [{
+			'vpus': x.vpus,
+			'memory': x.memory,
+			'disk': x.disk,
+			'network_up': x.network_up,
+			'network_down': x.network_down}
+		for x in Flavors.query.filter_by(locality=1)]
+
+		installable_flavors = db.session.query(
+			Flavors).filter(Flavors.locality!=1).all()
+
+		for flavor in installable_flavors:
+			setattr(flavor, 'is_installed', False)
+			for cmp_to in installed_flavor_specs:
+				if flavor.same_as_specs(**cmp_to):
+					setattr(flavor, 'is_installed', True)
+
+		return installable_flavors
+
 	def check(self):
 		flavors = db.session.query(Flavors).all()
 
@@ -189,27 +210,6 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 			if getattr(self, k) != v:
 				result = False
 		return result
-
-	@classmethod
-	def pool_flavors_mark_installed(cls):
-		installed_flavor_specs = [{
-			'vpus': x.vpus,
-			'memory': x.memory,
-			'disk': x.disk,
-			'network_up': x.network_up,
-			'network_down': x.network_down}
-		for x in Flavors.query.filter_by(locality=1)]
-
-		installable_flavors = db.session.query(
-			Flavors).filter(Flavors.locality!=1).all()
-
-		for flavor in installable_flavors:
-			setattr(flavor, 'is_installed', False)
-			for cmp_to in installed_flavor_specs:
-				if flavor.same_as_specs(**cmp_to):
-					setattr(flavor, 'is_installed', True)
-
-		return installable_flavors
 
 	# check if same as given openstack flavor
 	def is_same_as_osflavor(self, osflavor):
