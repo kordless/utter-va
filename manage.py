@@ -60,20 +60,21 @@ def reset(app):
 
 				# initialize database
 				path = os.path.dirname(os.path.abspath(__file__))
-				os.system('sqlite3 "%s/utterio.db" < "%s/schema.sql"' % (path, path))
+				os.system('cp "%s/utterio.db" "%s/utterio_backup.db"' % (path, path))
+
+				# delete, then create all tables
+				db.drop_all()
+				db.create_all()
 
 				# initialize the appliance object
 				appliance = Appliance()
 				appliance.initialize(ip)
 
 				# sync with pool database
-				flavors = Flavors()
-				fresponse = flavors.sync(appliance)
+				flavors = Flavors().sync()
 
-				if iresponse['response'] != "success":
-					print iresponse['result']
-				elif fresponse['response'] != "success":
-					print iresponse['result']
+				if flavors['response'] != "success":
+					print flavors['result']
 				else:
 					print "The database has been cleared and a new API token has been generated."
 					configure_blurb()
@@ -118,8 +119,7 @@ def install(app):
 			appliance = Appliance()
 			appliance.initialize(ip)
 
-		# sync flavors from pool
-		### can't sync from openstack yet because we don't have the user configured
+		# sync flavors from pool (openstack sync comes later when we have a user)
 		flavors = Flavors().sync()
 
 		# configure output
@@ -424,6 +424,8 @@ def housekeeper(app):
 			Flavors.active == True).filter(
 				Flavors.locality != 2).filter(
 					Flavors.locality != 0).all()
+
+		# loop through the flavors we have and mix an instance
 		for flavor in flavors:
 			response = instances.mix(flavor)
 

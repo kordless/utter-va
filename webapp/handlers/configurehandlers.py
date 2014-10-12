@@ -75,45 +75,15 @@ def configure_flavors():
 		appliance=appliance
 	)
 
-@mod.route('/configure/pool_flavors', methods=['GET'])
-def pool_flavors_get():
+@mod.route('/configure/flavors/add', methods=['GET'])
+def configure_flavors_add():
 	# fetch all flavors that came from the pool, the installed and non-installed ones
 	flavors = db.session.query(Flavors).filter(Flavors.locality!=1).all()
 
 	return render_template(
-		'/configure/pool_flavors.html',
+		'/configure/flavor_add.html',
 		settings=Status().check_settings(),
 		flavors=flavors)
-
-@mod.route('/configure/pool_flavors/<int:flavor_id>/<string:action>', methods=['PUT'])
-def pool_flavors_put(flavor_id, action):
-	try:
-		flavor = Flavors.get_by_id(flavor_id)
-		if not flavor:
-			raise Exception("Flavor with id \"{0}\" not found.".format(flavor_id))
-		if action == "install":
-			response = flavor_verify_install(flavor)
-			if not response['response'] == 'success':
-				raise Exception(response['result']['message'])
-			flavor.update(
-				locality=3,
-				active=True)
-		elif action == "uninstall":
-			response = flavor_uninstall(flavor)
-			if not response['response'] == 'success':
-				raise Exception(response['result']['message'])
-			flavor.update(
-				locality=2,
-				active=False)
-		else:
-			raise Exception("Bad action \"{0}\".".format(action))
-		instances = Instances()
-		instances.toggle(flavor.id, flavor.active)
-	except Exception as e:
-		response = jsonify({"response": "error", "result": {"message": str(e)}})
-		response.status_code = 500
-		return response
-	return jsonify({"response": "success"})
 
 @mod.route('/configure/flavors/<int:flavor_id>', methods=['GET', 'PUT'])
 @login_required
@@ -144,23 +114,27 @@ def configure_flavors_detail(flavor_id):
 		# clear settings cache
 		Status().flush()
 
-		try:
-			state = int(request.form['enable'])
-			flavor.active = state
+		# enable/diskable
+		if 'enable' in request.form.keys():
+			flavor.update(active=int(request.form['enable']))
 
-			# set instances with this flavor to the state
-			instances = Instances()
-			instances.toggle(flavor.id, state)
+		# set ask
+		if 'ask' in request.form.keys():
+			flavor.update(ask=int(request.form['ask']))
 
-		except:
-			pass
+		# install pool flavor
+		if 'install' in request.form.keys():
+			if int(request.form['install']):
+				flavor.update(locality=3, active=True)
+			else:
+				response = flavor_uninstall(flavor)
+				flavor.update(locality=2,	active=False)
 
-		try:
-			ask = request.form['ask']
-			flavor.ask = ask
-		except:
-			pass
+		# disable/enable instances as needed with this flavor
+		instances = Instances()
+		instances.toggle(flavor.id, flavor.active)
 
+		# load up ask prices
 		os_ask = 0
 		try:
 			# get current ask price on openstack

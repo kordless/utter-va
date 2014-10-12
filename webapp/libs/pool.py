@@ -99,7 +99,7 @@ def pool_salesman(instances=None, appliance=None):
 		except:
 			# something didn't go right somewhere, so just nail the instance
 			app.logger.error("Instance=(%s) integrity error." % instance.name)
-			instance.delete(instance)
+			# instance.delete(instance)
 
 	try:
 		request = Request(url)

@@ -127,3 +127,4 @@ def address_handler(address_token):
 		response['response'] = "error"
 		response['result'] = "bitcoin address token not found"		
 		return jsonify(response), 401
+
