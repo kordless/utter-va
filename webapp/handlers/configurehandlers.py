@@ -78,7 +78,7 @@ def configure_flavors():
 @mod.route('/configure/flavors/add', methods=['GET'])
 def configure_flavors_add():
 	# fetch all flavors that came from the pool, the installed and non-installed ones
-	flavors = db.session.query(Flavors).filter(Flavors.locality!=1).all()
+	flavors = Flavors.pool_flavors_mark_installed()
 
 	return render_template(
 		'/configure/flavor_add.html',

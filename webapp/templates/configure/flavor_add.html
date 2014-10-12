@@ -38,6 +38,7 @@
                 <th>Disk</th>
                 <th>Network Down/Up</th>
                 <th>Ask Rate</th>
+								<th>Installed</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -50,6 +51,7 @@
                 <td>{{ flavor.disk }}GB</td>
                 <td>{% if flavor.network_down < 0 %}Unlimited{% else %}{{ flavor.network_down }}{% endif %} / {% if flavor.network_up < 0 %}Unlimited{% else %}{{ flavor.network_up }} Mb/sec{% endif %}</td>
                 <td>{{ flavor.ask }} μBTC/Hour</td>      
+								<td>{{ flavor.is_installed }}</td>
 								<td><button id="flavor-install-{{ flavor.id }}" title="Install flavor {{ flavor.name }}." data-flavor="{{ flavor.id }}" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-floppy-open"></span> Install</button></td>
               </tr>
               {% endfor %}
