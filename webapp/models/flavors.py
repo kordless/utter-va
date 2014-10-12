@@ -40,10 +40,10 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 	active = db.Column(db.Boolean)
 	locality = db.Column(db.Integer)
 	# possible localities are:
-	# 0 - originated on pool and not installed locally (excluding merges)
-	# 1 - openstack cluster
-	# 2 - synced from pool and not installed locally (including merges)
-	# 3 - synced from pool and installed locally (including merges)
+	# 0 - were created on pool and are not installed locally (not merges)
+	# 1 - originated from openstack cluster
+	# 2 - were synced from pool are and not installed locally (merges)
+	# 3 - synced from pool and installed locally (merges)
 
 	# mappings of names with openstack flavor properties and extra keys
 	# used in method get_values_from_osflavor
@@ -182,6 +182,34 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 			else:
 				ret_value[property[0]] = getattr(flavor, property[1])
 		return ret_value
+
+	def same_as_specs(self, **kwargs):
+		result = True
+		for k, v in kwargs.items():
+			if getattr(self, k) != v:
+				result = False
+		return result
+
+	@classmethod
+	def pool_flavors_mark_installed(cls):
+		installed_flavor_specs = [{
+			'vpus': x.vpus,
+			'memory': x.memory,
+			'disk': x.disk,
+			'network_up': x.network_up,
+			'network_down': x.network_down}
+		for x in Flavors.query.filter_by(locality=1)]
+
+		installable_flavors = db.session.query(
+			Flavors).filter(Flavors.locality!=1).all()
+
+		for flavor in installable_flavors:
+			setattr(flavor, 'is_installed', False)
+			for cmp_to in installed_flavor_specs:
+				if flavor.same_as_specs(**cmp_to):
+					setattr(flavor, 'is_installed', True)
+
+		return installable_flavors
 
 	# check if same as given openstack flavor
 	def is_same_as_osflavor(self, osflavor):
