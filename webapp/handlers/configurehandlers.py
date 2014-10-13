@@ -46,6 +46,11 @@ def allowed_file(filename):
 def sec2min(value):
 	return divmod(int(value), 60)[0]
 
+@mod.route('/configure/backup_restore/<string:action>', methods=['GET'])
+@login_required
+def configure_backup_restore(action):
+	return render_template('configure/backup_restore.html')
+
 # configure flavors page
 @mod.route('/configure/flavors', methods=['GET'])
 @login_required

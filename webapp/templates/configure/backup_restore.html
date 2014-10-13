@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% import "macros.html" as macros %}
+
+{% block page_styles %}
+    <link href="/css/configure.css" rel="stylesheet">
+    <link href="/css/docs.css" rel="stylesheet">
+{% endblock %}
+
+{% block navbar %}
+  {% include 'navbar.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container content">
+  <div class="row">
+      <div class="row">
+        <div class="col-md-8">
+          <button id="export_config" class="btn btn-success">Export Config</button>
+          <button id="import_config" class="btn btn-success">Import Config</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script type="text/javascript">
+	$().ready(function() {
+		$('#export_config').click(function() {
+			var hiddenIFrameID = 'hiddenDownloader',
+			iframe = document.getElementById(hiddenIFrameID);
+			if (iframe === null) {
+				iframe = document.createElement('iframe');
+				iframe.id = hiddenIFrameID;
+				iframe.style.display = 'none';
+				document.body.appendChild(iframe);
+			}
+			iframe.src = '/configure/backup_restore/export';
+		});
+		$('#import_config').click(function() {
+		});
+	});
+{% endblock %}
