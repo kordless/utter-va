@@ -11,6 +11,34 @@
 {% endblock %}
 
 {% block content %}
+<!-- set ask rate modal -->
+<div id="modal-flavor-set-ask" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Set Ask Price</h4>
+      </div>
+      <div class="modal-body">
+        <p>This appliance is advertising an ask price of <code><span id="appliance-flavor-ask"></span> μBTC/Hour</code> for the <strong><span id="appliance-flavor-name"></span></strong> flavor. The pool reported network rate for the flavor of <code><span id="pool-flavor-rate"></span> μBTC/Hour</code> less than 15 minutes ago.</p>
+        <p>Enter an amount below and then click on <strong>Set Ask Price</strong> to set it as the new ask price.</p>
+        <div class="row">
+          <div class="col-md-5 form-padding" id="askrate-form">
+            <label class="control-label" for="askrate">Ask Price (in μBTC/hour)</label>
+            <input length=20 class="form-control" id="askrate" name="askrate" type="text">
+          </div>
+        </div>
+        <p><strong>Note:</strong> A μBTC is one millionth of a Bitcoin. <code>10 μBTC</code> is  approximately <code>US${{ '%0.4f'| format(quote*10|float) }}</code>.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="set-ask-close-button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" id="set-ask-confirm-button" class="btn btn-danger">Set Ask Price</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- end modal -->
+
 <div class="container content">
   <div class="row">
     {{ macros.nav_pills("systems", settings) }}
@@ -34,10 +62,11 @@
             <thead>
               <tr>
                 <th>Flavor</th>
-                <th>VPUs</th>
                 <th>Memory</th>
+                <th>VPUs</th>
                 <th>Disk</th>
-								<th>Network Down/Up</th>
+								<th class="text-center">Ingress</th>
+                <th class="text-center">Egress</th>
                 <th>Ask Rate</th>
                 <th>Serving</th>
               </tr>
@@ -49,8 +78,9 @@
                 <td>{{ flavor.vpus }} Core{% if flavor.vpus > 1 %}s{% endif %}</td>
                 <td>{{ flavor.memory }}MB</td>
                 <td>{{ flavor.disk }}GB</td>
-                <td>{% if flavor.network_down < 0 %}Unlimited{% else %}{{ flavor.network_down }}{% endif %} / {% if flavor.network_up < 0 %}Unlimited{% else %}{{ flavor.network_up }} Mb/sec{% endif %}</td>
-                <td><button id="ask-flavor-{{ flavor.id }}" title="Set ask for {{ flavor.name }}." data-flavor="{{ flavor.id }}" class="btn btn-xs btn-warning"><span class="glyphicon glyphicon-pencil"></span> {{ flavor.ask }} μBTC/Hour</button></td>
+                <td class="text-center">{% if flavor.network_down < 0 %}<span class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ flavor.network_down }}{% endif %}</td>
+                <td class="text-center">{% if flavor.network_up < 0 %}<span class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ flavor.network_up }} Mb/sec{% endif %}</td>
+                <td>{{ flavor.ask }} μBTC/Hour <a id="ask-flavor-{{ flavor.id }}" title="Set ask for {{ flavor.name }}." data-flavor="{{ flavor.id }}" data-flavor-ask="{{ flavor.ask }}" data-flavor-rate="{{ flavor.rate }}" href="#"><span class="glyphicon glyphicon-pencil"></span></a></td>
                 <td>
                   <div class="toggle-modern">
                     <div id="flavor-{{flavor.id}}" class="toggle{% if flavor.active %} enabled{% endif %}"></div>
@@ -129,20 +159,10 @@
     });
 
     // flavor buttons
-    $('button[id^="flavor-launch-"]').each(function(index){
+    $('a[id^="ask-flavor-"]').each(function(index){
       $('#'+this.id).click(function() {
         flavor_id = this.id.split("-").pop();
-        $.ajax({
-          url: '/configure/flavors/'+flavor_id+'?_csrf_token='+csrf_token,
-          type: 'POST',
-        }).done(function(data) {
-         if (data.response.indexOf("error") >= 0) {
-            alertify.log("Could not install flavor.  Check your OpenStack settings!", "error");
-            $("#openstack-settings").trigger('mouseenter');
-          } else {
-            location.reload();
-          }
-        });
+        $('#modal-flavor-set-ask').modal('show');
       });
     });
 
