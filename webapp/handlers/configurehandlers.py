@@ -128,7 +128,7 @@ def configure_flavors_detail(flavor_id):
 				flavor.update(locality=3, active=True)
 			else:
 				response = flavor_uninstall(flavor)
-				flavor.update(locality=2,	active=False)
+				flavor.update(locality=2, active=False)
 
 		# disable/enable instances as needed with this flavor
 		instances = Instances()

@@ -146,7 +146,69 @@
       });
     }
 
-    // toggle sliders
+    // pencil flavor edits
+    $('a[id^="ask-flavor-"]').each(function(index){
+      $('#'+this.id).click(function() {
+        var flavor_id = this.id.split("-").pop();
+
+        // grab the values from the flavor object
+        var ask = $('#'+this.id).attr('data-flavor-ask');
+        var rate = $('#'+this.id).attr('data-flavor-rate');
+        var name = $('#'+this.id).attr('data-flavor-name');
+
+        // set the modal values
+        $('#modal-appliance-flavor-ask').html(ask);
+        $('#modal-pool-flavor-rate').html(rate);
+        $('#modal-appliance-flavor-name').html(name);
+        $('#modal-flavor-id-input').val(flavor_id);
+        $('#modal-flavor-ask-input').val(rate);
+        
+        // show it's coming from the pencil edit
+        $('#modal-flavor-source-input').val("edit");
+        $('#set-ask-confirm-button').html('Set Ask Price');
+
+        // show the modal
+        $('#modal-flavor-set-ask').modal('show');
+      });
+    });
+
+    // modal submit ask button
+    $('#set-ask-confirm-button').click(function() {
+      var ask = $('#modal-flavor-ask-input').val();
+      var flavor_id = $('#modal-flavor-id-input').val();
+      var source = $('#modal-flavor-source-input').val();
+      var slider = $('#flavor-'+flavor_id);
+      var enabled = $(slider).children('.active').length;
+
+      console.log(ask, flavor_id, source, slider, enabled);
+
+      // disable slider if ask == 0
+      if (parseInt(ask) == 0 && source == "slider") {
+        $('#modal-flavor-set-ask').modal('hide');
+      } else {
+        if (parseInt(ask) == 0) {
+          enabled = 0;
+        }
+        $.ajax({
+          url: '/configure/flavors/'+flavor_id+'?_csrf_token='+csrf_token,
+          type: 'PUT',
+          data: {_csrf_token: csrf_token, ask: ask, enable: enabled},
+          success: function() {
+            // reload the page
+            location.reload();
+          },
+          error: function(jqXHR) {
+            console.log(jqXHR);
+            // code failed, clear value and alert
+            $('#modal-flavor-ask-input').val('');
+            $('#askrate-form').addClass('has-error');
+            alertify.error("The ask amount you entered is not valid.");
+          }
+        });
+      }
+    });
+
+    // deal with slider activty
     $('div[id^="flavor-"]').each(function(index){
       $('#'+this.id).toggles({
         text: {
@@ -158,6 +220,7 @@
       $('#'+this.id).click(function() {
         var enabled = $('#'+this.id).children('.active').length;
         var ask = $('#'+this.id).attr('data-flavor-ask');
+        
         // show ask edit modal if the ask is zero
         if (ask == 0 && enabled == 1) {
           var flavor_id = this.id.split("-").pop();
@@ -169,74 +232,17 @@
           $('#set-ask-confirm-button').html('Set Ask & Enable Flavor');
           $('#modal-flavor-id-input').val(flavor_id);
           $('#modal-flavor-source-input').val("slider");
+        } else {
+          // toggle the flavor state on the appliance
+          ajax_toggle('/configure/flavors/'+this.id.split("-").pop(), this.id);
         }
-        // ajax_toggle('/configure/flavors/'+this.id.split("-").pop(), this.id);
       });
     });
 
-    // set ask submit
-    $('#set-ask-confirm-button').click(function() {
-      var ask =$ ('#modal-flavor-ask-input').val();
-      var flavor_id = $('#modal-flavor-id-input').val();
-      var source = $('#modal-flavor-source-input').val();
-
-      // disable slider if ask == 0
-      if (parseInt(ask) == 0 && source == "slider") {
-        var flavor_id = $('#modal-flavor-id-input').val();
-        $('#modal-flavor-set-ask').modal('hide');
-      } else if (parseInt(ask) == 0) {
-        $('#modal-flavor-set-ask').modal('hide');
-      } else {
-        $.ajax({
-          url: '/configure/flavors/'+flavor_id+'?_csrf_token='+csrf_token,
-          type: 'PUT',
-          data: {_csrf_token: csrf_token, ask: ask},
-          success: function(data, textStatus, jqXHR) {
-            if (jqXHR['responseJSON']['response'] == "warning") {
-              alertify.log(jqXHR['responseJSON']['result']['message'], "warning");
-            }
-            // reload the page
-            location.reload();
-          },
-          error: function(jqXHR, textStatus, errorThrown) {
-            // code failed, clear value and alert
-            $('#modal-flavor-ask-input').val('');
-            $('#askrate-form').addClass('has-error');
-            alertify.log(jqXHR['responseJSON']['result']['message'], "error");
-          }
-        });
-      }
-    });
-
-    // toggle slider back on (by clicking however) when modal is dismissed
+    // toggle slider (by clicking) when modal is dismissed
     $('#modal-flavor-set-ask').on('hidden.bs.modal', function () {
       var flavor_id = $('#modal-flavor-id-input').val();
       $('#flavor-'+flavor_id).click();
-    });
-
-    // flavor edit pencils
-    $('a[id^="ask-flavor-"]').each(function(index){
-      $('#'+this.id).click(function() {
-        flavor_id = this.id.split("-").pop();
-
-        // grab the values from the flavor object
-        var ask = $('#'+this.id).attr('data-flavor-ask');
-        var rate = $('#'+this.id).attr('data-flavor-rate');
-        var name = $('#'+this.id).attr('data-flavor-name');
-
-        // set the modal values
-        $('#modal-appliance-flavor-ask').html(ask);
-        $('#modal-pool-flavor-rate').html(rate);
-        $('#modal-appliance-flavor-name').html(name);
-        $('#modal-flavor-ask-input').val(rate);
-        
-        // show it's coming from the pencil edit
-        $('#modal-flavor-source-input').val("edit");
-        $('#set-ask-confirm-button').html('Set Ask Price');
-
-        // show the modal
-        $('#modal-flavor-set-ask').modal('show');
-      });
     });
 
   });
