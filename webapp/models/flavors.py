@@ -69,8 +69,8 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		memory=None,
 		disk=None,
 		# the default network limitation if none is specified is -1
-		network_down=-1,
-		network_up=-1,
+		network_down=0,
+		network_up=0,
 		# the default price and rate is 0 if nothing is passed
 		rate=0,
 		ask=0,
