@@ -301,12 +301,8 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				flavor = Flavors()
 				keep_values['active'] = False
 			else:
-				# if active and installed on openstack, do not update price
-				if flavor.active == True and flavor.locality == 3:
-					# do not change ask price if flavor is enabled
-					keep_values['ask'] = flavor_schema.ask
-
-				# keep whatever we currently have for active
+				# keep whatever we currently have for active and ask
+				keep_values['ask'] = flavor.ask
 				keep_values['active'] = flavor.active
 				
 			# populate the object
