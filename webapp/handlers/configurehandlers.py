@@ -85,92 +85,72 @@ def configure_flavors_add():
 		settings=Status().check_settings(),
 		flavors=flavors)
 
-@mod.route('/configure/flavors/<int:flavor_id>', methods=['GET', 'PUT'])
+@mod.route('/configure/flavors/<int:flavor_id>', methods=['PUT'])
 @login_required
 def configure_flavors_detail(flavor_id):
 	# get the matching flavor
 	flavor = db.session.query(Flavors).filter_by(id=flavor_id).first()
 
-	# handle a GET
-	if request.method == 'GET':
-		# check configuration
-		settings = Status().check_settings()
+	# clear settings cache
+	Status().flush()
 
-		# how much is a micro BTC?
-		try:
-			quote = float(coinbase_get_quote(currency='btc_to_usd')['result']['btc_to_usd'])/1000000
-		except:
-			quote = 0
+	# enable/diskable
+	if 'enable' in request.form.keys():
+		flavor.update(active=int(request.form['enable']))
 
-		return render_template(
-			'/configure/flavor_detail.html',
-			settings=settings,
-			quote=quote,
-			flavor=flavor
-		)
+	# set ask
+	if 'ask' in request.form.keys():
+		flavor.update(ask=int(request.form['ask']))
 
-	# handle a PUT
-	elif request.method == 'PUT':
-		# clear settings cache
-		Status().flush()
+	# install pool flavor
+	if 'install' in request.form.keys():
+		if int(request.form['install']):
+			flavor.update(locality=3, active=True)
+		else:
+			response = flavor_uninstall(flavor)
+			flavor.update(locality=2, active=False)
 
-		# enable/diskable
-		if 'enable' in request.form.keys():
-			flavor.update(active=int(request.form['enable']))
+	# disable/enable instances as needed with this flavor
+	instances = Instances()
+	instances.toggle(flavor.id, flavor.active)
 
-		# set ask
-		if 'ask' in request.form.keys():
-			flavor.update(ask=int(request.form['ask']))
-
-		# install pool flavor
-		if 'install' in request.form.keys():
-			if int(request.form['install']):
-				flavor.update(locality=3, active=True)
-			else:
-				response = flavor_uninstall(flavor)
-				flavor.update(locality=2, active=False)
-
-		# disable/enable instances as needed with this flavor
-		instances = Instances()
-		instances.toggle(flavor.id, flavor.active)
-
-		# load up ask prices
-		os_ask = 0
-		try:
-			# get current ask price on openstack
-			os_ask = flavor.ask_on_openstack
-			# update entry
-			flavor.update()
-		# forbidden due to permissions or policy
-		except nova_exceptions.Forbidden:
-			# warn because we couldn't update the ask price that's set on openstack
-			if os_ask != None:
-				response = jsonify({"response": "error", "result": {
-					"message": "Forbidden to update the asking price on OpenStack due"
-						"to lack of permissions, refusing to update."}})
-				response.status_code = 500
-				return response
-			# if open stack has no flavor price, only warn but don't error
-			response = jsonify({"response": "warning", "result": {
+	# load up ask prices
+	os_ask = 0
+	try:
+		# get current ask price on openstack
+		os_ask = flavor.ask_on_openstack
+		# update entry
+		flavor.update()
+	# forbidden due to permissions or policy
+	except nova_exceptions.Forbidden:
+		# warn because we couldn't update the ask price that's set on openstack
+		if os_ask != None:
+			response = jsonify({"response": "error", "result": {
 				"message": "Forbidden to update the asking price on OpenStack due"
-					"to lack of permissions, only updating local db."}})
-			# do it again, but don't try to update openstack this time
-			flavor.save(ignore_hooks=True)
-			return response
-			# if there is no ask price set on os we don't need to warn if we can't update it
-		except nova_exceptions.ClientException as e:
-			response = jsonify({"response": "error", "result": {
-				"message": "Error in communication with OpenStack cluster."}})
+					"to lack of permissions, refusing to update."}})
 			response.status_code = 500
 			return response
-		except:
-			# warn because we couldn't talk to openstack
-			response = jsonify({"response": "error", "result": {
-				"message": "The ask rate is inavlid."}})
-			response.status_code = 500
-			return response
+		# if open stack has no flavor price, only warn but don't error
+		response = jsonify({"response": "warning", "result": {
+			"message": "Forbidden to update the asking price on OpenStack due"
+				"to lack of permissions, only updating local db."}})
+		# do it again, but don't try to update openstack this time
+		flavor.save(ignore_hooks=True)
+		return response
+		# if there is no ask price set on os we don't need to warn if we can't update it
+	except nova_exceptions.ClientException as e:
+		response = jsonify({"response": "error", "result": {
+			"message": "Error in communication with OpenStack cluster."}})
+		response.status_code = 500
+		return response
+	except:
+		# warn because we couldn't talk to openstack
+		response = jsonify({"response": "error", "result": {
+			"message": "The ask rate is inavlid."}})
+		response.status_code = 500
+		return response
 
-		return jsonify({"response": "success", "flavor": row2dict(flavor)})
+	return jsonify({"response": "success", "flavor": row2dict(flavor)})
 
 
 # configuration pages
