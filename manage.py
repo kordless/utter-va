@@ -733,7 +733,6 @@ manager.add_action('coinop', coinop)
 manager.add_action('message', messenger)
 manager.add_action('ips', ips)
 manager.add_action('stats', stats)
-manager.add_action('addressmop', addressmop)
 manager.add_action('admin', admin)
 
 # commands for user managment
