@@ -143,12 +143,14 @@ class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 		self._apitoken = new_token
 
 	# for the love of humanity, and wtforms
+	@property
 	def image_caching(self):
-		if self.enable_image_caching:
-			return False
-		else:
-			return True
-			
+		return not self.enable_image_caching
+
+	@image_caching.setter
+	def set_image_caching(self, value):
+		self.enabled_image_caching = not value
+
 	def initialize(self, ip):
 		# generate a new API token
 		self.apitoken = generate_token()
