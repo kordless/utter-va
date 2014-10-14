@@ -49,11 +49,11 @@ server {
 	listen 8080;
 
   location ~* "^/(http|https)/([a-zA-Z0-9\.\-]+)/(.*)$" {
-    set $real_proto $1;
-    set $real_host $2;
-    set $real_uri $3;
+    set \$real_proto \$1;
+    set \$real_host \$2;
+    set \$real_uri \$3;
     resolver 8.8.8.8;
-    proxy_pass             https://$real_host/$real_uri;
+    proxy_pass             https://\$real_host/\$real_uri;
 		proxy_set_header       Host \$real_host;
 		proxy_cache            IMGCACHE;
 		proxy_cache_valid      200 3650d;
