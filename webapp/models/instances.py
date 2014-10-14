@@ -401,14 +401,15 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		self.update()
 
 		# if image is not ready because it's either killed or still downloading
+		#import pdb; pdb.set_trace()
 		try:
 			image_status = image.status
 		except Exception:
 			app.logger.error("Error communicating with OpenStack: \"{0}\"".format(str(e)))
-			return
+			return {"response": "error"}
 		if image_status == "queued":
+			return {"response": "queued"}
 			# image is still downloading and is not ready to be used yet
-			return
 		elif image_status == "killed":
 			# image has been killed, probably that's another one of our beloved nebulas
 			try:
@@ -417,7 +418,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			except Exception as e:
 				# this is hopeless
 				app.logger.error("Failed to fix nebula")
-				return
+				return {"response": "error"}
 
 		# post creation file is blank to start
 		post_creation_ssh_key_combo = ""
