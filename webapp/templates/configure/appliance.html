@@ -97,7 +97,7 @@
               <div class="col-md-8">
                 {{ form.local_ip.label(class="control-label") }}
                 <div class="input-group" id="hover-local-ip">
-                  {{ form.local_ip(value=appliance.local_ip, id="local-ip", placeholder="0.0.0.0", disabled=appliance.image_caching, class="form-control") }}
+                  {{ form.local_ip(value=appliance.local_ip, id="local-ip", placeholder="0.0.0.0", disabled=not appliance.enable_image_caching, class="form-control") }}
                   <span class="input-group-btn">
                     <button id="enable-image-caching" title="Toggle image caching." class="btn btn-default" type="button"><span id="cache-icon" class="glyphicon glyphicon-floppy-{% if appliance.enable_image_caching %}saved{% else %}remove{% endif %}"></span></button>
                   </span>            
