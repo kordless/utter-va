@@ -413,7 +413,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			# image has been killed, probably that's another one of our beloved nebulas
 			try:
 				app.logger.warning("Attempting to fix nebula")
-				image.fix_nebula():
+				image.fix_nebula()
 			except Exception as e:
 				# this is hopeless
 				app.logger.error("Failed to fix nebula")
