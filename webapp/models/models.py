@@ -101,6 +101,7 @@ class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 	latitude = db.Column(db.String(100), unique=True)
 	longitude = db.Column(db.String(100), unique=True)
 	local_ip = db.Column(db.String(100), unique=True)
+	enable_image_caching = db.Column(db.Boolean(), default=True)
 	object_schema = schemas['ApplianceSchema']
 	hide_token = False
 
@@ -116,6 +117,7 @@ class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 		latitude=None, 
 		longitude=None,
 		local_ip=None,
+		enable_image_caching=True,
 	):
 		self.apitoken = apitoken
 		self.ngroktoken = ngroktoken

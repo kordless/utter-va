@@ -93,6 +93,22 @@
               </div>
             </div>
 
+            <div class="row form-group {% if form.local_ip.errors %}has-error{% endif %}">
+              <div class="col-md-8">
+                {{ form.enable_image_caching.label(class="control-label") }}
+                  {{ form.enable_image_caching(
+											false_values=False,
+                      id="enable-image-caching",
+                      class="form-control-imgcache") }}
+                  {{ form.local_ip(
+                      value=appliance.local_ip,
+                      id="local-ip",
+                      class="form-control-imgcache",
+                      placeholder="Appliance Address",
+                      disabled=not appliance.enable_image_caching)}}
+              </div>
+            </div>
+
             <div class="row form-group">
               <div class="col-md-12">
                 <label for="servicelocation" class="control-label">Service Location</label>
@@ -202,6 +218,10 @@
           location.reload();
         });
       });    
+
+      $('#enable-image-caching').click(function(eventData) {
+        $('#local-ip')[0].disabled = !eventData.toElement.checked;
+      });
     });
   </script>
 {% endblock %}
