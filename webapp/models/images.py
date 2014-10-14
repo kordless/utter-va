@@ -38,7 +38,8 @@ class Images(CRUDMixin, db.Model):
 		return url
 
 	def save(self, *args, **kwargs):
-		if self.osid == None or not os_image_exists(self.osid):
+		if Appliance.get().enable_image_caching and (
+				self.osid == None or not os_image_exists(self.osid)):
 			self.osid = create_os_image(name=self.name, url=self.cached_url).id
 		super(Images, self).save(*args, **kwargs)
 
