@@ -12,6 +12,7 @@ from webapp.libs.openstack import glance_client
 from webapp.libs.openstack import create_os_image
 from webapp.libs.openstack import ensure_image_is_deleted
 from webapp.libs.openstack import os_image_exists
+from webapp.libs.openstack import get_os_image
 
 # images model
 class Images(CRUDMixin, db.Model):
@@ -31,7 +32,7 @@ class Images(CRUDMixin, db.Model):
 		if proto_search:
 			proto = proto_search.group(1)
 			host_path = proto_search.group(2)
-			url = '{0}://{1}:8080/{2}'.format(proto, Appliance.get().local_ip, host_path)
+			url = '{0}:8080/{1}/{2}'.format(Appliance.get().local_ip, proto, host_path)
 		else:
 			url = self.url
 			
@@ -53,3 +54,9 @@ class Images(CRUDMixin, db.Model):
 	def housekeeping(self):
 		if self.instances.count() == 0:
 			self.delete()
+
+	def is_ready(self):
+		if not self.osid:
+			return False
+		image = get_os_image(self.osid)
+

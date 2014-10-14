@@ -400,6 +400,11 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		self.image = image
 		self.update()
 
+		# if image is not ready because it's either killed or still downloading
+		#if not self.image.is_ready():
+			#self.image.fix_nebula()
+			#return
+
 		# post creation file is blank to start
 		post_creation_ssh_key_combo = ""
 		

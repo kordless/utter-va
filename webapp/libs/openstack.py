@@ -122,21 +122,25 @@ def get_stats():
 	response['result']['stats'] = stats
 	return response		
 
+def get_os_image(id):
+		return glance_client().images.get(id)
+
 def os_image_exists(id):
 	try:
-		glance_client().images.get(id)
+		get_os_image(id)
 	except glance_exceptions.NotFound:
 		return False
 	return True
 
 def create_os_image(**kwargs):
-	return glance_client().images.create(
-		name = kwargs['name'],
-		is_public = False,
-		disk_format = 'qcow2',
-		container_format = 'bare',
-		location = kwargs['url']
-	)
+	fields = {
+		'name': unicode(kwargs['name']),
+		'is_public': False,
+		'disk_format': u'qcow2',
+		'container_format': u'bare',
+		'copy_from': unicode(kwargs['url']),
+		'properties': {}}
+	return glance_client().images.create(**fields)
 
 def ensure_image_is_deleted(image_id):
 	try:
