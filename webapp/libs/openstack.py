@@ -132,14 +132,18 @@ def os_image_exists(id):
 		return False
 	return True
 
-def create_os_image(**kwargs):
+def create_os_image(fd=None, **kwargs):
 	fields = {
 		'name': unicode(kwargs['name']),
 		'is_public': False,
 		'disk_format': u'qcow2',
 		'container_format': u'bare',
-		'copy_from': unicode(kwargs['url']),
 		'properties': {}}
+	if fd:
+		# just for nebula
+		fields['data'] = fd
+	else:
+		fields['copy_from'] = unicode(kwargs['url'])
 	return glance_client().images.create(**fields)
 
 def ensure_image_is_deleted(image_id):
