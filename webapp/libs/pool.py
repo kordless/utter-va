@@ -18,7 +18,7 @@ def pool_instances(**kwargs):
 
 	try:
 		pool_api = PoolApiInstancesUpdate()
-		if kwargs.has_key('url') and kwargs['url'] != None:
+		if kwargs.has_key('url') and kwargs['url'] != None and kwargs['url'] != '':
 			pool_api.custom_url = kwargs['url']
 			# mask our apitoken on subsequent redirects
 			kwargs['appliance'].hide_token = True
