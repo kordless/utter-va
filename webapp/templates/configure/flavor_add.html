@@ -77,48 +77,26 @@
       window.location = "{{ url_for('configure.configure_flavors') }}";
     });
 
-    // install toggle
-    $('div[id^="flavor-install-"]').each(function(index){
-
-      // setup initial state and button text
-      $('#'+this.id).toggles({
-        text: {
-          on: 'Remove',
-          off: 'Install',
-        },
-        on: $(this).hasClass('installed')
-      });
-
-      // submit the action
-      $('#'+this.id).on('toggle', function(e, active){
-        if (active) {
-          action = 'install';
-        } else{
-          action = 'uninstall';
-        }
-        ajax_toggle('/configure/pool_flavors/' + 
-            this.id.split("-").pop() + '/' + action , this.id, action);
-      });
-
-      function ajax_toggle(url, id, action) {
-        if (action == 'install') {
-          msg_action = 'installed';
-        } else if (action == 'uninstall') {
-          msg_action = 'removed';
-        }
+    // flavor install buttons
+    $('button[id^="flavor-install-"]').each(function(index){        
+      var flavor_id = this.id.split("-").pop();
+      $('#'+this.id).click(function() {
         $.ajax({
-          url: url,
+          url: '/configure/flavors/'+flavor_id+'?_csrf_token='+csrf_token,
           type: 'PUT',
-          data: {_csrf_token: csrf_token},
-          success: function(data, textStatus, jqXHR) {
-            alertify.log("Flavor has been " + msg_action + ".", "info");
+          data: {_csrf_token: csrf_token, install: 1},
+          success: function() {
+            // take them to the flavor page
+            window.location = "/configure/flavors";
           },
-          error: function(jqXHR, textStatus, errorThrown) {
-            alertify.log(jqXHR['responseJSON']['result']['message'], "error");
-          },
+          error: function(data) {
+            console.log(data);
+            alertify.error(data.responseJSON.result.message);
+          }
         });
-      }
+      });
     });
+
   });
 </script>
 {% endblock %}

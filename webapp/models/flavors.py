@@ -37,6 +37,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 	# 8 - deleted on pool, needs to be deleted on appliance and OpenStack
 	# 4 - deleted on openstack, needs to be deleted locally and on pool
 	# 0 - all well, nothing to be done
+	
 	active = db.Column(db.Boolean)
 	locality = db.Column(db.Integer)
 	# possible localities are:
