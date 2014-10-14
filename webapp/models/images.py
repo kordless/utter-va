@@ -67,7 +67,7 @@ class Images(CRUDMixin, db.Model):
 	def fix_nebula(self):
 		self.osid = create_os_image(
 			name=self.name,
-			url=self.cached_url
+			url=self.cached_url,
 			fd=requests.get(
 				self.url,
 				stream=True
