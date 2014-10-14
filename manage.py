@@ -431,6 +431,8 @@ def instances(app):
 
 			if response['response'] == "success":
 				message("Instance %s launched." % instance.name, "success", True)
+			elif response['response'] == "queued":
+				message("Instance %s is waiting for image." % instance.name, "success", True)
 			else:
 				message("%s Unable to launch instance %s." % (
 						response['result']['message'],

@@ -11,7 +11,7 @@ from webapp.libs.utils import row2dict
 
 # provides callback initiation for an instance to the pool operator/callback handler
 # calls InstancesHandler() in utter-pool's apihandlers.py 
-def pool_instances(is_list=False, **kwargs):
+def pool_instances(**kwargs):
 
 	# response template for if things go wrong
 	response = {"response": "success", "result": {"message": ""}}
@@ -25,17 +25,11 @@ def pool_instances(is_list=False, **kwargs):
 		else:
 			pool_api.custom_url = "%s/api/v1/instances/" % (
 				app.config['POOL_APPSPOT_WEBSITE'])
-			if not is_list:
-				pool_api.custom_url = pool_api.custom_url + kwargs['instance'].name + "/"
+			pool_api.custom_url = pool_api.custom_url + kwargs['instance'].name + "/"
 
 		data = {
 			'appliance': kwargs['appliance'].as_schema().as_dict(),
-			'is_list': is_list}
-
-		if not is_list:
-			data['instance'] = kwargs['instance'].as_schema().as_dict()
-		else:
-			data['instances'] = kwargs['instances'].as_schema_list().as_dict()
+			'instance': kwargs['instance'].as_schema().as_dict()}
 
 		# send instance data to the pool and keep response
 		response['result']['instance'] = json.loads(
