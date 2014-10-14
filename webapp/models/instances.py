@@ -401,7 +401,6 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		self.update()
 
 		# if image is not ready because it's either killed or still downloading
-		#import pdb; pdb.set_trace()
 		try:
 			image_status = image.status
 		except Exception:
