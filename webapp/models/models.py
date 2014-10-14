@@ -148,8 +148,8 @@ class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 		return not self.enable_image_caching
 
 	@image_caching.setter
-	def set_image_caching(self, value):
-		self.enabled_image_caching = not value
+	def image_caching(self, value):
+		self.enable_image_caching = not value
 
 	def initialize(self, ip):
 		# generate a new API token
