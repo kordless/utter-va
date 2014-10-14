@@ -203,41 +203,6 @@ def ips(app):
 
 	return action
 
-# cleans up errant address assignments
-def addressmop(app):
-	def action():
-		"""
-		Clean up errant address to instance assignments.
-		"""
-		# check appliance is ready to go - exit if not
-		settings = Status().check_settings()
-		if not settings['ngrok'] or not settings['openstack']:
-			print "Appliance is not ready."
-			return action
-
-		instances = db.session.query(Instances).all()
-		addresses = db.session.query(Addresses).all()
-
-		# build an array of address ids from current instances
-		addresses_used = []
-		for instance in instances:
-			addresses_used.append(instance.address.id)
-
-		# build an array of address ids
-		addresses_known = []
-		for address in addresses:
-			addresses_known.append(address.id)
-		
-		# build the remove list
-		addresses_remove = [address for address in addresses_known if address not in addresses_used]
-
-		# zero out the ones to remove - if any
-		for address in addresses:
-			if address.id in addresses_remove:
-				address.instance_id = 0
-
-	return action
-
 # quick and dirty openstack stats
 def stats(app):
 	def action():
