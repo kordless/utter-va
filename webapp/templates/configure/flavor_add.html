@@ -21,8 +21,8 @@
             <h2><small>Install New Flavors</small></h2>
             <div class="bs-callout bs-callout-info bs-callout-top">
               <h4>Installing Recommended Flavors</h4>
-              <p>The following <strong>Instance Flavors</strong> may be installed on your <strong>OpenStack Cluster</strong>. Installing a new flavor requires the <strong>Appliance's User</strong> to have flavor create privledges on the cluster.</p>
-              <p>More information regarding <strong>OpenStack Permissions</strong> is <a target="_blank" href="{{ config['APP_WEBSITE'] }}/docs/#appliance-operation-flavors">available in the documentation</a> located on the pool's website.</p>
+              <p>The following <strong>Instance Flavors</strong> may be installed on your <strong>OpenStack Cluster</strong>. Installing a new flavor requires the Appliance's configured <strong>OpenStack User</strong> to have flavor create privledges on the cluster. You can also manually create flavors on the OpenStack cluster to have them installed automatically.</p>
+              <p>More information about managing <strong>OpenStack Flavors</strong> is <a target="_blank" href="{{ config['APP_WEBSITE'] }}/docs/#appliance-operation-flavors">available in the documentation</a>.</p>
             </div>
           </div>
         </div>
@@ -51,7 +51,7 @@
                 <td>{{ flavor.disk }}GB</td>
                 <td class="text-center">{% if flavor.network_down < 0 %}<span class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ flavor.network_down }} Mb/s{% endif %}</td>
                 <td class="text-center">{% if flavor.network_up < 0 %}<span class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ flavor.network_up }} Mb/s{% endif %}</td>
-                <td>{{ flavor.ask }} μBTC/Hour</td>
+                <td>{{ flavor.rate }} μBTC/Hour</td>
 								<td><button id="flavor-install-{{ flavor.id }}" title="Install flavor {{ flavor.name }}." data-flavor="{{ flavor.id }}" class="btn btn-xs btn-success {% if flavor.is_installed %}disabled{% endif %}"><span class="glyphicon glyphicon-floppy-open"></span> Install</button></td>
               </tr>
               {% endfor %}

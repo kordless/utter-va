@@ -23,8 +23,8 @@
             <div class="bs-callout bs-callout-info bs-callout-top">
               <h4>Getting Started</h4>
               <p>Fill out the following form to configure your appliance. This appliance needs to have a <strong>Regsitered API Pool Token</strong>, a valid & unique <strong> <a href="https://coinbase.com/signup?r=52a9c6bf937ab6453a00001e&utm_campaign=user-referral&src=referral-link" target="_blank">Coinbase API Key and Secret</a></strong> and an <strong><a href="https://ngrok.com/">Ngrok API Token</a></strong> before it will function. Toggle visibility of the Coinbase API Secret with the <span class="glyphicon glyphicon-eye-open"></span> icon.</p>
-              <p><strong>Note</strong>: You <strong>must ensure</strong> this appliance is using a <strong>unique Coinbase Client ID</strong> if you are running multiple appliances.</p> 
-              <p>Signup for an Ngrok account by clicking on the <span class="glyphicon glyphicon-cog"></span> icon. Set the map to the approximate location of your <strong>OpenStack Cluster</strong> so users can request instances by <strong>Geolocation</strong>.</p>
+              <p><strong>Note</strong>: You <strong>should ensure</strong> this appliance is using a <strong>unique Coinbase Client ID</strong> if you are running multiple appliances.  Multiple IDs can be created in a single Coinbase account.</p> 
+              <p>Signup for an Ngrok account by clicking on the <span class="glyphicon glyphicon-cog"></span> icon. Use the <strong>Image Cache IP Address</strong> field to enter an accessible IP for this <strong>Virtual Appliance</strong>. Set the map to the approximate location of your <strong>OpenStack Cluster</strong> so users can request instances by <strong>Geolocation</strong>.</p>
             </div>
           </div>
         </div>
@@ -95,17 +95,13 @@
 
             <div class="row form-group {% if form.local_ip.errors %}has-error{% endif %}">
               <div class="col-md-8">
-                {{ form.enable_image_caching.label(class="control-label") }}
-                  {{ form.enable_image_caching(
-											false_values=False,
-                      id="enable-image-caching",
-                      class="form-control-imgcache") }}
-                  {{ form.local_ip(
-                      value=appliance.local_ip,
-                      id="local-ip",
-                      class="form-control-imgcache",
-                      placeholder="Appliance Address",
-                      disabled=not appliance.enable_image_caching)}}
+                {{ form.local_ip.label(class="control-label") }}
+                <div class="input-group" id="hover-local-ip">
+                  {{ form.local_ip(value=appliance.local_ip, id="local-ip", placeholder="0.0.0.0", disabled=appliance.image_caching(), class="form-control") }}
+                  <span class="input-group-btn">
+                    <button id="enable-image-caching" title="Toggle image caching." class="btn btn-default" type="button"><span id="cache-icon" class="glyphicon glyphicon-floppy-{% if appliance.enable_image_caching %}saved{% else %}remove{% endif %}"></span></button>
+                  </span>            
+                </div>
               </div>
             </div>
 
@@ -126,6 +122,10 @@
               </div>
             </div>
             
+            <div class="hidden-checkbox">
+              {{ form.image_caching(id="image-cache", checked=appliance.enable_image_caching) }}
+            </div>
+
             <button type="submit" class="btn btn-success">Save Configuration</button>
           </form>
         </div>
@@ -219,9 +219,25 @@
         });
       });    
 
-      $('#enable-image-caching').click(function(eventData) {
-        $('#local-ip')[0].disabled = !eventData.toElement.checked;
-      });
+      // button click for enable/disable next to ip cache field
+      $('#enable-image-caching').click(function() {
+        // ip address input box
+        $('#local-ip').prop( "disabled", function( i, val ) {
+          return !val;
+        });
+        // hidden checkbox
+        $('#image-cache').prop( "checked", function( i, val ) {
+          return !val;
+        });
+        // button icons for enable/disable
+        if ($('#local-ip').prop( "disabled")) {
+          $('#cache-icon').removeClass('glyphicon-floppy-saved');
+          $('#cache-icon').addClass('glyphicon-floppy-remove');
+        } else {
+          $('#cache-icon').removeClass('glyphicon-floppy-remove');
+          $('#cache-icon').addClass('glyphicon-floppy-saved'); 
+        }
+      }); 
     });
   </script>
 {% endblock %}

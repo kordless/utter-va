@@ -43,8 +43,8 @@ class ApplianceForm(Form):
 	cbapisecret = TextField("Coinbase Client Secret", validators=[])
 	apitoken = TextField("Pool API Token") # not submitted by form
 	ngroktoken = TextField("Ngrok Token", validators=[])
-	local_ip = TextField("Appliance Address")
-	enable_image_caching = BooleanField("Image Caching")
+	local_ip = TextField("Image Cache IP Address", validators=[])
+	image_caching = BooleanField("Image Caching")
 	latitude = TextField("latitude", validators=[Required()])
 	longitude = TextField("longitude", validators=[Required()])
 

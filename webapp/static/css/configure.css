@@ -82,23 +82,30 @@ h1 small, h2 small, h3 small {
 }
 
 /* appliance form styles */
+.hidden-checkbox {
+  opacity: 0; 
+  position: absolute; 
+  left: 9999px;
+}
 #button-api-token {
   margin-top: 27px;
 }
-#refresh-api-token {
+#refresh-api-token, #enable-image-caching {
   border-color: #E6E9ED;
   background-color: #E6E9ED;
 }
-#api-token {
+#api-token, #local-ip{
   border: 1px solid #AAB2BC;
 }
+
 button#refresh-api-token, 
 button#toggle-cb-api-secret, 
 button#toggle-cb-api-secret-again, 
-button#get-ngrok-token {
+button#get-ngrok-token,
+button#enable-image-caching {
   color: #434A54;
 }
-button#refresh-api-token:hover {
+button#refresh-api-token:hover, button#enable-image-caching:hover {
   background-color: white;
 }
 
