@@ -233,9 +233,27 @@
         if ($('#local-ip').prop( "disabled")) {
           $('#cache-icon').removeClass('glyphicon-floppy-saved');
           $('#cache-icon').addClass('glyphicon-floppy-remove');
+          $('button#enable-image-caching').css({'background-color': '#E6E9ED'});
+          // hover handling
+          $("button#enable-image-caching").hover(
+            function() {
+              $(this).css('background-color', '#FFF')
+            }, function() {
+              $(this).css('background-color', '#E6E9ED')
+            }
+          );
         } else {
           $('#cache-icon').removeClass('glyphicon-floppy-remove');
-          $('#cache-icon').addClass('glyphicon-floppy-saved'); 
+          $('#cache-icon').addClass('glyphicon-floppy-saved');
+          $('button#enable-image-caching').css({'background-color': '#FFF'});
+          // hover handling
+          $("button#enable-image-caching").hover(
+            function() {
+              $(this).css('background-color', '#E6E9ED')
+            }, function() {
+              $(this).css('background-color', '#FFF')
+            }
+          );
         }
       }); 
     });
