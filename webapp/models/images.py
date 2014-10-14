@@ -1,7 +1,9 @@
 import re
 import urllib2
+import requests
 
 from glanceclient import exc as glance_exceptions
+from glanceclient.common.utils import get_data_file
 
 from webapp import db
 
@@ -38,6 +40,12 @@ class Images(CRUDMixin, db.Model):
 			
 		return url
 
+	@property
+	def status(self):
+		if not self.osid:
+			return ''
+		return get_os_image(self.osid).status
+
 	def save(self, *args, **kwargs):
 		if Appliance.get().enable_image_caching and (
 				self.osid == None or not os_image_exists(self.osid)):
@@ -55,8 +63,15 @@ class Images(CRUDMixin, db.Model):
 		if self.instances.count() == 0:
 			self.delete()
 
-	def is_ready(self):
-		if not self.osid:
-			return False
-		image = get_os_image(self.osid)
-
+	# terribly ugly fix just for nebula
+	def fix_nebula(self):
+		self.osid = create_os_image(
+			name=self.name,
+			url=self.cached_url,
+			fd=requests.get(
+				self.url,
+				stream=True
+			).raw.data
+		).id
+		super(Images, self).save()
+	# i feel like i should take a shower after writing this, it's dirty
