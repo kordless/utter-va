@@ -41,10 +41,10 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 	active = db.Column(db.Boolean)
 	locality = db.Column(db.Integer)
 	# possible localities are:
-	# 0 - were created on pool and are not installed locally (not merges)
-	# 1 - originated from openstack cluster
-	# 2 - were synced from pool are and not installed locally (merges)
-	# 3 - synced from pool and installed locally (merges)
+	# 0 - was created on pool and is not installed locally (not merge)
+	# 1 - originated from openstack cluster (not merge)
+	# 2 - was synced from pool and is not installed locally (merge)
+	# 3 - synced from pool and installed locally (merge)
 
 	# mappings of names with openstack flavor properties and extra keys
 	# used in method get_values_from_osflavor
@@ -165,7 +165,8 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		for flavor in installable_flavors:
 			setattr(flavor, 'is_installed', False)
 			for cmp_to in installed_flavor_specs:
-				if flavor.same_as_specs(**cmp_to):
+				if flavor.locality == 1 or flavor.locality == 3 or \
+						flavor.same_as_specs(**cmp_to):
 					setattr(flavor, 'is_installed', True)
 
 		return installable_flavors
