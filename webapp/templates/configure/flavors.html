@@ -11,6 +11,26 @@
 {% endblock %}
 
 {% block content %}
+<!-- hidden delete modal -->
+<div id="delete" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Confirm Deletion</h4>
+      </div>
+      <div class="modal-body">
+        <p>Deleting this flavor will remove it from the OpenStack cluster. Are you sure that's what you want to do?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" id="delete-button" class="btn btn-danger">Delete Flavor</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- end modal -->
+
 <!-- set ask rate modal -->
 <div id="modal-flavor-set-ask" class="modal fade">
   <div class="modal-dialog">
@@ -70,8 +90,10 @@
                 <th>Disk</th>
 								<th class="text-center">Ingress</th>
                 <th class="text-center">Egress</th>
+                <th class="text-center">Start Limit</th>
                 <th>Ask Rate</th>
                 <th>Serving</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -83,11 +105,15 @@
                 <td>{{ flavor.disk }}GB</td>
                 <td class="text-center">{% if flavor.network_down < 1 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ flavor.network_down }} Mb/sec{% endif %}</td>
                 <td class="text-center">{% if flavor.network_up < 1 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ flavor.network_up }} Mb/sec{% endif %}</td>
-                <td>{{ flavor.ask }} μBTC/Hour <a id="ask-flavor-{{ flavor.id }}" title="Set ask for {{ flavor.name }}." data-flavor-name="{{ flavor.name }}" data-flavor-ask="{{ flavor.ask }}" data-flavor-rate="{{ flavor.rate }}" href="#"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                <td class="text-center"><a id="limit-flavor-{{ flavor.id }}" title="Set instance limit for {{ flavor.name }}." data-flavor-name="{{ flavor.name }}" data-flavor-ask="{{ flavor.ask }}" data-flavor-rate="{{ flavor.rate }}" href="#">2</a></td>
+                <td><a id="ask-flavor-{{ flavor.id }}" title="Set ask for {{ flavor.name }}." data-flavor-name="{{ flavor.name }}" data-flavor-ask="{{ flavor.ask }}" data-flavor-rate="{{ flavor.rate }}" href="#">{{ flavor.ask }} μBTC/Hour </a></td>
                 <td>
                   <div class="toggle-modern">
                     <div id="flavor-{{flavor.id}}" data-flavor-ask="{{ flavor.ask }}" class="toggle{% if flavor.active %} enabled{% endif %}"></div>
                   </div>
+                </td>
+                <td>
+                  <button type="button" id="remove-{{flavor.id}}" class="btn btn-danger btn-xs" title="Remove {{ flavor.name }}." href="#"><span class="glyphicon glyphicon-remove"></span></button>
                 </td>
               </tr>
               {% endfor %}
@@ -146,6 +172,30 @@
         }
       });
     }
+
+    // remove buttons
+    $('button[id^="remove-"]').each(function(index){
+      $('#'+this.id).click(function() {
+        var flavor_id = this.id.split("-").pop();
+        $('#delete').modal();
+        $('#delete-button').click(function() {
+          $.ajax({
+            url: '/configure/flavors/'+flavor_id+'?_csrf_token='+csrf_token,
+            type: 'PUT',
+            data: {_csrf_token: csrf_token, install: 0},
+            success: function() {
+              $('#delete').modal("hide");
+              // reload the page
+              location.reload();
+            },
+            error: function(data) {
+              $('#delete').modal("hide");
+              alertify.error("Something went wrong with uninstalling flavor.");
+            }
+          });
+        })
+      });
+    })
 
     // pencil flavor edits
     $('a[id^="ask-flavor-"]').each(function(index){
