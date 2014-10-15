@@ -81,8 +81,8 @@
                 <td>{{ flavor.vpus }} Core{% if flavor.vpus > 1 %}s{% endif %}</td>
                 <td>{{ flavor.memory }}MB</td>
                 <td>{{ flavor.disk }}GB</td>
-                <td class="text-center">{% if flavor.network_down < 1 %}<span class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ flavor.network_down }} Mb/sec{% endif %}</td>
-                <td class="text-center">{% if flavor.network_up < 1 %}<span class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ flavor.network_up }} Mb/sec{% endif %}</td>
+                <td class="text-center">{% if flavor.network_down < 1 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ flavor.network_down }} Mb/sec{% endif %}</td>
+                <td class="text-center">{% if flavor.network_up < 1 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ flavor.network_up }} Mb/sec{% endif %}</td>
                 <td>{{ flavor.ask }} μBTC/Hour <a id="ask-flavor-{{ flavor.id }}" title="Set ask for {{ flavor.name }}." data-flavor-name="{{ flavor.name }}" data-flavor-ask="{{ flavor.ask }}" data-flavor-rate="{{ flavor.rate }}" href="#"><span class="glyphicon glyphicon-pencil"></span></a></td>
                 <td>
                   <div class="toggle-modern">
