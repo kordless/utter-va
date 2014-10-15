@@ -58,6 +58,12 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		('network_up', 'extra_spec:int:quota:outbound_average'),
 		('ask', 'extra_spec:int:stackmonkey:ask_price')]
 
+	# these values are used when an openstack flavor does not define them
+	default_property_values = {
+		'quota:inbound_average': 0,
+		'quota:outbound_average': 0,
+		'stackmonkey:ask_price': 0}
+
 	# which schema should be used for validation and serialization
 	object_schema = schemas['FlavorSchema']
 
@@ -152,7 +158,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 			app.logger.info("Failed to update flavor=(%s) price on cluster. %s" % (self.name, str(e)))
 
 	@classmethod
-	def get_by_merge(cls, *args, **kwargs):
+	def get_by_specs(cls, *args, **kwargs):
 		criteria = dict(
 			(crit_key, kwargs[crit_key])
 			for crit_key in [
@@ -212,7 +218,10 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 					ret_value[property[0]] = eval(property_chunks[1])(
 							keys[property_chunks[2]])
 				except (ValueError, KeyError):
-					pass
+					try:
+						ret_value[property[0]] = self.default_property_values[property_chunks[2]]
+					except KeyError:
+						pass
 			else:
 				ret_value[property[0]] = getattr(flavor, property[1])
 		return ret_value
@@ -250,11 +259,13 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		# create all the non-existent ones
 		for osflavor in osflavors:
 			# if flavor doesn't exist, create new one
-			flavor = db.session.query(Flavors).filter_by(name=osflavor.name).first()
+			#flavor = db.session.query(Flavors).filter_by(name=osflavor.name).first()
+			flavor = self.get_by_specs(
+				**self.get_values_from_osflavor(
+					osflavor))
 			if not flavor:
 				# flavor is new
 				flavor = Flavors()
-				flavor.flags = 2
 				flavor.locality = 1
 				flavor.copy_values_from_osflavor(osflavor)
 				# if a price is given, activate the new flavor
@@ -262,11 +273,8 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 					flavor.active = True
 					flavor.save(ignore_hooks=True)
 			else:
-				if not flavor.is_same_as_osflavor(osflavor):
-					# flavor has changed
-					flavor.copy_values_from_osflavor(osflavor)
-					flavor.flags = 0
-					flavor.save(ignore_hooks=True)
+				flavor.flags = 0
+				flavor.save(ignore_hooks=True)
 
 		osflavor_ids = [x.id for x in osflavors]
 		# delete all flavors that originally came from openstack but are deleted now
@@ -292,7 +300,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 
 		# update the database with the flavors
 		for flavor_schema in flavor_list_schema.items:
-			flavor = self.get_by_merge(**flavor_schema.as_dict())
+			flavor = self.get_by_specs(**flavor_schema.as_dict())
 
 			# check if we need to delete flavor from local db
 			# b'001000' indicates delete flavor
