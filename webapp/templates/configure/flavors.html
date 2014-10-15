@@ -243,7 +243,10 @@
     // toggle slider (by clicking) when modal is dismissed
     $('#modal-flavor-set-ask').on('hidden.bs.modal', function () {
       var flavor_id = $('#modal-flavor-id-input').val();
-      $('#flavor-'+flavor_id).click();
+      var source = $('#modal-flavor-source-input').val();
+      if (source == 'slider') {
+        $('#flavor-'+flavor_id).click();
+      }
     });
 
   });
