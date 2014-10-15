@@ -305,11 +305,11 @@ def flavor_verify_install(flavor):
 			)
 		except nova_exceptions.Forbidden:
 			response['response'] = "forbidden"
-			response['result']['message'] = "Forbidden to create flavor due to lack of permissions."
+			response['result']['message'] = "Can't install flavor due to lack of permissions for tenant user."
 			return response
 		except:
 			response['response'] = "error"
-			response['result']['message'] = "Error creating flavor inside OpenStack."
+			response['result']['message'] = "Error installing flavor inside OpenStack."
 			return response
 
 		# set bandwidth

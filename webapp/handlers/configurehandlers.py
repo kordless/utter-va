@@ -104,49 +104,58 @@ def configure_flavors_detail(flavor_id):
 
 	# install pool flavor
 	if 'install' in request.form.keys():
-		if int(request.form['install']):
-			flavor.update(locality=3, active=True)
-		else:
-			response = flavor_uninstall(flavor)
-			flavor.update(locality=2, active=False)
+		# let's see what we can break, er install
+		try:
+			if not flavor:
+				response = jsonify({"response": "error", "result": {"message": "Flavor %s not found." % flavor_id }})
+				response.status_code = 404
+				return response
 
-	# disable/enable instances as needed with this flavor
+			# we are told to install
+			if int(request.form['install']):
+				response = flavor_verify_install(flavor)
+				if not response['response'] == 'success':
+					raise Exception(response['result']['message'])
+				
+				flavor.update(locality=3, active=True)
+			else:
+				# we are told to uninstall (install=0)
+				response = flavor_uninstall(flavor)
+				if not response['response'] == 'success':
+					raise Exception(response['result']['message'])
+
+				flavor.update(locality=2, active=False)
+
+		except Exception as e:
+			response = jsonify({"response": "error", "result": {"message": str(e)}})
+			response.status_code = 403
+			return response
+
+	# set instance state to match flavor's state
 	instances = Instances()
 	instances.toggle(flavor.id, flavor.active)
 
-	# load up ask prices
-	os_ask = 0
+	# update the ask prices on the openstack cluster using metadata
 	try:
-		# get current ask price on openstack
+		# get current ask price on openstack and update
 		os_ask = flavor.ask_on_openstack
-		# update entry
 		flavor.update()
-	# forbidden due to permissions or policy
+
+	# warn because we couldn't update the ask price that's set on openstack
 	except nova_exceptions.Forbidden:
-		# warn because we couldn't update the ask price that's set on openstack
 		if os_ask != None:
-			response = jsonify({"response": "error", "result": {
-				"message": "Forbidden to update the asking price on OpenStack due"
-					"to lack of permissions, refusing to update."}})
-			response.status_code = 500
+			response = jsonify({"response": "error", "result": {"message": "OpenStack is refusing to update flavor metadata due to lack of permissions."}})
+			response.status_code = 403
 			return response
-		# if open stack has no flavor price, only warn but don't error
-		response = jsonify({"response": "warning", "result": {
-			"message": "Forbidden to update the asking price on OpenStack due"
-				"to lack of permissions, only updating local db."}})
-		# do it again, but don't try to update openstack this time
+
+		# OpneStack has no flavor price, so we just save locally and warn
+		response = jsonify({"response": "warning", "result": {"message": "Updating local ask price. Flavor on OpenStack cluster was not updated."}})
 		flavor.save(ignore_hooks=True)
 		return response
-		# if there is no ask price set on os we don't need to warn if we can't update it
+	
+	# handle a client exception while talking to openstack
 	except nova_exceptions.ClientException as e:
-		response = jsonify({"response": "error", "result": {
-			"message": "Error in communication with OpenStack cluster."}})
-		response.status_code = 500
-		return response
-	except:
-		# warn because we couldn't talk to openstack
-		response = jsonify({"response": "error", "result": {
-			"message": "The ask rate is inavlid."}})
+		response = jsonify({"response": "error", "result": {"message": "Error in communicating with OpenStack cluster."}})
 		response.status_code = 500
 		return response
 
