@@ -304,6 +304,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				# keep whatever we currently have for active and ask
 				keep_values['ask'] = flavor.ask
 				keep_values['active'] = flavor.active
+				keep_values['locality'] = flavor.locality
 				
 			# populate the object
 			ApiSchemaHelper.fill_object_from_schema(flavor_schema, flavor)
