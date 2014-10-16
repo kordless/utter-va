@@ -325,5 +325,3 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		}
 		
 		return response
-
-

@@ -253,7 +253,7 @@ def flavor_verify_install(flavor):
 				ephemeral=0,
 				swap=0,
 				rxtx_factor=1.0,
-				is_public=False
+				is_public=True
 			)
 		except nova_exceptions.Forbidden:
 			response['response'] = "forbidden"
