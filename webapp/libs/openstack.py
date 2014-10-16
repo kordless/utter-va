@@ -229,66 +229,18 @@ def flavor_verify_install(flavor):
 		# return error
 		flavor_error_response(ex)
 
-	# look up flavors		
+	# look up flavors
 	try:
-		targetflavor = None
-
 		# look up the flavor by name and stop on it
-		osflavors = nova.flavors.list()
-		for osflavor in osflavors:
-			if osflavor.name == flavor.name:
-				targetflavor = osflavor
-				break
+		targetflavor = nova.flavors.get(flavor.osid)
+		if targetflavor:
+			return response
 	
 	except:
 		# no flavor found
 		targetflavor = None
 
-	# check for install needed
-	install_flavor = False
-
-	# check flavor specs match
-	if targetflavor:
-		if targetflavor.vcpus != flavor.vpus: # vpus wrong
-			install_flavor = True
-		if targetflavor.disk != flavor.disk: # disk size wrong
-			install_flavor = True 
-		if targetflavor.ram != flavor.memory: # memory wrong
-			install_flavor = True
-
-		try: 
-			# get the flavor network quota keys and check quotas match
-			osikeys = targetflavor.get_keys()
-			if flavor.network_up > 0:
-				if 'quota:outbound_average' not in osikeys or \
-						flavor.network_up != int(osikeys['quota:outbound_average']):
-					install_flavor = True
-			if flavor.network_down > 0:
-				if 'quota:inbound_average' not in osikeys or \
-						flavor.network_down != int(osikeys['quota:inbound_average']):
-					install_flavor = True
-		except nova_exceptions.NotFound:
-			# another special case for nebula, because they return 404 when asking keys
-			# ugly ugly, i don't like these special cases for one provider
-			pass
-		except:
-			# just force install
-			install_flavor = True
-
-	else:
-		# no flavor found
-		install_flavor = True
-		app.logger.info("Flavor not found.")
-
-	# install the flavor
-	if install_flavor:
-		if targetflavor:
-			try:
-				# remove the old flavor
-				nova.flavors.delete(targetflavor.id)
-			except:
-				app.logger.info("Could not remove the old flavor=(%s) from the OpenStack cluster." % flavor.name)
-
+	if not targetflavor:
 		try:
 			# referenced from ticket #80 
 			# create the new flavor
@@ -301,7 +253,7 @@ def flavor_verify_install(flavor):
 				ephemeral=0,
 				swap=0,
 				rxtx_factor=1.0,
-				is_public=False
+				is_public=True
 			)
 		except nova_exceptions.Forbidden:
 			response['response'] = "forbidden"
@@ -319,8 +271,7 @@ def flavor_verify_install(flavor):
 		app.logger.info("Installed flavor=(%s) into the OpenStack cluster." % flavor.name)
 
 	# update the flavor database with id
-	flavor.osid = targetflavor.id
-	flavor.update(flavor)
+	flavor.update(osid=targetflavor.id)
 
 	# response
 	response['response'] = "success"

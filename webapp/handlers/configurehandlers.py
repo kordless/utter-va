@@ -116,7 +116,10 @@ def configure_flavors_detail(flavor_id):
 				if not response['response'] == 'success':
 					raise Exception(response['result']['message'])
 				
-				flavor.update(installed=True, active=True)
+				if flavor.ask > 0:
+					flavor.update(active=True)
+				else:
+					flavor.update(active=False)
 			else:
 				# we are told to uninstall (install=0)
 				response = flavor_uninstall(flavor)

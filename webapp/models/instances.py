@@ -486,7 +486,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 
 			if flavor_response['response'] == "forbidden":
 				response['result']['message'] = \
-					"Not allowed to create flavor inside OpenStack, disabling flavor creation"
+					"Not allowed to create flavor inside OpenStack."
 
 				# log it
 				app.logger.error("Disabling all instances using flavor=(%s) and disabling "
