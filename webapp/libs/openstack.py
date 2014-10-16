@@ -233,6 +233,7 @@ def flavor_verify_install(flavor):
 	try:
 		# look up the flavor by name and stop on it
 		targetflavor = nova.flavors.get(flavor.osid)
+		response['response'] = "success"
 		if targetflavor:
 			return response
 	
