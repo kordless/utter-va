@@ -149,7 +149,7 @@ def configure_flavors_detail(flavor_id):
 
 		# OpneStack has no flavor price, so we just save locally and warn
 		response = jsonify({"response": "warning", "result": {"message": "Updating local ask price. Flavor on OpenStack cluster was not updated."}})
-		flavor.save(ignore_hooks=True)
+		flavor.save()
 		return response
 	
 	# handle a client exception while talking to openstack

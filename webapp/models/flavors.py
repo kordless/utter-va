@@ -37,6 +37,9 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 	# 8 - deleted on pool, needs to be deleted on appliance and OpenStack
 	# 4 - deleted on openstack, needs to be deleted locally and on pool
 	# 0 - all well, nothing to be done
+
+	# relationships
+	instances = db.relationship('Instances', backref='flavor', lazy='dynamic')
 	
 	# active defines whether instances of this flavor should be generated or not
 	active = db.Column(db.Boolean)
@@ -134,7 +137,10 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 
 	def _get_sync_hooks(self):
 		# return sync hooks for property updates
-		return {'ask': self._sync_ask_price}
+		return {
+			'ask': self._sync_ask_price,
+			'active': self._update_active,
+			'installed': self._update_installed}
 
 	# sync hook to push ask price to open stack on update
 	def _sync_ask_price(self):
@@ -154,7 +160,19 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 			# nebula only
 			pass
 		except Exception as e:
-			app.logger.info("Failed to update flavor=(%s) price on cluster. %s" % (self.name, str(e)))
+			app.logger.warning("Failed to update flavor=(%s) price on cluster. %s" % (self.name, str(e)))
+
+	def _update_active(self):
+		if not self.active:
+			for instance in self.instances:
+				if not instance.running:
+					instance.deactivate()
+
+	def _update_installed(self):
+		if not self.installed:
+			for instance in self.instances:
+				if not instance.running:
+					instance.delete()
 
 	@classmethod
 	def get_by_specs(cls, *args, **kwargs):
@@ -240,10 +258,12 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				# if a price is given, activate the new flavor
 				if flavor.ask > 0:
 					flavor.active = True
-					flavor.save(ignore_hooks=True)
+					flavor.save()
 			else:
+				flavor.installed = True
 				flavor.flags = 0
-				flavor.save(ignore_hooks=True)
+				flavor.name = osflavor.name
+				flavor.save()
 
 		# find all flavors that are currently installed == True, but are not in the
 		# list of flavor that came back from openstack. set all of them to be
