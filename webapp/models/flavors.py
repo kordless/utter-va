@@ -94,7 +94,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		# default hot value should be 2, because we feel like it
 		hot=2,
 		launches=0,
-		flags=None,
+		flags=0,
 		# flavors are only active if activated
 		active=False,
 		installed=False
@@ -229,11 +229,6 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		return True
 
 	# copy all properties from osflavor to self
-	def copy_values_from_osflavor(self, osflavor):
-		for (key, value) in self.get_values_from_osflavor(osflavor).items():
-			setattr(self, key, value)
-		self.save()
-
 	def sync_from_openstack(self, appliance):
 		from webapp.libs.openstack import list_flavors
 
@@ -252,9 +247,8 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 					osflavor))
 			if not flavor:
 				# flavor is new
-				flavor = Flavors()
+				flavor = Flavors(**self.get_values_from_osflavor(osflavor))
 				flavor.installed = True
-				flavor.copy_values_from_osflavor(osflavor)
 				# if a price is given, activate the new flavor
 				if flavor.ask > 0:
 					flavor.active = True
@@ -262,7 +256,9 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 			else:
 				flavor.installed = True
 				flavor.flags = 0
-				flavor.name = osflavor.name
+				osvalues = self.get_values_from_osflavor(osflavor)
+				for key in ['name', 'ask']:
+					setattr(flavor, key, osvalues[key])
 				flavor.save()
 
 		# find all flavors that are currently installed == True, but are not in the
