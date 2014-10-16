@@ -385,10 +385,7 @@ def housekeeper(app):
 		# MIXING
 		# make sure we have mixed an instance for each flavor
 		instances = Instances()
-		flavors = db.session.query(Flavors).filter(
-			Flavors.active == True).filter(
-				Flavors.locality != 2).filter(
-					Flavors.locality != 0).all()
+		flavors = Flavors.query.filter_by(installed=True, active=True).all()
 
 		# loop through the flavors we have and mix an instance
 		for flavor in flavors:

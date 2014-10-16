@@ -55,8 +55,7 @@ def configure_flavors():
 
 	# flavors without the ones that were synced from pool are not installed on 
 	# openstack cluster yet
-	flavors = db.session.query(Flavors).filter(
-		Flavors.locality != 2).filter(Flavors.locality != 0).all()
+	flavors = Flavors.query.filter_by(installed=True).all()
 
 	# load appliance
 	appliance = Appliance.get()
@@ -78,7 +77,7 @@ def configure_flavors():
 @mod.route('/configure/flavors/add', methods=['GET'])
 def configure_flavors_add():
 	# fetch all flavors that came from the pool, the installed and non-installed ones
-	flavors = Flavors.pool_flavors_mark_installed()
+	flavors = Flavors.query.filter_by(installed=False).all()
 
 	return render_template(
 		'/configure/flavor_add.html',
@@ -117,18 +116,17 @@ def configure_flavors_detail(flavor_id):
 				if not response['response'] == 'success':
 					raise Exception(response['result']['message'])
 				
-				if flavor.rate > 0:
-					flavor.update(locality=3, active=True)
+				if flavor.ask > 0:
+					flavor.update(active=True)
 				else:
-					flavor.update(locality=3, active=False)
-					
+					flavor.update(active=False)
 			else:
 				# we are told to uninstall (install=0)
 				response = flavor_uninstall(flavor)
 				if not response['response'] == 'success':
 					raise Exception(response['result']['message'])
 
-				flavor.update(locality=2, active=False)
+				flavor.update(installed=False, active=False)
 
 		except Exception as e:
 			response = jsonify({"response": "error", "result": {"message": str(e)}})
@@ -154,7 +152,7 @@ def configure_flavors_detail(flavor_id):
 
 		# OpneStack has no flavor price, so we just save locally and warn
 		response = jsonify({"response": "warning", "result": {"message": "Updating local ask price. Flavor on OpenStack cluster was not updated."}})
-		flavor.save(ignore_hooks=True)
+		flavor.save()
 		return response
 	
 	# handle a client exception while talking to openstack

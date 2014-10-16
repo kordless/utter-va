@@ -54,9 +54,6 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 	# foreign keys
 	flavor_id = db.Column(db.Integer, db.ForeignKey('flavors.id'))
 
-	# relationships
-	flavor = db.relationship('Flavors', foreign_keys='Instances.flavor_id')
-
 	# which schema should be used for validation and serialization
 	object_schema = schemas['InstanceSchema']
 	object_list_schema = schemas['InstanceListSchema']
@@ -159,6 +156,12 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			return address.address
 		return ""
 
+	@property
+	def running(self):
+		if self.state == 0 or self.state == 1:
+			return False
+		return True
+
 	def toggle(self, flavor_id, active):
 		# set active/inactive state for instances with a given flavor_id
 		# we only set instances that are in state 0 - inactive, or 1 - waiting on payment
@@ -166,11 +169,19 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		instances = db.session.query(Instances).filter_by(flavor_id=flavor_id, state=state).all()
 		# set to active/inactive
 		for instance in instances:
-			instance.state = int(active)
-			instance.update()
+			if active == 1:
+				instance.activate()
+			else:
+				instance.deactivate()
 			app.logger.info("Instance %s toggled to %s" % (instance.name, active))
 
 		return True
+
+	def activate(self):
+		self.update(state=1)
+
+	def deactivate(self):
+		self.update(state=0)
 
 	# instance reservations
 	def reserve(self, callback_url, flavor_id):

@@ -37,14 +37,16 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 	# 8 - deleted on pool, needs to be deleted on appliance and OpenStack
 	# 4 - deleted on openstack, needs to be deleted locally and on pool
 	# 0 - all well, nothing to be done
+
+	# relationships
+	instances = db.relationship('Instances', backref='flavor', lazy='dynamic')
 	
+	# active defines whether instances of this flavor should be generated or not
 	active = db.Column(db.Boolean)
-	locality = db.Column(db.Integer)
-	# possible localities are:
-	# 0 - was created on pool and is not installed locally (not merge)
-	# 1 - originated from openstack cluster (not merge)
-	# 2 - was synced from pool and is not installed locally (merge)
-	# 3 - synced from pool and installed locally (merge)
+	# installed is True if:
+	# 1) flavor of equal specs exists on OpenStack
+	# 2) the id of this flavor is set on osid
+	installed = db.Column(db.Boolean)
 
 	# mappings of names with openstack flavor properties and extra keys
 	# used in method get_values_from_osflavor
@@ -58,8 +60,22 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		('network_up', 'extra_spec:int:quota:outbound_average'),
 		('ask', 'extra_spec:int:stackmonkey:ask_price')]
 
+	# these values are used when an openstack flavor does not define them
+	default_property_values = {
+		'quota:inbound_average': 0,
+		'quota:outbound_average': 0,
+		'stackmonkey:ask_price': 0}
+
 	# which schema should be used for validation and serialization
 	object_schema = schemas['FlavorSchema']
+
+	# criteria based on which we decide if another flavor is same or not
+	comparison_criteria = [
+		{'key': 'memory', 'name': 'm'},
+		{'key': 'vpus', 'name': 'v'},
+		{'key': 'disk', 'name': 'd'},
+		{'key': 'network_up', 'name': 'e'},  # e = egress
+		{'key': 'network_down', 'name': 'i'}]  # i = ingress
 
 	def __init__(
 		self,
@@ -80,8 +96,8 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		launches=0,
 		flags=None,
 		# flavors are only active if activated
-		active=0,
-		locality=None
+		active=False,
+		installed=False
 	):
 		self.name = name
 		self.osid = osid
@@ -99,16 +115,10 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		self.launches = launches
 		self.flags = flags
 		self.active = active
-		self.locality = locality
+		self.installed = installed
 
 	def __repr__(self):
 		return '<Flavor %r>' % (self.name)
-
-	@property
-	def installed(self):
-		if self.locality == 2:
-			return False
-		return True
 
 	# retreive the ask price of this flavor that's set on openstack via keys
 	@property
@@ -127,7 +137,10 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 
 	def _get_sync_hooks(self):
 		# return sync hooks for property updates
-		return {'ask': self._sync_ask_price}
+		return {
+			'ask': self._sync_ask_price,
+			'active': self._update_active,
+			'installed': self._update_installed}
 
 	# sync hook to push ask price to open stack on update
 	def _sync_ask_price(self):
@@ -147,29 +160,28 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 			# nebula only
 			pass
 		except Exception as e:
-			app.logger.info("Failed to update flavor=(%s) price on cluster. %s" % (self.name, str(e)))
+			app.logger.warning("Failed to update flavor=(%s) price on cluster. %s" % (self.name, str(e)))
+
+	def _update_active(self):
+		if not self.active:
+			for instance in self.instances:
+				if not instance.running:
+					instance.deactivate()
+
+	def _update_installed(self):
+		if not self.installed:
+			for instance in self.instances:
+				if not instance.running:
+					instance.delete()
 
 	@classmethod
-	def pool_flavors_mark_installed(cls):
-		installed_flavor_specs = [{
-			'vpus': x.vpus,
-			'memory': x.memory,
-			'disk': x.disk,
-			'network_up': x.network_up,
-			'network_down': x.network_down}
-		for x in Flavors.query.filter_by(locality=1)]
-
-		installable_flavors = db.session.query(
-			Flavors).filter(Flavors.locality!=1).all()
-
-		for flavor in installable_flavors:
-			setattr(flavor, 'is_installed', False)
-			for cmp_to in installed_flavor_specs:
-				if flavor.locality == 1 or flavor.locality == 3 or \
-						flavor.same_as_specs(**cmp_to):
-					setattr(flavor, 'is_installed', True)
-
-		return installable_flavors
+	def get_by_specs(cls, *args, **kwargs):
+		criteria = dict(
+			(crit_key, kwargs[crit_key])
+			for crit_key in [
+					crit_full['key']
+					for crit_full in cls.comparison_criteria])
+		return Flavors.query.filter_by(**criteria).first()
 
 	def check(self):
 		flavors = db.session.query(Flavors).all()
@@ -201,17 +213,13 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 					ret_value[property[0]] = eval(property_chunks[1])(
 							keys[property_chunks[2]])
 				except (ValueError, KeyError):
-					pass
+					try:
+						ret_value[property[0]] = self.default_property_values[property_chunks[2]]
+					except KeyError:
+						pass
 			else:
 				ret_value[property[0]] = getattr(flavor, property[1])
 		return ret_value
-
-	def same_as_specs(self, **kwargs):
-		result = True
-		for k, v in kwargs.items():
-			if getattr(self, k) != v:
-				result = False
-		return result
 
 	# check if same as given openstack flavor
 	def is_same_as_osflavor(self, osflavor):
@@ -239,30 +247,31 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		# create all the non-existent ones
 		for osflavor in osflavors:
 			# if flavor doesn't exist, create new one
-			flavor = db.session.query(Flavors).filter_by(name=osflavor.name).first()
+			flavor = self.get_by_specs(
+				**self.get_values_from_osflavor(
+					osflavor))
 			if not flavor:
 				# flavor is new
 				flavor = Flavors()
-				flavor.flags = 2
-				flavor.locality = 1
+				flavor.installed = True
 				flavor.copy_values_from_osflavor(osflavor)
 				# if a price is given, activate the new flavor
 				if flavor.ask > 0:
 					flavor.active = True
-					flavor.save(ignore_hooks=True)
+					flavor.save()
 			else:
-				if not flavor.is_same_as_osflavor(osflavor):
-					# flavor has changed
-					flavor.copy_values_from_osflavor(osflavor)
-					flavor.flags = 0
-					flavor.save(ignore_hooks=True)
+				flavor.installed = True
+				flavor.flags = 0
+				flavor.name = osflavor.name
+				flavor.save()
 
+		# find all flavors that are currently installed == True, but are not in the
+		# list of flavor that came back from openstack. set all of them to be
+		# installed = False
 		osflavor_ids = [x.id for x in osflavors]
-		# delete all flavors that originally came from openstack but are deleted now
-		for flavor in db.session.query(Flavors).filter_by(locality=1):
+		for flavor in db.session.query(Flavors).filter_by(installed=True):
 			if flavor.osid not in osflavor_ids:
-				flavor.flags = 4
-				flavor.delete()
+				flavor.update(installed=False)
 
 	def sync(self):
 		response = {'response': 'success', 'result': ''}
@@ -281,39 +290,29 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 
 		# update the database with the flavors
 		for flavor_schema in flavor_list_schema.items:
-			# in case of update we will want to keep certain values
-			keep_values = {}
-
-			flavor = db.session.query(Flavors).filter_by(
-				name=flavor_schema.name.as_dict()).first()
-
-			# values to not update
-			keep_values = {}
+			flavor = self.get_by_specs(**flavor_schema.as_dict())
 
 			# check if we need to delete flavor from local db
 			# b'001000' indicates delete flavor
 			# TODO: need to cleanup OpenStack flavor if we uninstall
-			if (flavor_schema.flags.as_dict() & 8) == 8 and flavor != None:
+			if (flavor_schema.flags.as_dict() & 8) == 8:
 				# only delete if we have it
-				flavor.delete()
+				if flavor != None:
+					flavor.delete()
 				continue
 
 			elif flavor is None:
 				# don't have it, create, and set not active
 				flavor = Flavors()
-				keep_values['active'] = False
+				exception_keys = ['active']
 			else:
-				# keep whatever we currently have for active and ask
-				keep_values['ask'] = flavor.ask
-				keep_values['active'] = flavor.active
-				keep_values['locality'] = flavor.locality
+				exception_keys = ['active', 'ask', 'name']
 				
 			# populate the object
-			ApiSchemaHelper.fill_object_from_schema(flavor_schema, flavor)
-
-			# iterate over values that should be kept and set them on flavor object
-			for k, v in keep_values.items():
-				setattr(flavor, k, v)
+			ApiSchemaHelper.fill_object_from_schema(
+				flavor_schema,
+				flavor,
+				exceptions=exception_keys)
 
 			flavor.save()
 
