@@ -271,7 +271,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		osflavor_ids = [x.id for x in osflavors]
 		for flavor in db.session.query(Flavors).filter_by(installed=True):
 			if flavor.osid not in osflavor_ids:
-				flavor.update(installed=False, commit=True)
+				flavor.update(installed=False)
 
 	def sync(self):
 		response = {'response': 'success', 'result': ''}
