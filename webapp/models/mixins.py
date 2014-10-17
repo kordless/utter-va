@@ -45,7 +45,7 @@ class CRUDMixin(object):
     # check for properties that have hooks to sync on change and call hooks
     def call_property_hooks(self):
       hooks = self._get_sync_hooks()
-      properties = self._changed_properties[:]
+      properties = self._changed_properties.copy()
       for prop in properties:
         if prop in hooks.keys():
           # call sync hook for changed property
