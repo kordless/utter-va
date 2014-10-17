@@ -508,6 +508,9 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			response['response'] = "error"
 			return response
 
+		# the image isn't ready yet
+		if image.status == "saving":
+			return {"response": "success", "result": {"msg": "image is not ready"}}
 		# tell openstack to start the instance
 		cluster_response = instance_start(self)
 
