@@ -233,13 +233,16 @@ def flavor_verify_install(flavor):
 	try:
 		# look up the flavor by name and stop on it
 		targetflavor = nova.flavors.get(flavor.osid)
-		response['response'] = "success"
-		if targetflavor:
-			return response
 	
 	except:
-		# no flavor found
+		# flavor could not be retreived by osid
 		targetflavor = None
+		osflavors = nova.flavors.list()
+		for osflavor in osflavors:
+			if osflavor.name == flavor.name:
+				if flavor.is_same_as_osflavor(osflavor):
+					targetflavor = osflavor
+					break
 
 	if not targetflavor:
 		try:
@@ -272,7 +275,7 @@ def flavor_verify_install(flavor):
 		app.logger.info("Installed flavor=(%s) into the OpenStack cluster." % flavor.name)
 
 	# update the flavor database with id
-	flavor.update(osid=targetflavor.id)
+	flavor.update(osid=targetflavor.id, installed=True)
 
 	# response
 	response['response'] = "success"
