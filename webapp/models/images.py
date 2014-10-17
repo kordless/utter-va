@@ -37,7 +37,6 @@ class Images(CRUDMixin, db.Model):
 			url = 'http://{0}:8080/{1}/{2}'.format(Appliance.get().local_ip, proto, host_path)
 		else:
 			url = self.url
-			print url
 		return url
 
 	@property
