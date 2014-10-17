@@ -65,7 +65,9 @@
             <div class="bs-callout bs-callout-info bs-callout-top">
               <h4>About Instances</h4>
               <p><strong>Appliance Instances</strong> are are automatically created this <strong>Appliance</strong>, assigned <strong>Bitcoin Addresses</strong> from <strong>Coinbase</strong>, and registered for sale with the <strong>Pool Operator</strong> site. Instances are started by this appliance when Coinbase makes a <strong>Payment Callback</strong> to the appliance.</p>
+              {% if instances %}
               <p>Instances can be manually started by using the <strong>Start</strong> or <strong>Payment</strong> buttons. A detailed view of the instance can be seen by clicking on the <strong>Instance ID</strong> link.</p>
+              {% endif %}
             </div>
           </div>
         </div>
