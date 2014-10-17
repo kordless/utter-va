@@ -219,44 +219,49 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		# build response
 		response = {"response": "success", "result": {"message": ""}}
 
-		# the first instance which has this flavor assigned but is not running (active == 1)
-		instances = db.session.query(Instances).filter_by(flavor_id=flavor.id, state=1).all()
+		# query by flavor
+		q_flavor = db.session.query(Instances).filter_by(flavor_id=flavor.id)
+		flavor_count = q_flavor.count()
+
+		# limit query by state
+		flavor_running_count = q_flavor.filter_by(state=1).count()
+
+		# set create_count according to max_instances limit
+		create_count = flavor.max_instances - flavor_count
+
+		# if the limit defined by hot is lower than limit defined by max_instances
+		if flavor.hot - flavor_running_count < create_count:
+			create_count = flavor.hot - flavor_running_count
 
 		# create a minimum number of instances based on hot amount for flavor
-		if len(instances) < flavor.hot:
-			for x in range(len(instances), flavor.hot):		
-				# create a new instance		
-				instance = Instances()
-				instance.name = "smi-%s" % generate_token(size=8, caselimit=True)
-				instance.flavor = flavor
+		for x in range(create_count):
+			# create a new instance		
+			instance = Instances()
+			instance.name = "smi-%s" % generate_token(size=8, caselimit=True)
+			instance.flavor = flavor
 
-				# timestamps
-				epoch_time = int(time.time())
-				instance.created = epoch_time
-				instance.updated = epoch_time
-				instance.expires = epoch_time # already expired
+			# timestamps
+			epoch_time = int(time.time())
+			instance.created = epoch_time
+			instance.updated = epoch_time
+			instance.expires = epoch_time # already expired
 
-				# set state
-				instance.state = 1 # has address, but no payments/not started (warm)
+			# set state
+			instance.state = 1 # has address, but no payments/not started (warm)
 
-				# update - provides instance.id to us
-				instance.update()
+			# update - provides instance.id to us
+			instance.update()
 
-				# finally, assign a bitcoin address
+			response['result']['message'] = "Created new instance."
+			app.logger.info("Created new instance=(%s)." % instance.name)
+
+		for instance in q_flavor.all():
+			if not instance.address:
 				addresses = Addresses()
 				address = addresses.assign(instance.id)
 				if not address:
 					# we have no address, so delete what we made
 					instance.delete(instance)
-
-			response['result']['message'] = "Created new instance and assigned address."
-			app.logger.info("Created new instance=(%s)." % instance.name)
-
-		else:
-			# found enough instances - make sure they have addresses assigned to them
-			for instance in instances:
-				Addresses().assign(instance.id)
-			response['result']['message'] = "Found existing instances and assigned addresses."
 
 		return response
 
@@ -417,7 +422,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		except Exception:
 			app.logger.error("Error communicating with OpenStack: \"{0}\"".format(str(e)))
 			return {"response": "error"}
-		if image_status == "queued":
+		if image_status == "queued" or image_status == "saving":
 			return {"response": "queued"}
 			# image is still downloading and is not ready to be used yet
 		elif image_status == "killed":

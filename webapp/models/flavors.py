@@ -1,5 +1,6 @@
 import json
 
+from sqlalchemy import exc as sa_exceptions
 from webapp import app
 from webapp import db
 
@@ -32,6 +33,8 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 	ask = db.Column(db.Integer)
 	hot = db.Column(db.Integer)
 	launches = db.Column(db.Integer)
+	# max count of instances that can be created of a flavor
+	max_instances = db.Column(db.Integer)
 	flags = db.Column(db.Integer)
 	# possible values are:
 	# 8 - deleted on pool, needs to be deleted on appliance and OpenStack
@@ -93,6 +96,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		ask=0,
 		# default hot value should be 2, because we feel like it
 		hot=2,
+		max_instances=None,
 		launches=0,
 		flags=0,
 		# flavors are only active if activated
@@ -112,6 +116,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		# ask the price that this flavor costs
 		self.ask = ask
 		self.hot = hot
+		self.max_instances = hot if max_instances is None else max_instances
 		self.launches = launches
 		self.flags = flags
 		self.active = active
@@ -252,14 +257,19 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				# if a price is given, activate the new flavor
 				if flavor.ask > 0:
 					flavor.active = True
-					flavor.save()
 			else:
 				flavor.installed = True
+				flavor.osid = osflavor.id
 				flavor.flags = 0
 				osvalues = self.get_values_from_osflavor(osflavor)
 				for key in ['name', 'ask']:
 					setattr(flavor, key, osvalues[key])
-				flavor.save()
+				try:
+					flavor.save()
+					db.session.flush()
+				except (sa_exceptions.IntegrityError, sa_exceptions.OperationalError):
+					app.logger.error('Exception when saving flavor "{0}": "{1}".'.format(
+						osflavor.name, str(e)))
 
 		# find all flavors that are currently installed == True, but are not in the
 		# list of flavor that came back from openstack. set all of them to be
@@ -310,7 +320,12 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				flavor,
 				exceptions=exception_keys)
 
-			flavor.save()
+			try:
+				flavor.save()
+				db.session.flush()
+			except (sa_exceptions.IntegrityError, sa_exceptions.OperationalError):
+				app.logger.error('Exception when saving flavor "{0}": "{1}".'.format(
+					osflavor.name, str(e)))
 
 		# overwrite the results with the list of current flavors as dicts
 		response['result'] = {

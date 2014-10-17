@@ -12,7 +12,7 @@ class CRUDMixin(object):
 
     @classmethod
     def get(cls):
-        return cls.query.first()
+      return db.session.query(cls).first()
         
     @classmethod 
     def get_all(cls):
@@ -33,8 +33,10 @@ class CRUDMixin(object):
         return instance.save()
 
     def __setattr__(self, key, value):
-      # remember properties that are being changed
-      self._changed_properties.add(key)
+      # only if value is different from what's currently set
+      if getattr(self, key, None) != value:
+        # remember properties that are being changed
+        self._changed_properties.add(key)
       super(CRUDMixin, self).__setattr__(key, value)
 
     # hooks that should be called when properties are being updated,
