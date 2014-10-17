@@ -422,7 +422,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		except Exception:
 			app.logger.error("Error communicating with OpenStack: \"{0}\"".format(str(e)))
 			return {"response": "error"}
-		if image_status == "queued":
+		if image_status == "queued" or image_status == "saving":
 			return {"response": "queued"}
 			# image is still downloading and is not ready to be used yet
 		elif image_status == "killed":
@@ -508,9 +508,6 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			response['response'] = "error"
 			return response
 
-		# the image isn't ready yet
-		if image.status == "saving":
-			return {"response": "success", "result": {"msg": "image is not ready"}}
 		# tell openstack to start the instance
 		cluster_response = instance_start(self)
 
