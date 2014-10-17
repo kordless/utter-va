@@ -82,7 +82,7 @@
                     </tr>
                     <tr>
                       <td><strong>Network Up/Down</strong></td>
-											<td colspan="2">{% if instance.flavor.network_up < 0 %}Unlimited{% else %}{{ instance.flavor.network_up }}{% endif %}/{% if instance.flavor.network_down < 0 %}Unlimited{% else %}{{ instance.flavor.network_down }}{% endif %} Mb/sec</td>
+											<td colspan="2">{% if instance.flavor.network_up < 0 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ instance.flavor.network_up }}{% endif %}/{% if instance.flavor.network_down < 0 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ instance.flavor.network_down }}{% endif %} Mb/sec</td>
                     </tr>
                     <tr>
                       <td><strong>Ask</strong></td>
