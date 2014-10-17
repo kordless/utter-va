@@ -57,84 +57,103 @@
                   <p>{{ macros.instance_state_icon(instance.state) }}</p>
                 </div>
               </div>
+
               <div class="col-md-6">
                 <div class="text-center"><h3><small>Payment Address</small></h3></div>
                 <div class="text-center" id="qrcode"></div>
                 <div class="text-center" id="address"><a href="https://blockchain.info/address/{{ instance.address }}" target="_blank">{{ instance.address }}</a></div>
               </div>
             </div>
-            <div class="row {% if instance.callback_url or instance.image.url %}instance-detail-row{% endif %}">
-              <div class="col-md-6">
-                <div><h3><small>Instance Attributes</small></h3></div>
-                <div>
-                  <table class="table table-striped table-responsive">
-                    <tr>
-                      <td><strong>VPUs</strong></td>
-                      <td colspan="2">{{ instance.flavor.vpus }} Core</td>
-                    </tr>
-                    <tr>
-                      <td><strong>Memory</strong></td>
-                      <td colspan="2">{{ instance.flavor.memory }}MB</td>
-                    </tr>
-                    <tr>
-                      <td><strong>VPUs</strong></td>
-                      <td colspan=2>{{ instance.flavor.disk }}GB</td>
-                    </tr>
-                    <tr>
-                      <td><strong>Network Up/Down</strong></td>
-											<td colspan="2">{% if instance.flavor.network_up < 0 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ instance.flavor.network_up }}{% endif %}/{% if instance.flavor.network_down < 0 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ instance.flavor.network_down }}{% endif %} Mb/sec</td>
-                    </tr>
-                    <tr>
-                      <td><strong>Ask</strong></td>
-                      <td>{{ instance.flavor.ask }} μBTC/Hour</td>
-                      <td><a id="edit-ask-icon" href="#"><span class="glyphicon glyphicon-pencil"></span></a></td>
-                    </tr>
-                  </table>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <h3><small>Network Addresses</small></h3>
-                <table class="table table-striped table-responsive">
-                  <tbody>
-                    <tr>
-                      <td><strong>Private IPv4</strong></td>
-                      <td>{{ instance.privateipv4 }}</td>
-                    </tr>
-                    <tr>
-                      <td><strong>Public IPv4</strong></td>
-                      <td>{{ instance.publicipv4 }}</td>
-                    </tr>
-                    <tr>
-                      <td><strong>Public IPv6</strong></td>
-                      <td>{{ instance.publicipv6 }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            {% if instance.callback_url or instance.image.url %}
+
             <div class="row">
-              <div class="col-md-12">
-                <div><h3><small>External Instance Resources</small></h3></div>
-                <div>
-                  <table class="table table-striped table-responsive">
-                    {% if instance.callback_url %}
-                    <tr>
-                      <td><strong>Callback URL</strong></td>
-                      <td>{{ instance.callback_url|safe }}</td>
-                    </tr>
-                    {% endif %}
-                    {% if instance.image.url %}
+              
+              <ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
+                <li class="active"><a href="#instance" data-toggle="tab">Instance</a></li>
+                <li><a href="#console" data-toggle="tab">Console Log</a></li>
+              </ul>
+              
+              <div class="tab-content">
+                <div class="tab-pane active" id="instance">
+                  
+                  {% if instance.state > 3 %}
+                  <div class="col-md-6">
+                    <h3><small>Instance IPs</small></h3>
+                    <table class="table table-striped table-responsive">
+                      <tr>
+                        <td><strong>Public IPv6</strong></td>
+                        <td><input id="{% if instance.publicipv6 %}{{ instance.publicipv6 }}{% else %}None{% endif %}" class="ip" value="{% if instance.publicipv6 %}{{ instance.publicipv6 }}{% else %}None{% endif %}"></input></td>
+                      </tr>
+                      <tr>
+                        <td><strong>Public IPv4</strong></td>
+                        <td><input id="{% if instance.publicipv4 %}{{ instance.publicipv4 }}{% else %}None{% endif %}" class="ip" value="{% if instance.publicipv4 %}{{ instance.publicipv4 }}{% else %}None{% endif %}"></input></td>
+                      </tr>
+                      <tr>
+                        <td><strong>Private IPv4</strong></td>
+                        <td><input id="{% if instance.privateipv4 %}{{ instance.privateipv4 }}{% else %}None{% endif %}" class="ip" value="{% if instance.privateipv4 %}{{ instance.privateipv4 }}{% else %}None{% endif %}"></input></td>
+                      </tr>
+                    </table>
+                  </div>
+
+                  <div class="col-md-6">
+                    <h3><small>Instance Resources</small></h3>
+                    <table class="table table-striped table-responsive">
+                      {% if instance.callback_url %}
+                      <tr>
+                        <td><strong>Callback URL</strong></td>
+                        <td><a href="{{ instance.callback_url }}">{{ instance.callback_url|truncate(32, killwords=True) }}</a></td>
+                      </tr>
+                      {% endif %}
+                      {% if instance.image.url %}
                     <tr>
                       <td><strong>Image URL</strong></td>
                       <td class="text-left"><a href="{{ instance.image.url|safe }}">{{ instance.image.url|safe }}</a></td>
                     </tr>
                     {% endif %}
-                  </table>
+                    </table>
+                  </div>
+                  {% endif %}
+
+                  <div class="col-md-6">
+                    <div><h3><small>Instance Attributes</small></h3></div>
+                    <div>
+                      <table class="table table-striped table-responsive">
+                        <tr>
+                          <td><strong>VPUs</strong></td>
+                          <td colspan="2">{{ instance.flavor.vpus }} Core</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Memory</strong></td>
+                          <td colspan="2">{{ instance.flavor.memory }}MB</td>
+                        </tr>
+                        <tr>
+                          <td><strong>VPUs</strong></td>
+                          <td colspan=2>{{ instance.flavor.disk }}GB</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Network Egress</strong></td>
+                          <td colspan="2">{% if instance.flavor.network_up < 1 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ instance.flavor.network_up }} Mb/sec{% endif %}</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Network Ingress</strong></td>
+                          <td colspan="2">{% if instance.flavor.network_down < 1 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ instance.flavor.network_down }} Mb/sec{% endif %}</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Ask</strong></td>
+                          <td>{{ instance.flavor.ask }} μBTC/Hour</td>
+                          <td><a id="edit-ask-icon" href="#"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                        </tr>
+                      </table>
+                    </div>
+                  </div>
                 </div>
+
+                <div class="tab-pane" id="console">
+                  <pre id="console">{% if instance.console_output %}{{ instance.console_output }}{% else %}Waiting on console log...{% endif %}</pre>
+                </div>
+
               </div>
             </div>
-            {% endif %}
+
           </div>
         </div>
       </div>
@@ -196,6 +215,24 @@
       });
     });
 
+    // highlight entire IP for copying
+    $(".ip").click(function() {
+      var $this = $(this);
+      $this.select();
+      // Work around Chrome's little problem
+      $this.mouseup(function() {
+          // Prevent further mouseup intervention
+          $this.unbind("mouseup");
+          return false;
+      });
+    });
+
+    // 'disable' deleting IP addresses from input boxes
+    $('.ip').on('input', function() {
+      var ip = $(this).attr('id');
+      $(this).val(ip);
+    });
+    
     // build the QR code for the instance address
     var qrcode_string = "bitcoin:{{instance.address}}?amount="+(parseInt({{instance.flavor.ask}})/1000000);
     $('#qrcode').qrcode({text: qrcode_string});

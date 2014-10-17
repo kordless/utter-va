@@ -53,6 +53,15 @@ h1 small, h2 small, h3 small {
 #address {
   margin-top: 10px;
 }
+.nav-tabs {
+  background-color: #F9F9F9;
+}
+input.ip, input.ip:focus {
+  border: 0px;
+  width: 100%;
+  outline: 0;
+  background-color: inherit;
+}
 .instance-detail-row {
   padding-bottom: 30px;
   border-bottom: 1px dashed #bbb;
