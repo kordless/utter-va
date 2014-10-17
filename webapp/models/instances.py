@@ -404,7 +404,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			try:
 				image.save()
 			except Exception as e:
-				app.logger.error("Error creating flavor on OpenStack: \"{0}\"".format(str(e)))
+				app.logger.error("Error creating image on OpenStack: \"{0}\"".format(str(e)))
 				response['response'] = "error"
 				response['result']['message'] = "Error creating image."
 				return response
