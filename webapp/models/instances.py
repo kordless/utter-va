@@ -225,14 +225,14 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		flavor_count = q_flavor.count()
 
 		# limit query by state
-		flavor_running_count = q_flavor.filter_by(state=1).count()
+		flavor_available_count = q_flavor.filter_by(state=1).count()
 
 		# set create_count according to max_instances limit
 		create_count = flavor.max_instances - flavor_count
 
 		# if the limit defined by hot is lower than limit defined by max_instances
-		if flavor.hot - flavor_running_count < create_count:
-			create_count = flavor.hot - flavor_running_count
+		if flavor.hot - flavor_available_count < create_count:
+			create_count = flavor.hot - flavor_available_count
 
 		# create a minimum number of instances based on hot amount for flavor
 		for x in range(create_count):
@@ -255,6 +255,13 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 
 			response['result']['message'] = "Created new instance."
 			app.logger.info("Created new instance=(%s)." % instance.name)
+
+		if create_count < 0:
+			for x in range(create_count * -1):
+				instance = q_flavor.first()
+				if instance:
+					app.logger.info("Deleting instance=(%s)." % instance.name)
+					instance.delete()
 
 		for instance in q_flavor.all():
 			if not instance.address:

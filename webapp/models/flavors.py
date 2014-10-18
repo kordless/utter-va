@@ -146,7 +146,8 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		return {
 			'ask': self._sync_ask_price,
 			'active': self._update_active,
-			'installed': self._update_installed}
+			'installed': self._update_installed,
+			'max_instances': self._update_max_instances}
 
 	# sync hook to push ask price to open stack on update
 	def _sync_ask_price(self):
@@ -183,6 +184,9 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 					instance.delete()
 		elif self.active:
 			models.instances.Instances().mix(self)
+
+	def _update_max_instances(self):
+		models.instances.Instances().mix(self)
 
 	@classmethod
 	def get_by_specs(cls, *args, **kwargs):

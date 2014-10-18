@@ -101,6 +101,10 @@ def configure_flavors_detail(flavor_id):
 	if 'ask' in request.form.keys():
 		flavor.update(ask=int(request.form['ask']))
 
+	# set max-instances
+	if 'max-instances' in request.form.keys():
+		flavor.update(max_instances=int(request.form['max-instances']))
+
 	# install pool flavor
 	if 'install' in request.form.keys():
 		# let's see what we can break, er install

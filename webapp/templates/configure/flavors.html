@@ -31,6 +31,33 @@
 </div>
 <!-- end modal -->
 
+<!-- set max instances modal -->
+<div id="modal-flavor-set-max-instances" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Set Max Instances</h4>
+      </div>
+      <div class="modal-body">
+        <p>The flavor <code><span id="modal-flavor-max-instances-name"></span></code> currently has the max-instances limit set to <code><span id="modal-flavor-max-instances-value"></span></code>.</p>
+        <div class="row">
+          <div class="col-md-5 form-padding" id="ask-max-instances-form">
+            <input type="hidden" id="modal-flavor-max-instances-flavor-id-input" value="0">
+            <label class="control-label" for="max-instances">Max Instances</label>
+            <input length=20 class="form-control" id="modal-flavor-max-instances-value-input" name="max-instances" type="text">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="set-max-instances-close-button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" id="set-max-instances-confirm-button" class="btn btn-danger"></button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- end modal -->
+
 <!-- set ask rate modal -->
 <div id="modal-flavor-set-ask" class="modal fade">
   <div class="modal-dialog">
@@ -107,7 +134,7 @@
                 <td>{{ flavor.disk }}GB</td>
                 <td class="text-center">{% if flavor.network_down < 1 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ flavor.network_down }} Mb/sec{% endif %}</td>
                 <td class="text-center">{% if flavor.network_up < 1 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ flavor.network_up }} Mb/sec{% endif %}</td>
-                <td class="text-center"><a id="limit-flavor-{{ flavor.id }}" title="Set instance limit for {{ flavor.name }}." data-flavor-name="{{ flavor.name }}" data-flavor-ask="{{ flavor.ask }}" data-flavor-rate="{{ flavor.rate }}" href="#">2</a></td>
+                <td class="text-center"><a id="max-instances-flavor-{{ flavor.id }}" title="Set instance limit for {{ flavor.name }}." data-flavor-name="{{ flavor.name }}" data-flavor-max-instances="{{ flavor.max_instances }}" href="#">{{ flavor.max_instances }}</a></td>
                 <td><a id="ask-flavor-{{ flavor.id }}" title="Set ask for {{ flavor.name }}." data-flavor-name="{{ flavor.name }}" data-flavor-ask="{{ flavor.ask }}" data-flavor-rate="{{ flavor.rate }}" href="#">{{ flavor.ask }} μBTC/Hour </a></td>
                 <td>
                   <div class="toggle-modern">
@@ -198,6 +225,52 @@
         })
       });
     })
+
+    // edit max instances
+    $('a[id^="max-instances-flavor-"]').each(function(index){
+      $('#'+this.id).click(function() {
+        var flavor_id = this.id.split("-").pop();
+        var max_instances = $('#'+this.id).attr('data-flavor-max-instances');
+        var name = $('#'+this.id).attr('data-flavor-name');
+
+        $('#modal-flavor-max-instances-name').html(name);
+        $('#modal-flavor-max-instances-flavor-id-input').val(flavor_id);
+        $('#modal-flavor-max-instances-value').html(max_instances);
+        $('#modal-flavor-max-instances-value-input').val(max_instances);
+        $('#set-max-instances-confirm-button').html('Set Instances Limit');
+
+        $('#modal-flavor-set-max-instances').modal('show');
+      });
+    });
+
+    // modal submit max-instances button
+    $('#set-max-instances-confirm-button').click(function() {
+      var max_instances = $('#modal-flavor-max-instances-value-input').val();
+      var flavor_id = $('#modal-flavor-max-instances-flavor-id-input').val();
+      console.log(flavor_id);
+
+      max_instances = parseInt(max_instances);
+      if (max_instances == "NaN") {
+        console.log("nan");
+      } else {
+        $.ajax({
+          url: '/configure/flavors/'+flavor_id+'?_csrf_token='+csrf_token,
+          type: 'PUT',
+          data: {'_csrf_token': csrf_token, 'max-instances': max_instances},
+          success: function() {
+            // reload the page
+            location.reload();
+          },
+          error: function(jqXHR) {
+            console.log(jqXHR);
+            // code failed, clear value and alert
+            $('#modal-flavor-max-instances-value-input').val('');
+            $('#askrate-form').addClass('has-error');
+            alertify.error("The instances limit you entered is not valid.");
+          }
+        });
+      }
+    });
 
     // pencil flavor edits
     $('a[id^="ask-flavor-"]').each(function(index){
