@@ -12,6 +12,7 @@ from webapp.libs.utils import generate_token
 from webapp.libs.pool import pool_connect
 from webapp.libs.pool import PoolApiFlavorsList
 from webapp.libs.pool import PoolApiException
+from webapp import models
 
 from utter_libs.schemas.model_mixin import ModelSchemaMixin
 from utter_libs.schemas.helpers import ApiSchemaHelper
@@ -172,12 +173,16 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 			for instance in self.instances:
 				if not instance.running:
 					instance.deactivate()
+		elif self.installed:
+			models.instances.Instances().mix(self)
 
 	def _update_installed(self):
 		if not self.installed:
 			for instance in self.instances:
 				if not instance.running:
 					instance.delete()
+		elif self.active:
+			models.instances.Instances().mix(self)
 
 	@classmethod
 	def get_by_specs(cls, *args, **kwargs):
