@@ -489,7 +489,6 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 
 		# update the instance with post creation
 		self.post_creation = post_creation_combo
-		print post_creation_combo
 
 		self.update()
 
