@@ -130,12 +130,12 @@
                           <td colspan=2>{{ instance.flavor.disk }}GB</td>
                         </tr>
                         <tr>
-                          <td><strong>Network Egress</strong></td>
-                          <td colspan="2">{% if instance.flavor.network_up < 1 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ instance.flavor.network_up }} Mb/sec{% endif %}</td>
+                          <td><strong>Ingress Rate</strong></td>
+                          <td colspan="2">{% if instance.flavor.network_down < 1 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ instance.flavor.network_down }} Mb/sec{% endif %}</td>
                         </tr>
                         <tr>
-                          <td><strong>Network Ingress</strong></td>
-                          <td colspan="2">{% if instance.flavor.network_down < 1 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ instance.flavor.network_down }} Mb/sec{% endif %}</td>
+                          <td><strong>Egress Rate</strong></td>
+                          <td colspan="2">{% if instance.flavor.network_up < 1 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ instance.flavor.network_up }} Mb/sec{% endif %}</td>
                         </tr>
                         <tr>
                           <td><strong>Ask</strong></td>
@@ -232,7 +232,7 @@
       var ip = $(this).attr('id');
       $(this).val(ip);
     });
-    
+
     // build the QR code for the instance address
     var qrcode_string = "bitcoin:{{instance.address}}?amount="+(parseInt({{instance.flavor.ask}})/1000000);
     $('#qrcode').qrcode({text: qrcode_string});

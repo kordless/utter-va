@@ -1,4 +1,5 @@
 import time
+import base64
 
 from HTMLParser import HTMLParser
 from IPy import IP
@@ -436,7 +437,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 				return {"response": "error"}
 
 		# post creation file is blank to start
-		post_creation_ssh_key_combo = ""
+		post_creation_combo = ""
 		
 		# load the parser to unencode jinja2 template escaping from appliance
 		h = HTMLParser()
@@ -445,29 +446,44 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		try:
 			# loop through both strings and cat onto post_creation_ssh_key_combo
 			# using prefered method of injecting keys with cloud-init
-			post_creation_ssh_key_combo += "#cloud-config\n"
-			post_creation_ssh_key_combo += "ssh_authorized_keys:\n"
+			post_creation_combo += "#cloud-config\n"
+			post_creation_combo += "ssh_authorized_keys:\n"
 			for line in start_params['ssh_keys']:
-				post_creation_ssh_key_combo += " - %s\n" % h.unescape(line)
-			post_creation_ssh_key_combo += "\n"
+				post_creation_combo += " - %s\n" % h.unescape(line)
+			post_creation_combo += "\n"
 
 		except:
 			# do nothing on various key failure
 			pass
 
+		# create utterio file data
+		post_creation_file_data = ""
+		post_creation_file_data += "export MY_BITCOIN_ADDRESS=%s\n" % self.address
+		post_creation_file_data += "export MY_POOL_API_ADDRESS=%s/api/v1/instances/%s/\n" % (app.config['APP_WEBSITE'], self.name)
+		
+		# payment address source file
+		post_creation_combo += "write_files:\n"
+		post_creation_combo += "- encoding: b64\n"
+		post_creation_combo += '  content: %s\n' % base64.b64encode(post_creation_file_data) 
+		post_creation_combo += "  path: /etc/utterio\n"
+		post_creation_combo += "  permissions: '0644'\n"
+
 		# post creation configuration handling
 		try:
-
 			for line in start_params['post_create']:
 				# import what the user put in the textbox for their wisp
-				post_creation_ssh_key_combo += "%s\n" % h.unescape(line)
+				post_creation_combo += "%s\n" % h.unescape(line)
+
+			post_creation_combo += "\n"
 
 		except:
 			# do nothing on post creation failure
 			pass
 
 		# update the instance with post creation
-		self.post_creation = post_creation_ssh_key_combo
+		self.post_creation = post_creation_combo
+		print post_creation_combo
+
 		self.update()
 
 		# take the instance's flavor and verify install
