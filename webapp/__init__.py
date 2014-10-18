@@ -41,6 +41,8 @@ manager = Manager(app) # shell actions manager
 db = SQLAlchemy(app) # database connection
 bcrypt = Bcrypt(app) # hashing function
 
+from webapp.models.instances import Instances
+
 # users module blueprint
 from webapp.handlers.userhandlers import mod as usersModule
 app.register_blueprint(usersModule)

@@ -14,7 +14,7 @@ from webapp.libs.pool import pool_instances
 from webapp.models.models import Appliance
 from webapp.models.addresses import Addresses
 from webapp.models.images import Images
-from webapp.models.flavors import Flavors
+from webapp import models
 
 from utter_libs.schemas.model_mixin import ModelSchemaMixin
 from utter_libs.schemas import schemas
@@ -471,7 +471,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		self.update()
 
 		# take the instance's flavor and verify install
-		flavor = Flavors().get_by_id(self.flavor.id)
+		flavor = models.flavors.Flavors().get_by_id(self.flavor.id)
 		flavor_response = flavor_verify_install(flavor)
 
 		if flavor_response['response'] == "error" or flavor_response['response'] == "forbidden":
