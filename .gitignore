@@ -1,5 +1,6 @@
 *.pyc
 *.db
+*.db-journal
 tunnel.conf*
 config.py
 DEV
