@@ -95,5 +95,7 @@ class Images(CRUDMixin, db.Model):
 		osid = create_os_image(
 			name=self.name,
 			url=self.cached_url,
+			disk_format=self.disk_format,
+			container_format=self.container_format,
 			fd=self.get_data_stream(compressed=compressed)).id
 		self.update(osid=osid)
