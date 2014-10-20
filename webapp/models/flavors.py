@@ -182,11 +182,12 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 			for instance in self.instances:
 				if not instance.running:
 					instance.delete()
-		elif self.active:
+		elif self.active and self.installed and self.ask > 0:
 			models.instances.Instances().mix(self)
 
 	def _update_max_instances(self):
-		models.instances.Instances().mix(self)
+		if self.active and self.installed and self.ask > 0:
+			models.instances.Instances().mix(self)
 
 	@classmethod
 	def get_by_specs(cls, *args, **kwargs):
