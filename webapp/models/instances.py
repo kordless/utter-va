@@ -435,16 +435,15 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			app.logger.error("Error communicating with OpenStack: \"{0}\"".format(str(e)))
 			return {"response": "error"}
 		if image_status == "queued" or image_status == "saving":
-			return {"response": "queued"}
 			# image is still downloading and is not ready to be used yet
+			return {"response": "queued"}
 		elif image_status == "killed":
-			# image has been killed, probably that's another one of our beloved nebulas
+			# image has been killed, prossibly our openstack is a nebula
 			try:
-				app.logger.warning("Attempting to fix nebula")
-				image.fix_nebula()
+				app.logger.warning("Falling back to proxying image.")
+				image.proxy_image()
 			except Exception as e:
-				# this is hopeless
-				app.logger.error("Failed to fix nebula")
+				app.logger.error("Failed to proxy image")
 				return {"response": "error"}
 
 		# post creation file is blank to start
