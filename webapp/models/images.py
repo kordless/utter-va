@@ -52,16 +52,13 @@ class Images(CRUDMixin, db.Model):
 	@property
 	def decompress(self):
 		return bool(
-			re.compile(
-				'\.bz2$'
-			).search(
-				self.cached_url))
+			re.compile('\.bz2$').search(self.url))
 
 	def save(self, *args, **kwargs):
 		if Appliance.get().enable_image_caching and (
 				self.osid == None or not os_image_exists(self.osid)):
 			if self.decompress:
-				self.osid = self.proxy_image(compressed=True)
+				self.osid = self.proxy_image()
 			else:
 				self.osid = create_os_image(
 					name=self.name,
@@ -91,11 +88,11 @@ class Images(CRUDMixin, db.Model):
 			data = BZ2Decompressor().decompress(data)
 		return data
 
-	def proxy_image(self, compressed=False):
+	def proxy_image(self):
 		osid = create_os_image(
 			name=self.name,
 			url=self.cached_url,
 			disk_format=self.disk_format,
 			container_format=self.container_format,
-			fd=self.get_data_stream(compressed=compressed)).id
+			fd=self.get_data_stream(compressed=self.decompress)).id
 		self.update(osid=osid)
