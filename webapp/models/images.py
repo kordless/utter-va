@@ -1,4 +1,5 @@
 import re
+from bz2 import BZ2Decompressor
 import urllib2
 import requests
 
@@ -6,6 +7,7 @@ from glanceclient import exc as glance_exceptions
 from glanceclient.common.utils import get_data_file
 
 from webapp import db
+from webapp import app
 
 from webapp.models.mixins import CRUDMixin
 from webapp.models.models import Appliance
@@ -47,14 +49,25 @@ class Images(CRUDMixin, db.Model):
 			return ''
 		return get_os_image(self.osid).status
 
+	@property
+	def decompress(self):
+		return bool(
+			re.compile(
+				'\.bz2$'
+			).search(
+				self.cached_url))
+
 	def save(self, *args, **kwargs):
 		if Appliance.get().enable_image_caching and (
 				self.osid == None or not os_image_exists(self.osid)):
-			self.osid = create_os_image(
-				name=self.name,
-				url=self.cached_url,
-				disk_format=self.disk_format,
-				container_format=self.container_format).id
+			if self.decompress:
+				self.osid = self.proxy_image(compressed=True)
+			else:
+				self.osid = create_os_image(
+					name=self.name,
+					url=self.cached_url,
+					disk_format=self.disk_format,
+					container_format=self.container_format).id
 		super(Images, self).save(*args, **kwargs)
 
 	def delete(self, *args, **kwargs):
@@ -68,15 +81,19 @@ class Images(CRUDMixin, db.Model):
 		if self.instances.count() == 0:
 			self.delete()
 
-	# terribly ugly fix just for nebula
-	def fix_nebula(self):
-		self.osid = create_os_image(
-			name=self.name,
-			url=self.cached_url,
-			fd=requests.get(
-				self.url,
+	def get_data_stream(self, compressed=False):
+		data = requests.get(
+				self.cached_url,
 				stream=True
 			).raw.data
-		).id
-		super(Images, self).save()
-	# i feel like i should take a shower after writing this, it's dirty
+		if compressed:
+			app.logger.error("Decompressing compressed Image.")
+			data = BZ2Decompressor().decompress(data)
+		return data
+
+	def proxy_image(self, compressed=False):
+		osid = create_os_image(
+			name=self.name,
+			url=self.cached_url,
+			fd=self.get_data_stream(compressed=compressed)).id
+		self.update(osid=osid)
