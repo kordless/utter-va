@@ -256,6 +256,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		# create all the non-existent ones
 		for osflavor in osflavors:
 			# if flavor doesn't exist, create new one
+			import pdb; pdb.set_trace()
 			flavor = self.get_by_specs(
 				**self.get_values_from_osflavor(
 					osflavor))
@@ -266,6 +267,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				# if a price is given, activate the new flavor
 				if flavor.ask > 0:
 					flavor.active = True
+				flavor.put()
 			else:
 				flavor.installed = True
 				flavor.osid = osflavor.id
