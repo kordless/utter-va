@@ -443,7 +443,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 				app.logger.warning("Falling back to proxying image.")
 				image.proxy_image()
 			except Exception as e:
-				app.logger.error("Failed to proxy image")
+				app.logger.error('Failed to proxy image: "{0}".'.format(str(e)))
 				return {"response": "error"}
 
 		# post creation file is blank to start

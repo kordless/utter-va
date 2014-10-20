@@ -83,6 +83,7 @@ class Images(CRUDMixin, db.Model):
 		try:
 			tmp_handle = tempfile.NamedTemporaryFile()
 			response = requests.get(self.cached_url, stream=True)
+
 			if not response.ok:
 				raise Exception('Failed to download from url "{0}".'.format(
 					self.cached_url))
@@ -98,6 +99,7 @@ class Images(CRUDMixin, db.Model):
 					tmp_handle.write(decompressor.decompress(block))
 				else:
 					tmp_handle.write(block)
+
 		except Exception as e:
 			raise Exception('Failed to get image: "{0}".'.format(str(e)))
 
