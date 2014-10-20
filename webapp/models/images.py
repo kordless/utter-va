@@ -1,7 +1,6 @@
 import re
 from bz2 import BZ2Decompressor
 import urllib2
-import requests
 
 from glanceclient import exc as glance_exceptions
 from glanceclient.common.utils import get_data_file
@@ -79,13 +78,12 @@ class Images(CRUDMixin, db.Model):
 			self.delete()
 
 	def get_data_stream(self, compressed=False):
-		data = requests.get(
-				self.cached_url,
-				stream=True
-			).raw.data
+		request = urllib2.urlopen(self.cached_url)
 		if compressed:
 			app.logger.error("Decompressing compressed Image.")
-			data = BZ2Decompressor().decompress(data)
+			data = BZ2Decompressor().decompress(request.read())
+		else:
+			data = request.read()
 		return data
 
 	def proxy_image(self):
