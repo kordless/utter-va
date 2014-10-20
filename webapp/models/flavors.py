@@ -265,7 +265,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				# if a price is given, activate the new flavor
 				if flavor.ask > 0:
 					flavor.active = True
-				flavor.put()
+				flavor.save()
 			else:
 				flavor.installed = True
 				flavor.osid = osflavor.id
