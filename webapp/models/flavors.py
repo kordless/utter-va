@@ -256,13 +256,11 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		# create all the non-existent ones
 		for osflavor in osflavors:
 			# if flavor doesn't exist, create new one
-			import pdb; pdb.set_trace()
-			flavor = self.get_by_specs(
-				**self.get_values_from_osflavor(
-					osflavor))
+			os_flavor_values = self.get_values_from_osflavor(osflavor)
+			flavor = self.get_by_specs(**os_flavor_values)
 			if not flavor:
 				# flavor is new
-				flavor = Flavors(**self.get_values_from_osflavor(osflavor))
+				flavor = Flavors(**os_flavor_values)
 				flavor.installed = True
 				# if a price is given, activate the new flavor
 				if flavor.ask > 0:
@@ -272,9 +270,8 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				flavor.installed = True
 				flavor.osid = osflavor.id
 				flavor.flags = 0
-				osvalues = self.get_values_from_osflavor(osflavor)
 				for key in ['name', 'ask']:
-					setattr(flavor, key, osvalues[key])
+					setattr(flavor, key, os_flavor_values[key])
 				try:
 					flavor.save()
 					db.session.flush()
