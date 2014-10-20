@@ -22,6 +22,8 @@ class Images(CRUDMixin, db.Model):
 	osid = db.Column(db.String(100))
 	url = db.Column(db.String(1024), unique=True)
 	name = db.Column(db.String(1024))
+	container_format = db.Column(db.String(1024))
+	disk_format = db.Column(db.String(1024))
 	instances = db.relationship('Instances', backref='image', lazy='dynamic')
 
 	@property
@@ -48,7 +50,11 @@ class Images(CRUDMixin, db.Model):
 	def save(self, *args, **kwargs):
 		if Appliance.get().enable_image_caching and (
 				self.osid == None or not os_image_exists(self.osid)):
-			self.osid = create_os_image(name=self.name, url=self.cached_url).id
+			self.osid = create_os_image(
+				name=self.name,
+				url=self.cached_url,
+				disk_format=self.disk_format,
+				container_format=self.container_format).id
 		super(Images, self).save(*args, **kwargs)
 
 	def delete(self, *args, **kwargs):

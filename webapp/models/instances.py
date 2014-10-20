@@ -410,10 +410,14 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		self.callback_url = start_params['callback_url']
 
 		# lookup the image for this instance, or create it otherwise
-		image = Images.query.filter_by(url=start_params['image_url']).first()
+		image = Images.query.filter_by(
+			**dict(
+				filter(
+					lambda x: x[0] in ['url', 'container_format', 'disk_format'],
+					start_params['image'].items()))).first()
 		if not image:
-			image = Images(url=start_params['image_url'],
-										 name=start_params['image_name'])
+			image = Images(**start_params['image'])
+
 			try:
 				image.save()
 			except Exception as e:

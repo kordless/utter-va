@@ -136,8 +136,8 @@ def create_os_image(fd=None, **kwargs):
 	fields = {
 		'name': unicode(kwargs['name']),
 		'is_public': False,
-		'disk_format': u'qcow2',
-		'container_format': u'bare',
+		'disk_format': kwargs['disk_format'],
+		'container_format': kwargs['container_format'],
 		'properties': {}}
 	if fd:
 		# just for nebula
