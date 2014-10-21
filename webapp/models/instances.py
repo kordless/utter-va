@@ -421,6 +421,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			try:
 				image.save()
 			except Exception as e:
+				image.delete()
 				app.logger.error("Error creating image on OpenStack: \"{0}\"".format(str(e)))
 				response['response'] = "error"
 				response['result']['message'] = "Error creating image."
@@ -443,6 +444,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 				app.logger.warning("Falling back to proxying image.")
 				image.proxy_image()
 			except Exception as e:
+				image.delete()
 				app.logger.error('Failed to proxy image: "{0}".'.format(str(e)))
 				return {"response": "error"}
 
