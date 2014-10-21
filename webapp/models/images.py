@@ -88,18 +88,25 @@ class Images(CRUDMixin, db.Model):
 				raise Exception('Failed to download from url "{0}".'.format(
 					self.cached_url))
 
+			# represents if decompression should be applied
 			decompress = self.decompress
 
 			if decompress:
+				# create sequential decompressor
 				decompressor = BZ2Decompressor()
 
+			# iterate over the image data in chunks
 			for chunk in response.iter_content(1024 * 1024):
 				if not chunk:
 					break
 				if decompress:
+					# send data through decompressor if necessary
 					tmp_handle.write(decompressor.decompress(chunk))
 				else:
+					# write data directly into tmp file
 					tmp_handle.write(chunk)
+
+			# reset file descriptor to position 0 before returning it
 			tmp_handle.seek(0)
 
 		except Exception as e:
@@ -115,5 +122,7 @@ class Images(CRUDMixin, db.Model):
 			disk_format=self.disk_format,
 			container_format=self.container_format,
 			fd=tmp_file).id
+
+		# close tmp file fd, this should delete it from the disk
 		tmp_file.close()
 		self.update(osid=osid)
