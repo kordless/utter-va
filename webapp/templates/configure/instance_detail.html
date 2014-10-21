@@ -148,7 +148,7 @@
                 </div>
 
                 <div class="tab-pane" id="console">
-                  <pre id="console">{% if instance.console_output %}{{ instance.console_output }}{% else %}Waiting on console log...{% endif %}</pre>
+                  <pre id="console">{% if instance.console_output %}{{ '\n'.join(instance.console_output) }}{% else %}Waiting on console log...{% endif %}</pre>
                 </div>
 
               </div>
