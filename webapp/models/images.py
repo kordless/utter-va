@@ -89,6 +89,7 @@ class Images(CRUDMixin, db.Model):
 					self.cached_url))
 
 			decompress = self.decompress
+
 			if decompress:
 				decompressor = BZ2Decompressor()
 
@@ -99,6 +100,7 @@ class Images(CRUDMixin, db.Model):
 					tmp_handle.write(decompressor.decompress(block))
 				else:
 					tmp_handle.write(block)
+			tmp_handle.seek(0)
 
 		except Exception as e:
 			raise Exception('Failed to get image: "{0}".'.format(str(e)))
