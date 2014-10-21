@@ -63,7 +63,7 @@ class Images(CRUDMixin, db.Model):
 		if Appliance.get().enable_image_caching and (
 				self.osid == None or not os_image_exists(self.osid)):
 			if self.decompress:
-				self.osid = self.proxy_image()
+				self.proxy_image()
 			else:
 				self.osid = create_os_image(
 					name=self.name,
