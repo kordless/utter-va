@@ -89,7 +89,13 @@ input.ip, input.ip:focus {
   margin-top: 20px;
   margin-bottom: 20px;
 }
-
+/* console log */
+pre {
+  height: auto;
+  max-height: 900px;
+  overflow: auto;
+  background-color: #F9F9F9;
+}
 /* appliance form styles */
 .hidden-checkbox {
   opacity: 0; 
