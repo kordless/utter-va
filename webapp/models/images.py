@@ -112,6 +112,6 @@ class Images(CRUDMixin, db.Model):
 			url=self.cached_url,
 			disk_format=self.disk_format,
 			container_format=self.container_format,
-			fd=tmp_file).id
+			fd=tmp_file.read()).id
 		tmp_file.close()
 		self.update(osid=osid)
