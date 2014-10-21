@@ -93,13 +93,13 @@ class Images(CRUDMixin, db.Model):
 			if decompress:
 				decompressor = BZ2Decompressor()
 
-			for block in response.iter_content(1024):
-				if not block:
+			for chunk in response.iter_content(1024 * 1024):
+				if not chunk:
 					break
 				if decompress:
-					tmp_handle.write(decompressor.decompress(block))
+					tmp_handle.write(decompressor.decompress(chunk))
 				else:
-					tmp_handle.write(block)
+					tmp_handle.write(chunk)
 			tmp_handle.seek(0)
 
 		except Exception as e:
@@ -114,6 +114,6 @@ class Images(CRUDMixin, db.Model):
 			url=self.cached_url,
 			disk_format=self.disk_format,
 			container_format=self.container_format,
-			fd=tmp_file.read()).id
+			fd=tmp_file).id
 		tmp_file.close()
 		self.update(osid=osid)
