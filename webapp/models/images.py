@@ -36,6 +36,10 @@ class Images(CRUDMixin, db.Model):
 
 		# remove protocol from url
 		proto_search = re.compile('^(http|https)://(.*)$').search(urlinfo.url)
+
+		# clean up the open connection
+		urlinfo.close()
+
 		if proto_search:
 			proto = proto_search.group(1)
 			host_path = proto_search.group(2)
@@ -105,6 +109,9 @@ class Images(CRUDMixin, db.Model):
 				else:
 					# write data directly into tmp file
 					tmp_handle.write(chunk)
+
+			# clean up your open connections
+			response.connection.close()
 
 			# reset file descriptor to position 0 before returning it
 			tmp_handle.seek(0)
