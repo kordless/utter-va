@@ -136,7 +136,8 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		if response['response'] == "error":
 			raise Exception("Failed to get console_output.")
 		if response['response'] == "success":
-			return response['result']['console']
+			lines = response['result']['console'].split('\n')
+			return lines
 		return []
 
 	# property that returns the associated address model
@@ -441,7 +442,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		elif image_status == "killed":
 			# image has been killed, prossibly our openstack is a nebula
 			try:
-				app.logger.warning("Falling back to proxying image.")
+				app.logger.info("Falling back to proxying image.")
 				image.proxy_image()
 			except Exception as e:
 				image.delete()
