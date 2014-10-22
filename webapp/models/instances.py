@@ -166,7 +166,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 
 	def delete(self, *args, **kwargs):
 		address = self.address_model
-		if self.address:
+		if address:
 			address.delete()
 		super(Instances, self).delete(*args, **kwargs)
 
