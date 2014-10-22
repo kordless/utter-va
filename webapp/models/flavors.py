@@ -271,8 +271,9 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				flavor.installed = True
 				flavor.osid = osflavor.id
 				flavor.flags = 0
-				for key in ['name', 'ask']:
-					setattr(flavor, key, os_flavor_values[key])
+				flavor.name = os_flavor_values['name']
+				if os_flavor_values.has_key('ask') and os_flavor_values['ask'] != 0:
+					flavor.ask = os_flavor_values['ask']
 				try:
 					flavor.save()
 					db.session.flush()
