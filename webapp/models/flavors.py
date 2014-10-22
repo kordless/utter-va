@@ -157,11 +157,11 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		if not self.osid:
 			return
 
-		# if price on openstack is already equal to new price just return
-		if self.ask == self.ask_on_openstack:
-			return
-
 		try:
+			# if price on openstack is already equal to new price just return
+			if self.ask == self.ask_on_openstack:
+				return
+
 			set_flavor_ask_price(self.osid, self.ask)
 		except nova_exceptions.NotFound:
 			# nebula only
