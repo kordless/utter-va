@@ -446,7 +446,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		# if image is not ready because it's either killed or still downloading
 		try:
 			image_status = image.status
-		except Exception:
+		except Exception as e:
 			app.logger.error("Error communicating with OpenStack: \"{0}\"".format(str(e)))
 			return {"response": "error"}
 		if image_status == "queued" or image_status == "saving":
