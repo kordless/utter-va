@@ -164,6 +164,12 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			return False
 		return True
 
+	def delete(self, *args, **kwargs):
+		address = self.address_model
+		if self.address:
+			address.delete()
+		super(Instances, self).delete(*args, **kwargs)
+
 	def toggle(self, flavor_id, active):
 		# set active/inactive state for instances with a given flavor_id
 		# we only set instances that are in state 0 - inactive, or 1 - waiting on payment
