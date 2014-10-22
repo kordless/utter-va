@@ -277,7 +277,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				try:
 					flavor.save()
 					db.session.flush()
-				except (sa_exceptions.IntegrityError, sa_exceptions.OperationalError):
+				except (sa_exceptions.IntegrityError, sa_exceptions.OperationalError) as e:
 					app.logger.error('Exception when saving flavor "{0}": "{1}".'.format(
 						osflavor.name, str(e)))
 
