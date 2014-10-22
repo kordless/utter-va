@@ -164,6 +164,13 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			return False
 		return True
 
+	def _get_sync_hooks(self):
+		# return sync hooks for property updates
+		return {'state': self._update_updated_timestamp}
+
+	def _update_updated_timestamp(self):
+		self.updated = int(time.time())
+
 	def delete(self, *args, **kwargs):
 		address = self.address_model
 		if address:
