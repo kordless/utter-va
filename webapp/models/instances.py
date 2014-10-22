@@ -806,11 +806,12 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		if 'console' in response['result']:
 			self.console = response['result']['console']
 
-		# update
-		self.update()
+		# save updated properties
+		self.save()
 
-		# make a call to the callback url to report instance details on state change
-		if self.state != start_state:			
+		# make a call to the callback url to report instance details if either the
+		# state has changed or the last state change is less than 900 secs ago
+		if self.state != start_state or self.updated >= int(time.time()) - 900:
 			appliance = Appliance().get()
 			callback_url = self.callback_url
 			pool_response = pool_instances(

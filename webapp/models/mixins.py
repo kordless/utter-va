@@ -63,7 +63,7 @@ class CRUDMixin(object):
       if commit:
         if not ignore_hooks:
           self.call_property_hooks()
-          # reset the _changed_properties if syncing has been completed
+        # reset the _changed_properties if syncing has been completed
         self._changed_properties = set()
         db.session.commit()
       return self
