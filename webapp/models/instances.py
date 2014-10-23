@@ -371,7 +371,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		# appliance
 		appliance = Appliance().get()
 
-		# load the callback url (expected to be None)
+		# load the callback url (expected to be None first time through)
 		callback_url = self.callback_url
 		
 		# check if instance needs to reset
@@ -402,11 +402,13 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 
 			# look and see if we have a callback_url in the response
 			try:
-				callback_url = pool_response['result']['instance']['callback_url']
 				# run the loop again to call the callback url
-				if callback_url == '':
+				if pool_response['result']['instance']['callback_url'] == '':
 					break
+				else:
+					callback_url = pool_response['result']['instance']['callback_url']
 			except:
+				# catch no callback_url keys
 				break
 		else:
 			response['response'] = "error"
@@ -421,7 +423,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			**pool_response['result']['instance']).as_dict()
 
 		# and lo, callback_url is saved
-		self.callback_url = start_params['callback_url']
+		self.callback_url = callback_url
 
 		# lookup the image for this instance, or create it otherwise
 		image = Images.query.filter_by(

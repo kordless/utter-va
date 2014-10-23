@@ -263,9 +263,9 @@ def flavor_verify_install(flavor):
 			response['response'] = "forbidden"
 			response['result']['message'] = "Can't install flavor due to lack of permissions for tenant user."
 			return response
-		except:
+		except Exception as ex:
 			response['response'] = "error"
-			response['result']['message'] = "Error installing flavor inside OpenStack."
+			response['result']['message'] = "Error installing flavor inside OpenStack. %s" % ex
 			return response
 
 		# set bandwidth
