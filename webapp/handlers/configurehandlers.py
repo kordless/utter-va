@@ -130,7 +130,7 @@ def configure_flavors_detail(flavor_id):
 				if not response['response'] == 'success':
 					raise Exception(response['result']['message'])
 
-				flavor.update(installed=False, active=False)
+				flavor.update(installed=False, active=False, osid=None)
 
 		except Exception as e:
 			response = jsonify({"response": "error", "result": {"message": str(e)}})
