@@ -198,6 +198,10 @@
           } else {
             $('#flavors-settings').addClass("hidden");
           }
+          return true;
+        },
+        error: function() {
+          console.log("would log error");
         }
       });
     }
