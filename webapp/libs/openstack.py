@@ -46,9 +46,23 @@ def keystone_client():
 
 def glance_client():
 	keystone = keystone_client()
-	glance_endpoint = keystone.service_catalog.url_for(service_type='image')
+	openstack = OpenStack.get()
+	service_type = "image"
+
+	# get list of endpoints for image and our region from keystone
+	endpoints = keystone.service_catalog.get_endpoints(
+		service_type=service_type,
+		region_name=openstack.region)[service_type]
+
+	# if len is 0 there is no endpoint for us available
+	if len(endpoints) == 0:
+		raise Exception('No endpoints for service type "{0}".'.format(service_type))
+
+	# get public url
+	endpoint = endpoints[0]['publicURL']
+
 	# establish connection to glance
-	return glanceclient.Client('1', endpoint=glance_endpoint, token=keystone.auth_token, timeout=10)
+	return glanceclient.Client('1', endpoint=endpoint, token=keystone.auth_token, timeout=10)
 
 # get stats for appliance cluster
 def get_stats():

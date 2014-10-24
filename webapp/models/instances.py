@@ -437,7 +437,10 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			try:
 				image.save()
 			except Exception as e:
-				image.delete()
+				try:
+					image.delete()
+				except Exception:
+					pass
 				app.logger.error("Error creating image on OpenStack: \"{0}\"".format(str(e)))
 				response['response'] = "error"
 				response['result']['message'] = "Error creating image."
