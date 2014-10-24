@@ -28,6 +28,7 @@ def nova_connection():
 		openstack.ospassword,
 		openstack.tenantname,
 		openstack.authurl,
+		retion_name=openstack.region,
 		service_type="compute"
 	)
 
