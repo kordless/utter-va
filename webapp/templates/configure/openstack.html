@@ -76,10 +76,10 @@
               </div>
             </div>
 
-            <div class="row form-group {% if form.osusername.errors %}has-error{% endif %}">
+            <div class="row form-group {% if form.region.errors %}has-error{% endif %}">
               <div class="col-md-6">
                 {{ form.region.label(class="control-label") }}
-                {{ form.region(class="form-control", value=openstack.region, placeholder="None", required=false) }}
+                {{ form.region(class="form-control", value=openstack.region, placeholder="RegionOne", required=false) }}
               </div>
             </div>
             

@@ -296,6 +296,7 @@ def configure_openstack():
 				openstack.region = "%s" % dequote(keyvals['OS_REGION_NAME'])
 			except:
 				# don't need it
+				openstack.region = ""
 				pass
 			openstack.osusername = "%s" % dequote(keyvals['OS_USERNAME'])
 			openstack.ospassword = "changeme"
