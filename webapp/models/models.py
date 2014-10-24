@@ -53,13 +53,15 @@ class OpenStack(CRUDMixin, db.Model):
 		tenantname=None, 
 		tenantid=None, 
 		osusername=None, 
-		ospassword=None
+		ospassword=None,
+		region=None
 	):
 		self.authurl = authurl
 		self.tenantname = tenantname
 		self.tenantid = tenantid
 		self.osusername = osusername
 		self.ospassword = ospassword
+		self.region = region
 
 	def __repr__(self):
 		return '<TenantID %r>' % (self.tenantid)
