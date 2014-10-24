@@ -292,7 +292,11 @@ def configure_openstack():
 			openstack.authurl = "%s" % dequote(keyvals['OS_AUTH_URL'])
 			openstack.tenantname = "%s" % dequote(keyvals['OS_TENANT_NAME'])
 			openstack.tenantid = "%s" % dequote(keyvals['OS_TENANT_ID'])
-			openstack.region = "%s" % dequote(keyvals['OS_REGION_NAME'])
+			try:
+				openstack.region = "%s" % dequote(keyvals['OS_REGION_NAME'])
+			except:
+				# don't need it
+				pass
 			openstack.osusername = "%s" % dequote(keyvals['OS_USERNAME'])
 			openstack.ospassword = "changeme"
 
