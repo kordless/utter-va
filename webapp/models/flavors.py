@@ -154,7 +154,7 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 		from webapp.libs.openstack import set_flavor_ask_price
 
 		# if flavor doesn't exist on openstack we don't need to attempt to update it
-		if not self.osid:
+		if not self.osid or not self.installed or not self.active:
 			return
 
 		try:
