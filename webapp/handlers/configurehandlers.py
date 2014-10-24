@@ -297,10 +297,11 @@ def configure_openstack():
 					keyvals.update(keyval)
 			
 			# set values from extracted lines above - needs SQL injection protection?
-			openstack.authurl = "%s" % dequote(keyvals['OS_AUTH_URL']) 
-			openstack.tenantname = "%s" % dequote(keyvals['OS_TENANT_NAME']) 
-			openstack.tenantid = "%s" % dequote(keyvals['OS_TENANT_ID']) 
-			openstack.osusername = "%s" % dequote(keyvals['OS_USERNAME']) 
+			openstack.authurl = "%s" % dequote(keyvals['OS_AUTH_URL'])
+			openstack.tenantname = "%s" % dequote(keyvals['OS_TENANT_NAME'])
+			openstack.tenantid = "%s" % dequote(keyvals['OS_TENANT_ID'])
+			openstack.region = "%s" % dequote(keyvals['OS_REGION_NAME'])
+			openstack.osusername = "%s" % dequote(keyvals['OS_USERNAME'])
 			openstack.ospassword = "changeme"
 
 			# update entry
