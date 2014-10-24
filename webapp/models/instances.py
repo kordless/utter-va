@@ -385,13 +385,15 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 
 		# we run a maximum of 7 callback checks
 		for loop_count in range(7):
+			# set state to 3 just for the pool
+			self.state = 3
 			# make a call to the callback url to get instance details
-			next_state = 3 # hack the expected next state into the pool packet
 			pool_response = pool_instances(
 				url=callback_url,
 				instance=self,
-				next_state=next_state,
 				appliance=appliance)
+			# and set it back to 2 because we don't know yet if it's actually starting
+			self.state = 2
 
 			# check for a failure to contact the callback server
 			if pool_response['response'] == "error":
@@ -452,11 +454,16 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		try:
 			image_status = image.status
 		except Exception as e:
-			app.logger.error("Error communicating with OpenStack: \"{0}\"".format(str(e)))
-			return {"response": "error"}
+			err_string = "Error communicating with OpenStack: \"{0}\"".format(str(e))
+			app.logger.error(err_string)
+			response['response'] = "error"
+			response['result']['message'] = err_string
+			return response
 		if image_status == "queued" or image_status == "saving":
 			# image is still downloading and is not ready to be used yet
-			return {"response": "queued"}
+			response['response'] = "queued"
+			response['result']['message'] = "image is being created"
+			return response
 		elif image_status == "killed":
 			# image has been killed, prossibly our openstack is a nebula
 			try:
@@ -464,8 +471,11 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 				image.proxy_image()
 			except Exception as e:
 				image.delete()
-				app.logger.error('Failed to proxy image: "{0}".'.format(str(e)))
-				return {"response": "error"}
+				err_msg = 'Failed to proxy image: "{0}".'.format(str(e))
+				app.logger.error(err_msg)
+				response['response'] = "error"
+				response['result']['message'] = err_msg
+				return response
 
 		# post creation file is blank to start
 		post_creation_combo = ""
