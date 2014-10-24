@@ -294,6 +294,7 @@ def configure_openstack():
 			openstack.tenantid = "%s" % dequote(keyvals['OS_TENANT_ID'])
 			try:
 				openstack.region = "%s" % dequote(keyvals['OS_REGION_NAME'])
+				print openstack.region
 				if openstack.region == None:
 					openstack.region = ""
 			except:
