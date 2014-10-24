@@ -144,26 +144,18 @@ def configure_flavors_detail(flavor_id):
 	# update the ask prices on the openstack cluster using metadata
 	try:
 		# get current ask price on openstack and update
-		os_ask = flavor.ask_on_openstack
-		flavor.update()
+		flavor.save()
 
 	# warn because we couldn't update the ask price that's set on openstack
 	except nova_exceptions.Forbidden:
-		if os_ask != None:
-			response = jsonify({"response": "error", "result": {"message": "OpenStack is refusing to update flavor metadata due to lack of permissions."}})
-			response.status_code = 403
-			return response
-
-		# OpneStack has no flavor price, so we just save locally and warn
-		response = jsonify({"response": "warning", "result": {"message": "Updating local ask price. Flavor on OpenStack cluster was not updated."}})
-		flavor.save()
+		app.logger.warning('No permissions to update price of flavor "{0}".'.format(
+											 flavor.name))
 		return response
 	
-	# handle a client exception while talking to openstack
-	except nova_exceptions.ClientException as e:
-		response = jsonify({"response": "error", "result": {"message": "Error in communicating with OpenStack cluster."}})
-		response.status_code = 500
-		return response
+	# handle any other exception while talking to openstack
+	except Exception as e:
+		app.logger.warning('Error updating price of flavor "{0}": {1}.'.format(
+											 flavor.name, str(e)))
 
 	return jsonify({"response": "success", "flavor": row2dict(flavor)})
 
