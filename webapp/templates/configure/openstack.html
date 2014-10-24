@@ -75,6 +75,13 @@
                 {{ form.tenantid(class="form-control", value=openstack.tenantid, placeholder="78e98e2295344aabb82135d75bbab06e", required=true) }}
               </div>
             </div>
+
+            <div class="row form-group {% if form.osusername.errors %}has-error{% endif %}">
+              <div class="col-md-6">
+                {{ form.osregion.label(class="control-label") }}
+                {{ form.osregion(class="form-control", value=openstack.osregion, placeholder="None", required=false) }}
+              </div>
+            </div>
             
             <div class="row form-group {% if form.osusername.errors %}has-error{% endif %}">
               <div class="col-md-6">

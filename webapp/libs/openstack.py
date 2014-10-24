@@ -215,7 +215,6 @@ def flavor_verify_install(flavor):
 	# get the cluster configuration
 	try:
 		openstack = db.session.query(OpenStack).first()
-		
 		# what happens if they haven't configured it already?
 		if not openstack:
 			raise OpenStackConfiguration("OpenStack configuration isn't complete.")

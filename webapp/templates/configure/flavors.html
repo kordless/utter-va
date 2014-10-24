@@ -366,8 +366,8 @@
           // toggle the flavor state on the appliance
           var result = ajax_toggle('/configure/flavors/'+this.id.split("-").pop(), this.id);
           if (result == false) {
-            // got an error, so turn slider off
-            $('#'+this.id).trigger( "click" );
+            // console log
+            console.log("Got an error.");
           }
         }
       });
