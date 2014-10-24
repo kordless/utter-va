@@ -212,19 +212,20 @@ class PoolApiBase(object):
 
 	# main entry, do the request
 	def request(self, data=None):
+		import pdb; pdb.set_trace()
 		try:
-			# submit request to the api
-			response = urlopen(
-					self._build_request(
-						self._api_url()), data, timeout=self.timeout)
-
-			# if reply code was 2xx
-			if str(response.getcode())[:1] == '2':
-				return response.read()
-
-		except:
-			# try, try again, this time with no post data
 			try:
+				# submit request to the api
+				response = urlopen(
+						self._build_request(
+							self._api_url()), data, timeout=self.timeout)
+
+				# if reply code was 2xx
+				if str(response.getcode())[:1] == '2':
+					return response.read()
+
+			except HTTPError, e:
+				# try, try again, this time with no post data
 				# submit request to the api
 				response = urlopen(
 						self._build_request(
@@ -236,20 +237,22 @@ class PoolApiBase(object):
 				
 			# starting from here, handle all error conditions
 				err_msg = u"Bad return status from API request."
-			except HTTPError, e:
-				err_msg = u"Error code %s returned from server: %s" % (str(e.code), type(e).__name__)
-			except IOError:
-				err_msg = u"Can't contact callback server.  Try again later."
-			except ValueError as ex:
-				err_msg = u"Having issues parsing JSON from the site: %s.  Open a ticket." \
-					% type(ex).__name__
-			except Exception as ex:
-				err_msg = u"An error of type %s has occured.  Open a ticket." % \
-					type(ex).__name__
-			raise PoolApiException(
-				err_msg,
-				self._api_url(),
-				data)
+			except Exception:
+					raise
+		except HTTPError, e:
+			err_msg = u"Error code %s returned from server: %s" % (str(e.code), type(e).__name__)
+		except IOError:
+			err_msg = u"Can't contact callback server.  Try again later."
+		except ValueError as ex:
+			err_msg = u"Having issues parsing JSON from the site: %s.  Open a ticket." \
+				% type(ex).__name__
+		except Exception as ex:
+			err_msg = u"An error of type %s has occured.  Open a ticket." % \
+				type(ex).__name__
+		raise PoolApiException(
+			err_msg,
+			self._api_url(),
+			data)
 
 
 # interact with instance objects on pool api
