@@ -45,6 +45,7 @@ class OpenStack(CRUDMixin, db.Model):
 	tenantid = db.Column(db.String(100), unique=True)
 	osusername = db.Column(db.String(100), unique=True)
 	ospassword = db.Column(db.String(100))
+	region = db.Column(db.String(100))
  
 	def __init__(
 		self, 
