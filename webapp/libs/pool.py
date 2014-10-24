@@ -212,7 +212,6 @@ class PoolApiBase(object):
 
 	# main entry, do the request
 	def request(self, data=None):
-		import pdb; pdb.set_trace()
 		try:
 			try:
 				# submit request to the api
