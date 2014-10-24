@@ -163,9 +163,6 @@ class Flavors(CRUDMixin,  db.Model, ModelSchemaMixin):
 				return
 
 			set_flavor_ask_price(self.osid, self.ask)
-		except nova_exceptions.NotFound:
-			# nebula only
-			pass
 		except Exception as e:
 			app.logger.warning("Failed to update flavor=(%s) price on cluster. %s" % (self.name, str(e)))
 
