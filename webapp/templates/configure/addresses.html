@@ -72,6 +72,11 @@
   $().ready(function() {
     var csrf_token = "{{ csrf_token() }}";
 
+    // reload button
+    $('#reload').click(function() {
+      location.reload();
+    });
+    
   });
 </script>
 {% endblock %}
