@@ -171,6 +171,11 @@
       window.location = "{{ url_for('configure.configure_flavors_add') }}";
     });
 
+    // reload button
+    $('#reload').click(function() {
+      location.reload();
+    });
+
     // warn about needing some serving
     {% if settings['flavors'] == False %}
       alertify.log("You need a minimum of one flavor enabled to serve instances.", "error");
