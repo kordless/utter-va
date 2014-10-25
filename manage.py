@@ -25,6 +25,7 @@ from webapp.models.addresses import Addresses
 from webapp.libs.utils import query_yes_no, pprinttable, message
 from webapp.libs.coinbase import coinbase_get_addresses, coinbase_checker
 from webapp.libs.pool import pool_salesman, pool_connect
+from webapp.libs import task_lock
 
 # configuration file
 if os.path.isfile('./DEV'): 
@@ -774,6 +775,11 @@ if __name__ == "__main__":
 
 	# deal with glance client logs
 	logging.getLogger('glanceclient.common.http').addHandler(handler)
-	
-	# run the manager
-	manager.run()
+
+	lock_config = {'lock_dir': app.config['LOCK_DIRECTORY']}
+	if len(sys.argv) > 0:
+		lock_config['lock_name'] = sys.argv[1]
+	else:
+		lock_config['lock_name'] = 'anonymous'
+
+	task_lock.LockManager(**lock_config).run_once(manager.run)
