@@ -364,8 +364,6 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		response = {'response': 'success'}
 		try:
 			image.proxy_image()
-			self.image = image
-			self.save()
 		except Exception as e:
 			image.delete()
 			err_msg = 'Failed to proxy image: "{0}".'.format(str(e))
@@ -442,6 +440,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		self.callback_url = callback_url
 
 
+		
 		# lookup the image for this instance, or create it otherwise
 		image = Images.query.filter_by(
 			**dict(
@@ -453,8 +452,6 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 
 			try:
 				image.save()
-				self.image = image
-				self.update()
 			except Exception as e:
 				app.logger.warning("Error creating image using copy_from, attempt proxying: \"{0}\"".format(str(e)))
 				response = self._proxy_image(image)
@@ -480,6 +477,8 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			response = self._proxy_image(image)
 			if response['response'] != 'success':
 				return response
+
+		self.update(image=image)
 
 		# post creation file is blank to start
 		post_creation_combo = ""
