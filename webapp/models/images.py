@@ -77,10 +77,11 @@ class Images(CRUDMixin, db.Model):
 		super(Images, self).save(*args, **kwargs)
 
 	def delete(self, *args, **kwargs):
-		try:
-			ensure_image_is_deleted(self.osid)
-		except glance_exceptions.NotFound:
-			app.logger.error("Image {0} does not exist on Glance.".format(image_id))
+		if self.osid:
+			try:
+				ensure_image_is_deleted(self.osid)
+			except glance_exceptions.NotFound:
+				app.logger.error("Image {0} does not exist on Glance.".format(image_id))
 		super(Images, self).delete(*args, **kwargs)
 
 	def housekeeping(self):
