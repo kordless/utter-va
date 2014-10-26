@@ -43,6 +43,7 @@ class BaseConfiguration(object):
 	CSRF_SESSION_KEY = "%CSRF_SESSION_KEY%"
 	THREADS_PER_PAGE = 8
 
+	# lock director for cronjobs
 	LOCK_DIRECTORY = "/var/www/utterio/locks"
 	
 # debug configuration extras for dev
