@@ -776,6 +776,7 @@ if __name__ == "__main__":
 	# deal with glance client logs
 	logging.getLogger('glanceclient.common.http').addHandler(handler)
 
+	# lock things down so we don't run over the top of another run
 	lock_config = {'lock_dir': app.config['LOCK_DIRECTORY']}
 	if len(sys.argv) > 0:
 		lock_config['lock_name'] = sys.argv[1]

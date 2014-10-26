@@ -106,7 +106,7 @@
                       {% if instance.image.url %}
                     <tr>
                       <td><strong>Image URL</strong></td>
-                      <td class="text-left"><a href="{{ instance.image.url|safe }}">{{ instance.image.url|safe }}</a></td>
+                      <td class="text-left"><a href="{{ instance.image.url|safe }}">{{ instance.image.url|truncate(32, killwords=True) }}</a></td>
                     </tr>
                     {% endif %}
                     </table>
