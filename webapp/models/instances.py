@@ -360,6 +360,20 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 
 		return response
 
+	def _proxy_image(self, image):
+		response = {'response': 'success'}
+		try:
+			image.proxy_image()
+			self.image = image
+			self.save()
+		except Exception as e:
+			image.delete()
+			err_msg = 'Failed to proxy image: "{0}".'.format(str(e))
+			app.logger.error(err_msg)
+			response['response'] = "error"
+			response['result']['message'] = err_msg
+		return response
+
 	# move instances from light to warm
 	def start(self):
 		from webapp.libs.openstack import flavor_verify_install
@@ -427,6 +441,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		# and lo, callback_url is saved
 		self.callback_url = callback_url
 
+
 		# lookup the image for this instance, or create it otherwise
 		image = Images.query.filter_by(
 			**dict(
@@ -438,17 +453,13 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 
 			try:
 				image.save()
+				self.image = image
+				self.update()
 			except Exception as e:
-				try:
-					image.delete()
-				except Exception:
-					pass
-				app.logger.error("Error creating image on OpenStack: \"{0}\"".format(str(e)))
-				response['response'] = "error"
-				response['result']['message'] = "Error creating image."
-				return response
-		self.image = image
-		self.update()
+				app.logger.warning("Error creating image using copy_from, attempt proxying: \"{0}\"".format(str(e)))
+				response = self._proxy_image(image)
+				if response['response'] != 'success':
+					return response
 
 		# if image is not ready because it's either killed or still downloading
 		try:
@@ -466,15 +477,8 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			return response
 		elif image_status == "killed":
 			# image has been killed, prossibly our openstack is a nebula
-			try:
-				app.logger.info("Falling back to proxying image.")
-				image.proxy_image()
-			except Exception as e:
-				image.delete()
-				err_msg = 'Failed to proxy image: "{0}".'.format(str(e))
-				app.logger.error(err_msg)
-				response['response'] = "error"
-				response['result']['message'] = err_msg
+			response = self._proxy_image(image)
+			if response['response'] != 'success':
 				return response
 
 		# post creation file is blank to start
