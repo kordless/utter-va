@@ -409,51 +409,8 @@ def instance_info(instance):
 
 	return response
 
-def instance_suspend(instance):
-	# default response
-	response = {"response": "success", "result": {"message": "", "server": {}}}
-
-	# try establishing nova connection
-	try:
-		nova = nova_connection()
-	except:
-		response['response'] = "error"
-		response['result']['message'] = "Can't communicate with OpenStack cluster."
-		app.logger.error("Can't communicate with OpenStack cluster.")
-		return response
-
-	# suspend the instance
-	server = nova.servers.suspend(instance.osid)
-
-	# response
-	response['result']['message'] = "OpenStack instance suspended."
-	response['result']['server'] = server
-	app.logger.info("OpenStack instance=(%s) suspended." % instance.name)	
-	
-	return response
-
-def instance_resume(instance):
-	# default response
-	response = {"response": "success", "result": {"message": "", "server": {}}}
-
-	# try establishing nova connection
-	try:
-		nova = nova_connection()
-		
-		# resume the instance
-		server = nova.servers.resume(instance.osid)
-		app.logger.info("OpenStack instance=(%s) resumed." % instance.name)
-	
-		# response
-		response['result']['message'] = "OpenStack instance resumed."
-		response['result']['server'] = server
-	
-	except:
-		response['response'] = "error"
-		response['result']['message'] = "Can't communicate with OpenStack cluster."
-		app.logger.error("Can't communicate with OpenStack cluster.")
-
-	return response
+def nova_get_instance(osid):
+	return nova_connection().servers.get(osid)
 
 def instance_decommission(instance):
 	# default response

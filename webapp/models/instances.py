@@ -439,17 +439,18 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		# and lo, callback_url is saved
 		self.callback_url = callback_url
 
-
-		
 		# lookup the image for this instance, or create it otherwise
-		image = Images.query.filter_by(
-			**dict(
-				filter(
-					lambda x: x[0] in ['url', 'container_format', 'disk_format'],
-					start_params['image'].items()))).first()
+		image = self.image
+		if not image:
+			image = Images.query.filter_by(
+				**dict(
+					filter(
+						lambda x: x[0] in ['url', 'container_format', 'disk_format'],
+						start_params['image'].items()))).first()
+			self.update(image=image)
 		if not image:
 			image = Images(**start_params['image'])
-
+			self.update(image=image)
 			try:
 				image.save()
 			except Exception as e:
@@ -477,8 +478,6 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			response = self._proxy_image(image)
 			if response['response'] != 'success':
 				return response
-
-		self.update(image=image)
 
 		# post creation file is blank to start
 		post_creation_combo = ""
@@ -573,9 +572,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		# process response
 		if cluster_response['response'] == "success":
 			server = cluster_response['result']['server']
-			self.osid = server.id # assign openstack instance id
-			self.state = 3 # mark as starting
-			self.update()
+			self.update(osid=server.id, state=3)
 			response['result'] = cluster_response['result']
 		else:
 			response = cluster_response
@@ -732,6 +729,32 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 
 		return response
 
+	def get_os_instance(self):
+		from webapp.libs.openstack import nova_get_instance
+
+		if not self.osid:
+			raise Exception('OpenStack instance id is unkown.')
+
+		return nova_get_instance(self.osid)
+
+	# try to suspend instance, and otherwise stop id
+	def suspend(self):
+		instance = self.get_os_instance()
+		try:
+			instance.suspend()
+		except Exception:
+			instance.stop()
+
+	# if instance status is SUSPENDED resume, otherwise start
+	def resume(self):
+		instance = self.get_os_instance()
+		if instance.status == 'SUSPENDED':
+			instance.resume()
+		elif instance.status == 'STOPPED':
+			instance.start()
+		else:
+			raise Exception('Unexpected instance status {0}.'.format(instance.status))
+
 	# HOUSEKEEPING WORKS ON STATE==4, STATE==5 and STATE==6 INSTANCES ONLY
 	# pauses instances which are payment expired
 	# decomissions instances which are past paused grace period
@@ -739,8 +762,6 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 	# decomissions non-running instances which are payment expired
 	def housekeeping(self):
 		from webapp.libs.openstack import instance_info
-		from webapp.libs.openstack import instance_suspend
-		from webapp.libs.openstack import instance_resume
 		from webapp.libs.openstack import instance_decommission
 		from webapp.libs.openstack import instance_console
 
@@ -764,8 +785,15 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 				# openstack says the server is running
 				if self.expires < epoch_time:
 					# suspend the instance for non-payment
-					response = instance_suspend(self)
-					response['result']['message'] = "Instance %s suspended." % self.name
+					try:
+						self.suspend()
+						response['result']['message'] = "Instance %s suspended." % self.name
+					except Exception as e:
+						response['response'] = 'error'
+						response['result']['message'] = \
+							'Instance {instance} suspending failed: "{error}".'.format(
+								instance=self.name, error=str(e))
+						return response
 					self.state = 5
 				elif self.expires > epoch_time:
 					# openstack says we're running, and we're paid
@@ -773,12 +801,19 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 						# we move the instance to starting mode
 						response['result']['message'] = "Instance %s is starting." % self.name
 						self.state = 3
-			elif server.status == "SUSPENDED":
+			elif server.status == "SUSPENDED" or server.status == "STOPPED":
 				# openstack says this instance is suspended
 				if self.expires > epoch_time:
 					# should be running because not expired
-					response = instance_resume(self)
-					response['result']['message'] = "Instance %s resumed." % self.name
+					try:
+						self.resume()
+						response['result']['message'] = "Instance %s resumed." % self.name
+					except Exception as e:
+						response['response'] = 'error'
+						response['result']['message'] = \
+							'Instance {instance} resume failed: "{error}".'.format(
+								instance=self.name, error=str(e))
+						return response
 					self.state = 3 # mark as starting
 				if self.expires + app.config['POOL_DECOMMISSION_TIME'] < epoch_time:
 					# should be destroyed (suspended for +2 hours without pay)
