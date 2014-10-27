@@ -801,7 +801,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 						# we move the instance to starting mode
 						response['result']['message'] = "Instance %s is starting." % self.name
 						self.state = 3
-			elif server.status == "SUSPENDED" or server.status == "STOPPED":
+			elif server.status == "SUSPENDED" or server.status == "SHUTOFF":
 				# openstack says this instance is suspended
 				if self.expires > epoch_time:
 					# should be running because not expired
