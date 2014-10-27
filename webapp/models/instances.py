@@ -750,7 +750,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		instance = self.get_os_instance()
 		if instance.status == 'SUSPENDED':
 			instance.resume()
-		elif instance.status == 'STOPPED':
+		elif instance.status == 'SHUTOFF':
 			instance.start()
 		else:
 			raise Exception('Unexpected instance status {0}.'.format(instance.status))
