@@ -51,10 +51,18 @@ def token_validate():
 	else:
 		return jsonify(response), 401
 
+# checking openstack connection
+@mod.route('/api/openstack/check', methods=('GET', 'POST'))
+@login_required
+def openstack_check():
+	# check openstack is setup
+	response = OpenStack().check()
+	return jsonify(response)
+
 # METHODS USING APITOKEN AUTH
 # api for sending messages into the socketio context
 @csrf.exempt
-@mod.route('/api/message', methods=('GET', 'POST'))
+@mod.route('/api/messages', methods=('GET', 'POST'))
 def api_message():
 	# get the appliance info
 	appliance = db.session.query(Appliance).first()

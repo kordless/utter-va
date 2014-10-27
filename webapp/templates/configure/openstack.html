@@ -11,6 +11,32 @@
 {% endblock %}
 
 {% block content %}
+<!-- set password modal -->
+<div id="set-password-modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Set OpenStack Password</h4>
+      </div>
+      <div class="modal-body">
+        <p>Please enter the OpenStack password for the user <strong>{{ openstack.osusername }}</strong>.</p>
+        <div id="password-modal-group" class="row form-group {% if form.ospassword.errors %}has-error{% endif %}">
+          <div class="col-md-6">
+            {{ form.ospassword.label(class="control-label") }}
+            {{ form.ospassword(class="form-control", value=openstack.ospassword, placeholder="******", required=true) }}
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="set-password-close-button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" id="set-password-confirm-button" class="btn btn-danger">Set Password</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- end modal -->
+
 <div class="container content">
   <div class="row">
     {{ macros.nav_pills("openstack", settings) }}
@@ -90,16 +116,14 @@
               </div>
             </div>
             
-            <div class="row form-group {% if form.ospassword.errors %}has-error{% endif %}">
-              <div class="col-md-6">
-                {{ form.ospassword.label(class="control-label") }}
-                {{ form.ospassword(class="form-control", value=openstack.ospassword, placeholder="******", required=true) }}
-              </div>
-            </div>
-            
+            <input class="form-control" id="hidden-ospassword" name="ospassword" type="hidden" value="">
+
             <div class="row form-group {% if form.authurl.errors %}has-error{% endif %}">
               <div class="col-md-6">
-                <button type="submit" class="btn btn-success">Save Configuration</button>
+                <button type="submit" id="submit-form" class="btn btn-success">Save Configuration</button>
+                {% if openstack.osusername %}
+                <button type="button" id="set-password" class="btn btn-danger">Set Password {% if settings['openstack'] == 0 %}<span id="flavors-settings"class="glyphicon glyphicon-exclamation-sign"></span>{% endif %}</button>
+                {% endif %}
               </div>
             </div>
           
@@ -125,11 +149,38 @@
         }
       };
 
-      var error = "{{ settings['openstack'] }}";
+    // warn to set password
+    {% if openstack.osusername %}{% if settings['openstack'] == 0 %}alertify.error("Please set the OpenStack password!");{% endif %}{% endif %}
 
-      if (error == "False") { 
-        alertify.log("Could not establish a connection with the OpenStack cluster.  Check your settings!", "error");
+    // set focus on input when modal is done showing up
+    $('#set-password-modal').on('shown.bs.modal', function () {
+      console.log("modal show");
+      $('#ospassword').focus();
+    });
+
+    // hit enter on password form
+    $('#ospassword').keydown(function (e){
+      if(e.keyCode == 13){
+        $('#set-password-confirm-button').trigger('click');
       }
+    })
+
+    // set password button
+    $('#set-password').click(function() {
+      $('#set-password-modal').modal('show');
+    });
+
+    // submit password button
+    $('#set-password-confirm-button').click(function() {
+      if ($('#ospassword').val() == "") {
+        alertify.error("Please enter a password.");
+        $('#password-modal-group').addClass('has-error');
+        return
+      }
+      // load form values and submit
+      $('#hidden-ospassword').val($('#ospassword').val());
+      $('#submit-form').trigger('click');
+    })
     });
   </script>
 {% endblock %}

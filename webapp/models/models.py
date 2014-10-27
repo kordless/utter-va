@@ -2,6 +2,7 @@ import yaml
 import time
 
 from keystoneclient.v2_0 import client as keyclient
+from keystoneclient.openstack.common.apiclient import exceptions
 from flask.ext.login import UserMixin
 
 from webapp import app
@@ -79,14 +80,22 @@ class OpenStack(CRUDMixin, db.Model):
 					auth_url = openstack.authurl,
 					timeout = 10
 				)
-			except:
-				app.logger.info("OpenStack API is not ready.")
-				return False
+
+			except exceptions.Unauthorized:
+				app.logger.error("OpenStack API not authorized.  Check credentials.")
+				return {"result": False, "reason": "unauthorized"}
+
+			except Exception as ex:
+				template = "OpenStack API is not ready. An exception of type {0} occured."
+				message = template.format(type(ex).__name__)
+				app.logger.error(message)
+				return {"result": False, "reason": message}
+
 		else:
 			app.logger.info("OpenStack API is not ready.")
-			return False
+			return {"result": False, "reason": "settings"}
 		
-		return True
+		return {"result": True}
 
 
 # appliance model
@@ -263,7 +272,7 @@ class Status(CRUDMixin, db.Model):
 			
 			# openstack connected?
 			openstack_check = openstack.check()
-			status.openstack_check = openstack_check
+			status.openstack_check = openstack_check['result']
 
 			# coinbase tokens working?
 			coinbase_check = coinbase_checker(appliance)
@@ -297,7 +306,7 @@ class Status(CRUDMixin, db.Model):
 			# stuff we check all the time
 			# openstack connected?
 			openstack_check = openstack.check()
-			status.openstack_check = openstack_check
+			status.openstack_check = openstack_check['result']
 
 			# ngrok connection
 			ngrok_check = ngrok_checker(appliance)

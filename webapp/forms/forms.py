@@ -36,7 +36,7 @@ class OpenStackForm(Form):
 	tenantid = TextField("Tenant ID", validators=[Required()])
 	region = TextField("OpenStack Region", validators=[])
 	osusername = TextField("OpenStack Username", validators=[Required()])
-	ospassword = PasswordField("OpenStack Password", validators=[Required()])
+	ospassword = PasswordField("OpenStack Password", validators=[])
 
 
 class ApplianceForm(Form):

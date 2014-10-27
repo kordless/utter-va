@@ -267,6 +267,7 @@ def configure_openstack():
 	# try to select one and only record
 	openstack = db.session.query(OpenStack).first()
 
+
 	# create new entry if configuration doesn't exist
 	if not openstack:
 		openstack = OpenStack()
@@ -274,7 +275,7 @@ def configure_openstack():
 	if request.method == 'POST':
 		# clear settings cache
 		Status().flush()
-		
+
 		# handle a file upload		
 		try:
 			file = request.files['file']
@@ -313,15 +314,25 @@ def configure_openstack():
 		
 		else:
 			# user is manually updating form
+			current_password = openstack.ospassword
+
 			if form.validate_on_submit():
 				# populate with form and update
 				form.populate_obj(openstack)
+
+				# check if password was blank and use old one
+				if openstack.ospassword == "":
+					openstack.ospassword = current_password
+
 				openstack.update(openstack)
+
 				flash("OpenStack settings updated!", "success")
 
-				return redirect(url_for(".configure_openstack"))
 			else:
 				flash("There were form errors. Please check your entries and try again.", "error")
+
+			# having to do this to get the form to update on password update
+			return redirect("/configure/openstack")
 
 	# get existing form data
 	openstack = db.session.query(OpenStack).first()
