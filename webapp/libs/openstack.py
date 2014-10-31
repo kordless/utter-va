@@ -348,7 +348,8 @@ def instance_start(instance):
 		response['response'] = "error"
 		response['result']['message'] = "OpenStack instance start failed."
 
-		app.logger.error("Failed to start instance=(%s)." % instance.name)
+		app.logger.error("Failed to start instance=({0}): {1}.".format(
+			instance.name, str(ex)))
 
 	return response
 

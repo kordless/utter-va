@@ -60,18 +60,22 @@ class Images(CRUDMixin, db.Model):
 			re.compile('\.bz2$').search(self.url))
 
 	def save(self, *args, **kwargs):
-		if Appliance.get().enable_image_caching and (
-				self.osid == None or not os_image_exists(self.osid)):
+		appliance = Appliance.get()
+		if appliance.enable_image_caching:
+			url = self.cached_url
+		else:
+			url = self.url
+		if self.osid == None or not os_image_exists(self.osid):
 			if self.decompress:
 				app.logger.info("Proxying image in order to decompress {0}.".format(
-					self.cached_url))
+					url))
 				self.proxy_image()
 			else:
 				app.logger.info("Creating image with location {0}.".format(
-					self.cached_url))
+					url))
 				self.osid = create_os_image(
 					name=self.name,
-					url=self.cached_url,
+					url=url,
 					disk_format=self.disk_format,
 					container_format=self.container_format).id
 		super(Images, self).save(*args, **kwargs)

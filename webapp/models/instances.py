@@ -464,6 +464,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			image_status = image.status
 		except Exception as e:
 			err_string = "Error communicating with OpenStack: \"{0}\"".format(str(e))
+			image.delete()
 			app.logger.error(err_string)
 			response['response'] = "error"
 			response['result']['message'] = err_string
@@ -474,6 +475,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			response['result']['message'] = "image is being created"
 			return response
 		elif image_status == "killed":
+			image.delete()
 			# image has been killed, prossibly our openstack is a nebula
 			response = self._proxy_image(image)
 			if response['response'] != 'success':
@@ -575,6 +577,13 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 			self.update(osid=server.id, state=3)
 			response['result'] = cluster_response['result']
 		else:
+			app.logger.error("Failed to start instance {0}, decomissioning.".format(
+				self.name))
+			self.update(state=7, image_id=None)
+			pool_response = pool_instances(
+				url=callback_url,
+				instance=self,
+				appliance=appliance)
 			response = cluster_response
 
 		return response
