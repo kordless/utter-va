@@ -130,10 +130,14 @@ class Images(CRUDMixin, db.Model):
 		return tmp_handle
 
 	def proxy_image(self):
+		if Appliance.get().enable_image_caching:
+			url = self.cached_url
+		else:
+			url = self.url
 		tmp_file = self.get_data()
 		osid = create_os_image(
 			name=self.name,
-			url=self.cached_url,
+			url=url,
 			disk_format=self.disk_format,
 			container_format=self.container_format,
 			fd=tmp_file).id
