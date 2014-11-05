@@ -129,8 +129,8 @@
               {% for flavor in flavors %}
               <tr>
                 <td>{{ flavor.name }}</td>
-                <td>{{ flavor.vpus }} Core{% if flavor.vpus > 1 %}s{% endif %}</td>
                 <td>{{ flavor.memory }}MB</td>
+                <td>{{ flavor.vpus }} Core{% if flavor.vpus > 1 %}s{% endif %}</td>
                 <td>{{ flavor.disk }}GB</td>
                 <td class="text-center">{% if flavor.network_down < 1 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ flavor.network_down }} Mb/sec{% endif %}</td>
                 <td class="text-center">{% if flavor.network_up < 1 %}<span title="Unlimited Bandwidth" class="glyphicon glyphicon-ban-circle"></span>{% else %}{{ flavor.network_up }} Mb/sec{% endif %}</td>
