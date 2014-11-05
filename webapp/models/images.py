@@ -5,7 +5,6 @@ import urllib2
 import requests
 
 from glanceclient import exc as glance_exceptions
-from glanceclient.common.utils import get_data_file
 
 from webapp import db
 from webapp import app
@@ -91,10 +90,10 @@ class Images(CRUDMixin, db.Model):
 		if self.instances.count() == 0:
 			self.delete()
 
-	def get_data(self):
+	def get_data(self, url):
 		try:
 			tmp_handle = tempfile.NamedTemporaryFile()
-			response = requests.get(self.cached_url, stream=True)
+			response = requests.get(url, stream=True)
 
 			if not response.ok:
 				raise Exception('Failed to download from url "{0}".'.format(
@@ -134,10 +133,9 @@ class Images(CRUDMixin, db.Model):
 			url = self.cached_url
 		else:
 			url = self.url
-		tmp_file = self.get_data()
+		tmp_file = self.get_data(url)
 		osid = create_os_image(
 			name=self.name,
-			url=url,
 			disk_format=self.disk_format,
 			container_format=self.container_format,
 			fd=tmp_file).id

@@ -448,6 +448,9 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 						lambda x: x[0] in ['url', 'container_format', 'disk_format'],
 						start_params['image'].items()))).first()
 			self.update(image=image)
+		if image and not image.osid:
+			image.delete()
+			image = None
 		if not image:
 			image = Images(**start_params['image'])
 			self.update(image=image)
