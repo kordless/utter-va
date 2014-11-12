@@ -41,6 +41,13 @@ manager = Manager(app) # shell actions manager
 db = SQLAlchemy(app) # database connection
 bcrypt = Bcrypt(app) # hashing function
 
+# load our name
+@app.context_processor
+def inject_user():
+	from webapp.models.models import Appliance
+	appliance = db.session.query(Appliance).first()
+	return dict(appliance_name=appliance.name)
+
 from webapp.models.instances import Instances
 
 # users module blueprint

@@ -104,6 +104,7 @@ class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 	id = db.Column(db.Integer, primary_key=True)
 	# make it private to decorate and check for hidden flag
 	_apitoken = db.Column(db.String(100), unique=True)
+	name = db.Column(db.String(100), unique=True)
 	ngroktoken = db.Column(db.String(100), unique=True)
 	subdomain = db.Column(db.String(100), unique=True)
 	dynamicimages = db.Column(db.Integer)
@@ -119,7 +120,8 @@ class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 
 	def __init__(
 		self, 
-		apitoken=None, 
+		apitoken=None,
+		name=None, 
 		ngroktoken=None, 
 		subdomain=None, 
 		dynamicimages=None, 
@@ -133,6 +135,7 @@ class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 	):
 		self.apitoken = apitoken
 		self.ngroktoken = ngroktoken
+		self.name = name
 		self.subdomain = subdomain
 		self.dynamicimages = dynamicimages
 		self.secret = secret
@@ -169,6 +172,7 @@ class Appliance(CRUDMixin, db.Model, ModelSchemaMixin):
 
 		# remainder of settings
 		self.ngroktoken = ""
+		self.name = "%s Virtual Appliance" % app.config['POOL_NAME']
 		self.subdomain = ""
 		self.dynamicimages = 1
 		# important, do not remove

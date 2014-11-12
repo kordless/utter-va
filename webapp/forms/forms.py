@@ -40,6 +40,7 @@ class OpenStackForm(Form):
 
 
 class ApplianceForm(Form):
+	name = TextField("Appliance Name", validators=[])
 	cbapikey = TextField("Coinbase Client ID", validators=[])
 	cbapisecret = TextField("Coinbase Client Secret", validators=[])
 	apitoken = TextField("Pool API Token") # not submitted by form
