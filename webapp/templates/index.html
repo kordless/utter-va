@@ -11,19 +11,23 @@
 {% endblock %}
 
 {% block content %}
+  <!--floating stuff-->
   <div class="splash-container">
-    <h1>Join the Decentralized Cloud</h1>
+    <h1>Help Decentralize the Cloud</h1>
     <div>
-      <button id="get-started-button" class="btn btn-lg btn-success">Get Started</button>
-      <button id="learn-more-button" class="btn btn-lg btn-warning">Learn More</button>
+      <button id="get-started-button" class="btn btn-lg btn-success">Start Configuring the Appliance</button>
+      <button id="learn-more-button" class="btn btn-lg btn-warning">Learn More About {{ config['POOL_NAME'] }}™</button>
     </div>
     <div class="splash-instructions">
       Don't have a provider account? Signup at <a href="{{ config['APP_WEBSITE'] }}/login">{{ config['POOL_NAME'] }}</a>.
     </div>
   </div>
+  <!--/floating stuff-->
 
-  <div id="map"></div>
-
+  <!--top billboard-->
+  <div id="billboard"></div>
+  <!--/top billboard-->
+  
   <!--container-->
   <div class="container">
     
@@ -56,25 +60,20 @@
 {% block javascript %}
   <script type="text/javascript">
     $().ready(function() {
-    	// login button
-    	$('#nav-login').click(function() { 
+      // login button
+      $('#nav-login').click(function() { 
         window.location = "/login" 
       });
-    	$('#get-started-button').click(function() {
+      $('#get-started-button').click(function() {
         window.location = "/login" 
       });
-    	$('#learn-more-button').click(function() {
+      $('#learn-more-button').click(function() {
         window.location = "{{ config['APP_WEBSITE'] }}/docs/#becoming-a-provider"
       });
-
-      // the map!
-      var themap = L.mapbox.map('map', 'kordless.gnm28jg1', {scrollWheelZoom: false, zoomControl: false}).setView([20, 20], 3);
-      setInterval(function(){themap.panBy([-1, 0]);},3000);
     });
   </script>
 {% endblock %}
 
 {% block extras %}
-    <script src='//api.tiles.mapbox.com/mapbox.js/v1.6.0-beta0/mapbox.js'></script>
 {% endblock %}
 

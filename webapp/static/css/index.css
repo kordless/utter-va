@@ -43,6 +43,13 @@ body {
   }
 }
 
+#billboard {
+  padding-top: 130px;
+  height: 665px;
+  background-image: url(/img/datacenter.png);
+  background-size: cover;
+}
+
 /* the almighty map */
 #map {
   top:0; 
@@ -61,11 +68,11 @@ body {
   z-index: 10;
   left: 0;
   right: 0;
-  top: 260px;
+  top: 240px;
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
-  background: rgba(30, 30, 30, 0.5);
+  background: rgba(30, 30, 30, 0.8);
   padding: 20px 60px 40px 60px;
 }
 .splash-container h1 {
