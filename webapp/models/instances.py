@@ -505,7 +505,7 @@ class Instances(CRUDMixin, db.Model, ModelSchemaMixin):
 		# create utterio file data
 		post_creation_file_data = ""
 		post_creation_file_data += "export MY_BITCOIN_ADDRESS=%s\n" % self.address
-		post_creation_file_data += "export MY_POOL_API=%s/api/v1/instances/%s/\n" % (app.config['APP_WEBSITE'], self.name)
+		post_creation_file_data += "export MY_POOL_API_ADDRESS=%s/api/v1/instances/%s/\n" % (app.config['APP_WEBSITE'], self.name)
 		
 		# payment address source file
 		post_creation_combo += "write_files:\n"
