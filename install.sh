@@ -83,7 +83,7 @@ git clone https://github.com/StackMonkey/utter-va.git ${BASE_DIR}
 chown -R ${USER}:${GROUP} ${BASE_DIR}
 
 # install all the python requirements
-pip install -U -r ${BASE_DIR}/requirements.txt
+pip install --use-mirrors -U -r ${BASE_DIR}/requirements.txt
 
 # set vim tabs
 cat <<EOF > /home/ubuntu/.vimrc
