@@ -1,20 +1,20 @@
 import socket
+import json
 
 from urllib import urlopen
-from csv import reader
 
 from webapp import app
 
 # simple geoip lookup to get appliance latitude/longitude
 def get_geodata():
     socket.setdefaulttimeout(5)
-    URL = "http://freegeoip.net/csv/"
+    URL = "http://freegeoip.net/json/"
     try:
-        response_csv = reader(urlopen(URL))
-        csv_data = response_csv.next()
+        response = json.loads(urlopen(URL))
+
         return {
-            "latitude":csv_data[7],
-            "longitude":csv_data[8]
+            "latitude": response['latitude'],
+            "longitude": response['longitude']
         }
     
     # timeout!
