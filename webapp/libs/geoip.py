@@ -8,9 +8,10 @@ from webapp import app
 # simple geoip lookup to get appliance latitude/longitude
 def get_geodata():
     socket.setdefaulttimeout(5)
-    URL = "http://freegeoip.net/json/"
+    url = "http://freegeoip.net/json/"
     try:
-        response = json.loads(urlopen(URL))
+
+        response = json.loads(urlopen(url).read())
 
         return {
             "latitude": response['latitude'],
@@ -18,8 +19,8 @@ def get_geodata():
         }
     
     # timeout!
-    except:
-        app.logger.error("Error getting geolocation.  Using Old Faithful.")
+    except Exception as ex:
+        app.logger.error("Error getting geolocation.  Using Old Faithful.  %s" % ex)
         return {
             "latitude": "44.4605",
             "longitude": "-110.8282"
